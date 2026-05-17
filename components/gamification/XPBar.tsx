@@ -22,11 +22,8 @@ export function XPBar() {
       >
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
-            <div
-              className="w-8 h-8 rounded-xl flex items-center justify-center text-sm"
-              style={{ background: `${level.color}20`, border: `1px solid ${level.color}40` }}
-            >
-              {level.emoji}
+            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: `${level.color}20`, color: level.color }}>
+              <level.icon className="w-4 h-4" />
             </div>
             <div>
               <p className="text-xs font-bold" style={{ color: level.color }}>
@@ -106,7 +103,9 @@ export function XPBar() {
                         border: current ? `1px solid ${l.color}50` : '1px solid transparent',
                       }}
                     >
-                      <span className="text-base">{done ? '✅' : l.emoji}</span>
+                      <div className="w-5 h-5 flex items-center justify-center shrink-0">
+                        {done ? <span className="text-base">✅</span> : <l.icon className="w-4 h-4" style={{ color: current ? l.color : 'var(--text-muted)' }} />}
+                      </div>
                       <div className="flex-1">
                         <p className="text-sm font-semibold"
                           style={{ color: current ? l.color : done ? 'var(--text-secondary)' : 'var(--text-muted)' }}>

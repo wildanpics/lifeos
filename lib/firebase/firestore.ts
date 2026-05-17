@@ -15,6 +15,7 @@ import { db } from './config';
 import { DailyStats, Reflection } from '@/types/user';
 import { HabitLog, HabitStreak } from '@/types/habit';
 import { FocusSession } from '@/types/focus';
+import { UserAchievement } from '@/types/achievement';
 
 // === Daily Stats ===
 export const getTodayStats = async (userId: string, date: string): Promise<DailyStats | null> => {
@@ -128,4 +129,24 @@ export const addXP = async (userId: string, amount: number): Promise<number> => 
   const newTotal = current + amount;
   await setDoc(ref, { totalXP: newTotal }, { merge: true });
   return newTotal;
+};
+
+// === Achievements ===
+export const getUserAchievements = async (userId: string): Promise<UserAchievement[]> => {
+  const ref = doc(db, 'users', userId);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) return [];
+  return snap.data().unlockedAchievements || [];
+};
+
+export const unlockAchievement = async (userId: string, achievement: UserAchievement) => {
+  const ref = doc(db, 'users', userId);
+  const snap = await getDoc(ref);
+  const current = snap.exists() ? (snap.data().unlockedAchievements || []) : [];
+  
+  // Check if already unlocked
+  if (current.some((a: UserAchievement) => a.id === achievement.id)) return;
+  
+  const newAchievements = [...current, achievement];
+  await setDoc(ref, { unlockedAchievements: newAchievements }, { merge: true });
 };

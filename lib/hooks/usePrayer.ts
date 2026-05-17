@@ -3,10 +3,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { DailyPrayerSchedule, PrayerAlert, PrayerAlertLevel } from '@/types/prayer';
 import { getToday, minutesUntil } from '@/lib/utils/time';
-
-const CITY_ID = process.env.NEXT_PUBLIC_PRAYER_CITY_ID || '29';
+import { useAppStore } from '@/store/useAppStore';
 
 export const usePrayer = () => {
+  const { prayerCityId } = useAppStore();
   const [schedule, setSchedule] = useState<DailyPrayerSchedule | null>(null);
   const [nextPrayer, setNextPrayer] = useState<{ name: string; time: string } | null>(null);
   const [alert, setAlert] = useState<PrayerAlert | null>(null);
@@ -17,7 +17,7 @@ export const usePrayer = () => {
   const fetchPrayerTimes = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/prayer?cityId=${CITY_ID}`);
+      const response = await fetch(`/api/prayer?cityId=${prayerCityId}`);
       if (!response.ok) throw new Error('Failed to fetch prayer times');
       const data: DailyPrayerSchedule = await response.json();
       setSchedule(data);
@@ -27,7 +27,7 @@ export const usePrayer = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [prayerCityId]);
 
   const updateNextPrayer = useCallback(() => {
     if (!schedule) return;

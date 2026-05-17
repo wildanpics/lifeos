@@ -1,36 +1,69 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Sun, Moon, Bell } from 'lucide-react';
+import { Sun, Moon, Bell, CalendarDays } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { getLevelFromXP } from '@/lib/constants/levels';
+import { useEffect, useState } from 'react';
+import { NotificationCenter } from './NotificationCenter';
 
 interface TopBarProps {
   title?: string;
 }
 
 export function TopBar({ title }: TopBarProps) {
-  const { theme, toggleTheme, totalXP } = useAppStore();
+  const { theme, toggleTheme, totalXP, notifications = [] } = useAppStore();
   const level = getLevelFromXP(totalXP);
+  const [dateStr, setDateStr] = useState('');
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+
+  const unreadCount = notifications.filter(n => !n.read).length;
+
+  useEffect(() => {
+    const now = new Date();
+    const formatter = new Intl.DateTimeFormat('id-ID', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
+    setDateStr(formatter.format(now));
+  }, []);
 
   return (
     <header
-      className="sticky top-0 z-30 flex items-center justify-between px-4 py-3 lg:px-6"
+      className="sticky top-0 z-30 flex items-center justify-between px-4 py-3 lg:px-6 mb-2"
       style={{
-        background: 'var(--bg-primary)',
-        borderBottom: '1px solid var(--border)',
-        backdropFilter: 'blur(12px)',
+        background: 'transparent',
       }}
     >
-      <div>
+      {/* Left side (flex-1 to help center the middle item) */}
+      <div className="flex-1">
         {title && (
-          <h2 className="text-base font-semibold lg:text-lg" style={{ color: 'var(--text-primary)' }}>
+          <h2 className="text-base font-semibold lg:hidden" style={{ color: 'var(--text-primary)' }}>
             {title}
           </h2>
         )}
       </div>
 
-      <div className="flex items-center gap-2">
+      {/* Center: Empty to maintain space if needed or just remove */}
+      <div className="hidden lg:flex flex-1 items-center justify-center"></div>
+
+      {/* Right side */}
+      <div className="flex-1 flex justify-end items-center gap-3">
+        {/* Date Badge */}
+        <div 
+          className="hidden lg:flex items-center gap-2 px-4 py-1.5 rounded-2xl text-xs font-medium"
+          style={{ 
+            background: 'var(--bg-secondary)', 
+            border: '1px solid var(--border)',
+            color: 'var(--text-secondary)'
+          }}
+        >
+          <CalendarDays className="w-3.5 h-3.5" />
+          <span>{dateStr}</span>
+        </div>
+
         {/* Level badge - mobile only */}
         <div
           className="lg:hidden flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold"
@@ -40,31 +73,48 @@ export function TopBar({ title }: TopBarProps) {
             border: `1px solid ${level.color}40`,
           }}
         >
-          <span>{level.emoji}</span>
+          <level.icon className="w-3.5 h-3.5" />
           <span>Lv.{level.level}</span>
         </div>
 
         {/* Notifications */}
-        <motion.button
-          whileTap={{ scale: 0.9 }}
-          className="relative p-2 rounded-xl transition-colors"
-          style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
-        >
-          <Bell className="w-4 h-4" style={{ color: 'var(--text-secondary)' }} />
-          <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500" />
-        </motion.button>
+        <div className="relative">
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+            className="relative p-2 rounded-xl transition-colors hover:bg-white/5"
+            style={{ 
+              background: 'var(--bg-secondary)', 
+              border: isNotificationsOpen ? '1px solid var(--text-primary)' : '1px solid var(--border)' 
+            }}
+          >
+            <Bell className="w-4 h-4" style={{ color: isNotificationsOpen ? 'var(--text-primary)' : 'var(--text-secondary)' }} />
+            {unreadCount > 0 && (
+              <span 
+                className="absolute -top-1.5 -right-1.5 px-1.5 py-0.5 min-w-[18px] h-[18px] rounded-full text-[9px] font-black text-white bg-red-500 shadow-md flex items-center justify-center animate-pulse"
+              >
+                {unreadCount}
+              </span>
+            )}
+          </motion.button>
+          
+          <NotificationCenter 
+            isOpen={isNotificationsOpen} 
+            onClose={() => setIsNotificationsOpen(false)} 
+          />
+        </div>
 
         {/* Theme toggle */}
         <motion.button
           whileTap={{ scale: 0.9 }}
           onClick={toggleTheme}
           className="p-2 rounded-xl transition-colors"
-          style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
+          style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)' }}
         >
           {theme === 'dark' ? (
-            <Sun className="w-4 h-4" style={{ color: 'var(--warning)' }} />
+            <Sun className="w-4 h-4" style={{ color: 'var(--text-secondary)' }} />
           ) : (
-            <Moon className="w-4 h-4" style={{ color: 'var(--accent)' }} />
+            <Moon className="w-4 h-4" style={{ color: 'var(--text-secondary)' }} />
           )}
         </motion.button>
       </div>

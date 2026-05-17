@@ -99,6 +99,7 @@ export const HABIT_DEFINITIONS: HabitDefinition[] = [
     icon: '🍳',
     xp: 10,
     deadline: '09:00',
+    isHidden: true,
   },
   {
     id: 'eat_lunch',
@@ -108,6 +109,7 @@ export const HABIT_DEFINITIONS: HabitDefinition[] = [
     category: 'health',
     icon: '🍚',
     xp: 10,
+    isHidden: true,
   },
   {
     id: 'eat_dinner',
@@ -117,6 +119,7 @@ export const HABIT_DEFINITIONS: HabitDefinition[] = [
     category: 'health',
     icon: '🍽️',
     xp: 10,
+    isHidden: true,
   },
   {
     id: 'water_8',
@@ -126,6 +129,7 @@ export const HABIT_DEFINITIONS: HabitDefinition[] = [
     category: 'health',
     icon: '💧',
     xp: 10,
+    isHidden: true,
   },
   {
     id: 'no_tiktok_night',
