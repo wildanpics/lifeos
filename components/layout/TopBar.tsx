@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { Sun, Moon, Bell, CalendarDays } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { getLevelFromXP } from '@/lib/constants/levels';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { NotificationCenter } from './NotificationCenter';
 
 interface TopBarProps {
@@ -16,6 +16,7 @@ export function TopBar({ title }: TopBarProps) {
   const level = getLevelFromXP(totalXP);
   const [dateStr, setDateStr] = useState('');
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -80,6 +81,7 @@ export function TopBar({ title }: TopBarProps) {
         {/* Notifications */}
         <div className="relative">
           <motion.button
+            ref={triggerRef}
             whileTap={{ scale: 0.9 }}
             onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
             className="relative p-2 rounded-xl transition-colors hover:bg-white/5"
@@ -101,6 +103,7 @@ export function TopBar({ title }: TopBarProps) {
           <NotificationCenter 
             isOpen={isNotificationsOpen} 
             onClose={() => setIsNotificationsOpen(false)} 
+            triggerRef={triggerRef}
           />
         </div>
 
