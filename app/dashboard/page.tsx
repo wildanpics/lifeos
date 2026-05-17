@@ -1,70 +1,59 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { DynamicGreeting } from '@/components/dashboard/DynamicGreeting';
-import { ProgressRing } from '@/components/dashboard/ProgressRing';
+import { HeroCard } from '@/components/dashboard/HeroCard';
+import { DailyRules } from '@/components/dashboard/DailyRules';
 import { QuickStats } from '@/components/dashboard/QuickStats';
 import { DopamineStatus } from '@/components/dashboard/DopamineStatus';
+import { PrayerList } from '@/components/prayer/PrayerList';
+import { MorningReset } from '@/components/dashboard/MorningReset';
+import { BreakTheLoop } from '@/components/dashboard/BreakTheLoop';
+import { FocusList } from '@/components/dashboard/FocusList';
+import { PomodoroWidget } from '@/components/dashboard/PomodoroWidget';
+import { QuoteFooter } from '@/components/dashboard/QuoteFooter';
 import { EmergencyPanel } from '@/components/dashboard/EmergencyPanel';
-import { PrayerCountdown } from '@/components/prayer/PrayerCountdown';
-import { XPBar } from '@/components/gamification/XPBar';
-import { WaterTracker } from '@/components/hydration/WaterTracker';
-import { NightReflection } from '@/components/reflection/NightReflection';
-
-const section = (delay: number) => ({
-  initial: { opacity: 0, y: 20 },
-  animate: { opacity: 1, y: 0 },
-  transition: { delay, duration: 0.4 },
-});
 
 export default function DashboardPage() {
   return (
-    <div className="space-y-5">
-      {/* Header: Greeting + Progress Ring */}
-      <motion.div {...section(0)} className="flex items-start justify-between gap-4">
-        <div className="flex-1">
-          <DynamicGreeting />
-        </div>
-        <div className="flex-shrink-0">
-          <ProgressRing />
-        </div>
-      </motion.div>
-
-      {/* XP Bar */}
-      <motion.div {...section(0.1)}>
-        <XPBar />
-      </motion.div>
-
-      {/* Prayer Countdown */}
-      <motion.div {...section(0.15)}>
-        <PrayerCountdown />
-      </motion.div>
-
+    <div className="flex flex-col gap-6 pb-24 lg:pb-8">
       {/* Emergency Panel (conditional) */}
       <EmergencyPanel />
 
-      {/* Dopamine Status */}
-      <motion.div {...section(0.2)}>
-        <DopamineStatus />
-      </motion.div>
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+        {/* Left Column (Main Content) */}
+        <div className="xl:col-span-8 2xl:col-span-9 flex flex-col gap-6">
+          <HeroCard />
+          <DailyRules />
+          
+          <div>
+            <h2 className="text-sm font-semibold mb-3" style={{ color: 'var(--text-secondary)' }}>
+              Statistik Cepat
+            </h2>
+            <QuickStats />
+          </div>
 
-      {/* Quick Stats */}
-      <motion.div {...section(0.25)}>
-        <h2 className="text-sm font-semibold mb-2" style={{ color: 'var(--text-secondary)' }}>
-          📊 Stats Hari Ini
-        </h2>
-        <QuickStats />
-      </motion.div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-3">
+              <BreakTheLoop />
+            </div>
+            <div className="lg:col-span-1">
+              <FocusList />
+            </div>
+            <div className="lg:col-span-2">
+              <PomodoroWidget />
+            </div>
+          </div>
+        </div>
 
-      {/* Water Tracker */}
-      <motion.div {...section(0.3)}>
-        <WaterTracker />
-      </motion.div>
+        {/* Right Column (Sidebar-ish) */}
+        <div className="xl:col-span-4 2xl:col-span-3 flex flex-col gap-6">
+          <DopamineStatus />
+          <PrayerList />
+          <MorningReset />
+        </div>
+      </div>
 
-      {/* Night Reflection (conditional) */}
-      <motion.div {...section(0.35)}>
-        <NightReflection />
-      </motion.div>
+      <QuoteFooter />
     </div>
   );
 }

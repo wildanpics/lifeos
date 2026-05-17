@@ -3,72 +3,63 @@
 import { motion } from 'framer-motion';
 import { useAppStore } from '@/store/useAppStore';
 import { analyzeDopamine, getDopamineColor } from '@/lib/utils/dopamine';
-import { Brain } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Brain, Info, MoreVertical, ChevronRight } from 'lucide-react';
 
 export function DopamineStatus() {
   const { todayStats } = useAppStore();
   const analysis = analyzeDopamine(todayStats || {});
   const color = getDopamineColor(analysis.status);
 
-  const statusIcon = {
-    clean: '✅',
-    distracted: '⚠️',
-    overstimulated: '🚨',
-  }[analysis.status];
-
   return (
-    <motion.div
-      initial={{ opacity: 0, x: -20 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ delay: 0.3 }}
-      className="card"
-      style={{
-        background: `${color}10`,
-        border: `1px solid ${color}30`,
-      }}
-    >
-      <div className="flex items-center gap-3">
-        <div
-          className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-          style={{ background: `${color}20` }}
-        >
-          <Brain className="w-5 h-5" style={{ color }} />
-        </div>
+    <div className="card p-5 rounded-2xl flex flex-col items-center relative overflow-hidden"
+         style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)' }}>
+      
+      {/* Subtle glow */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 blur-3xl opacity-20 pointer-events-none"
+           style={{ background: color }} />
 
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-0.5">
-            <span className="text-sm font-semibold" style={{ color }}>
-              {statusIcon} {analysis.messageId}
-            </span>
-            <span
-              className="text-xs px-2 py-0.5 rounded-full font-medium"
-              style={{ background: `${color}20`, color }}
-            >
-              {analysis.score}/100
-            </span>
-          </div>
-          <p className="text-xs leading-relaxed" style={{ color: 'var(--text-muted)' }}>
-            {analysis.recommendationId}
-          </p>
+      <div className="w-full flex items-center justify-between mb-6">
+        <div className="flex items-center gap-1.5">
+          <h2 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Status Dopamine</h2>
+          <Info className="w-3.5 h-3.5" style={{ color: 'var(--text-muted)' }} />
         </div>
+        <MoreVertical className="w-4 h-4" style={{ color: 'var(--text-muted)' }} />
+      </div>
 
-        {/* Score bar */}
-        <div className="w-12 flex flex-col items-center gap-1">
-          <div className="text-xs font-bold" style={{ color }}>
-            {analysis.score}%
-          </div>
-          <div className="w-2 h-16 rounded-full relative" style={{ background: 'var(--border)' }}>
-            <motion.div
-              className="absolute bottom-0 left-0 right-0 rounded-full"
-              style={{ background: color }}
-              initial={{ height: 0 }}
-              animate={{ height: `${analysis.score}%` }}
-              transition={{ duration: 1, delay: 0.5 }}
-            />
-          </div>
+      {/* Central Visual */}
+      <div className="relative mb-4">
+        {/* Decorative Arc/Ring */}
+        <svg className="absolute -inset-4 w-24 h-24 transform -rotate-135">
+          <circle cx="48" cy="48" r="40" className="stroke-current" style={{ color: 'var(--bg-primary)' }} strokeWidth="4" fill="transparent" strokeDasharray="180 251" />
+          <motion.circle
+            cx="48" cy="48" r="40" className="stroke-current" style={{ color }} strokeWidth="4" fill="transparent"
+            strokeDasharray={`${(analysis.score / 100) * 180} 251`}
+            strokeLinecap="round"
+            initial={{ strokeDashoffset: 180 }}
+            animate={{ strokeDashoffset: 0 }}
+            transition={{ duration: 1 }}
+          />
+        </svg>
+
+        <div className="w-16 h-16 rounded-full flex items-center justify-center relative z-10"
+             style={{ background: `${color}15`, border: `1px solid ${color}30` }}>
+          <Brain className="w-8 h-8" style={{ color }} />
         </div>
       </div>
-    </motion.div>
+
+      <h3 className="text-lg font-bold mb-1" style={{ color }}>{analysis.messageId}</h3>
+      <p className="text-xs text-center mb-6" style={{ color: 'var(--text-secondary)' }}>
+        {analysis.recommendationId}
+      </p>
+
+      <button className="w-full flex items-center justify-between py-3 px-4 rounded-xl text-xs font-medium transition-colors hover:bg-white/5"
+              style={{ background: 'var(--bg-primary)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}>
+        <div className="flex items-center gap-2">
+          <div className="w-4 h-4 rounded-sm" style={{ background: `${color}20` }} />
+          Lihat Heatmap
+        </div>
+        <ChevronRight className="w-4 h-4" />
+      </button>
+    </div>
   );
 }

@@ -17,6 +17,13 @@ export interface UserPreferences {
   language: 'en' | 'id';
 }
 
+export interface FocusTask {
+  id: string;
+  label: string;
+  tag: string;
+  done: boolean;
+}
+
 export interface DailyStats {
   date: string; // YYYY-MM-DD
   userId: string;
@@ -33,6 +40,9 @@ export interface DailyStats {
   completedHabits: string[];
   morningLockUnlocked: boolean;
   dopamineStatus: 'clean' | 'distracted' | 'overstimulated';
+  morningResetComplete?: number[]; // IDs of completed morning routines
+  focusTasks?: FocusTask[]; // User's daily main focus tasks
+  breakTheLoopDone?: boolean;
 }
 
 export interface Reflection {

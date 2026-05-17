@@ -5,7 +5,9 @@ import { useRouter } from 'next/navigation';
 import { useAppStore } from '@/store/useAppStore';
 import { signOutUser } from '@/lib/firebase/auth';
 import { getLevelFromXP, getProgressToNextLevel, getXPToNextLevel } from '@/lib/constants/levels';
-import { Sun, Moon, LogOut, MapPin, Star, Zap, Shield, User } from 'lucide-react';
+import { CitySelectorModal } from '@/components/profile/CitySelectorModal';
+import { useState } from 'react';
+import { Sun, Moon, LogOut, MapPin, Star, Zap, Shield, User, ChevronRight } from 'lucide-react';
 
 export default function ProfilePage() {
   const { user, totalXP, todayStats, theme, toggleTheme, setUser } = useAppStore();
@@ -13,6 +15,9 @@ export default function ProfilePage() {
   const level = getLevelFromXP(totalXP);
   const progress = getProgressToNextLevel(totalXP);
   const xpToNext = getXPToNextLevel(totalXP);
+  const [isCityModalOpen, setIsCityModalOpen] = useState(false);
+  const { prayerCityName } = useAppStore();
+  const [avatarError, setAvatarError] = useState(false);
 
   const handleSignOut = async () => {
     await signOutUser();
@@ -30,9 +35,15 @@ export default function ProfilePage() {
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="card text-center py-6">
         <div className="w-20 h-20 rounded-2xl overflow-hidden mx-auto mb-3 flex items-center justify-center"
           style={{ background: 'linear-gradient(135deg, #6366F1, #8B5CF6)' }}>
-          {user?.photoURL ? (
+          {user?.photoURL && !avatarError ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={user.photoURL} alt="Avatar" className="w-full h-full object-cover" />
+            <img 
+              src={user.photoURL} 
+              alt="Avatar" 
+              className="w-full h-full object-cover" 
+              referrerPolicy="no-referrer"
+              onError={() => setAvatarError(true)}
+            />
           ) : (
             <span className="text-white text-3xl font-bold">{user?.displayName?.charAt(0) || 'U'}</span>
           )}
@@ -43,7 +54,7 @@ export default function ProfilePage() {
         {/* Level badge */}
         <div className="inline-flex items-center gap-2 mt-3 px-4 py-2 rounded-full"
           style={{ background: `${level.color}20`, border: `1px solid ${level.color}40` }}>
-          <span className="text-lg">{level.emoji}</span>
+          <level.icon className="w-4 h-4" style={{ color: level.color }} />
           <span className="font-bold text-sm" style={{ color: level.color }}>
             Lv.{level.level} — {level.titleId}
           </span>
@@ -102,10 +113,19 @@ export default function ProfilePage() {
           </button>
 
           {/* City */}
-          <div className="flex items-center gap-3 p-3 rounded-xl" style={{ background: 'var(--bg-secondary)' }}>
-            <MapPin className="w-4 h-4" style={{ color: 'var(--text-muted)' }} />
-            <span className="text-sm" style={{ color: 'var(--text-primary)' }}>Kota: Jakarta</span>
-          </div>
+          <button 
+            onClick={() => setIsCityModalOpen(true)}
+            className="w-full flex items-center justify-between p-3 rounded-xl transition-all" 
+            style={{ background: 'var(--bg-secondary)' }}
+          >
+            <div className="flex items-center gap-3">
+              <MapPin className="w-4 h-4" style={{ color: 'var(--accent)' }} />
+              <span className="text-sm" style={{ color: 'var(--text-primary)' }}>
+                {prayerCityName || 'Pilih Lokasi'}
+              </span>
+            </div>
+            <ChevronRight className="w-4 h-4" style={{ color: 'var(--text-muted)' }} />
+          </button>
         </div>
       </motion.div>
 
@@ -138,6 +158,12 @@ export default function ProfilePage() {
           <LogOut className="w-4 h-4" /> Keluar
         </button>
       </motion.div>
+
+      {/* City Selector Modal */}
+      <CitySelectorModal 
+        isOpen={isCityModalOpen} 
+        onClose={() => setIsCityModalOpen(false)} 
+      />
     </div>
   );
 }

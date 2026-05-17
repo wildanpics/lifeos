@@ -1,13 +1,12 @@
 import { NextResponse } from 'next/server';
 import { DailyPrayerSchedule } from '@/types/prayer';
 
-// eQuran.id API for Indonesian prayer times
-// Docs: https://equran.id/apidev
-const EQURAN_API = 'https://equran.id/api/v2/sholat';
+// MyQuran API for Indonesian prayer times
+const MYQURAN_API = 'https://api.myquran.com/v2/sholat/jadwal';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const cityId = searchParams.get('cityId') || '29'; // Jakarta default
+  const cityId = searchParams.get('cityId') || '1301'; // Jakarta default
 
   const today = new Date();
   const year = today.getFullYear();
@@ -16,17 +15,17 @@ export async function GET(request: Request) {
 
   try {
     const response = await fetch(
-      `${EQURAN_API}/${cityId}/${year}/${month}/${day}`,
+      `${MYQURAN_API}/${cityId}/${year}/${month}/${day}`,
       { next: { revalidate: 3600 } } // Cache for 1 hour
     );
 
     if (!response.ok) {
-      throw new Error(`eQuran API error: ${response.status}`);
+      throw new Error(`MyQuran API error: ${response.status}`);
     }
 
     const data = await response.json();
 
-    // eQuran.id response structure
+    // MyQuran response structure
     const jadwal = data?.data?.jadwal;
 
     if (!jadwal) {
@@ -54,7 +53,7 @@ export async function GET(request: Request) {
     // Fallback Jakarta prayer times (approximate)
     const fallback: DailyPrayerSchedule = {
       date: `${year}-${month}-${day}`,
-      cityId: 29,
+      cityId: 1301,
       cityName: 'Jakarta (Fallback)',
       prayers: {
         fajr: '04:30',

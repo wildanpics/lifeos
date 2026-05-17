@@ -32,6 +32,7 @@ export interface HabitDefinition {
   deadline?: string; // HH:mm — time-based rule
   isMorningLock?: boolean; // Required for morning lock
   streakBonus?: boolean;
+  isHidden?: boolean; // Hide from standard list (e.g. for custom UI integrations)
 }
 
 export interface HabitLog {
