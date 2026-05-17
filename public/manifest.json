@@ -1,0 +1,26 @@
+{
+  "name": "LIFE OS — Personal Discipline & Productivity System",
+  "short_name": "LIFE OS",
+  "description": "Build discipline, reduce distraction, live structured.",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0B0F19",
+  "theme_color": "#6366F1",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ],
+  "categories": ["productivity", "health", "lifestyle"],
+  "screenshots": []
+}
