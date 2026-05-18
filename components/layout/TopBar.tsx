@@ -93,14 +93,16 @@ export function TopBar({ title }: TopBarProps) {
 
           {/* Mobile version (dynamic width-expanding button container) */}
           <motion.button
-            layout
+            animate={{ 
+              width: isCalendarOpen ? 'auto' : 34,
+            }}
+            transition={{ duration: 0.25, ease: 'easeInOut' }}
             whileTap={{ scale: 0.95 }}
             onClick={() => setIsCalendarOpen(!isCalendarOpen)}
-            className="sm:hidden flex items-center justify-center h-8.5 rounded-xl transition-all duration-300 overflow-hidden px-2 flex-shrink-0"
+            className="sm:hidden flex items-center justify-center h-8.5 rounded-xl transition-colors duration-300 overflow-hidden px-2 flex-shrink-0"
             style={{ 
               background: 'var(--bg-secondary)', 
               border: isCalendarOpen ? '1px solid var(--text-primary)' : '1px solid var(--border)',
-              width: isCalendarOpen ? 'auto' : '34px',
             }}
           >
             <CalendarDays className="w-4 h-4 flex-shrink-0" style={{ color: isCalendarOpen ? 'var(--text-primary)' : 'var(--text-secondary)' }} />

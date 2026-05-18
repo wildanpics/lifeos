@@ -276,6 +276,7 @@ export interface PublicUserProfile {
   league?: 'bronze' | 'silver' | 'gold' | 'diamond';
   disciplineStreak?: number;
   hasCompletedTutorial?: boolean;
+  customTitle?: string;
 }
 
 export const syncUserProfile = async (userId: string, data: Partial<PublicUserProfile>) => {
@@ -304,7 +305,8 @@ export const getAllUserProfiles = async (): Promise<PublicUserProfile[]> => {
         unlockedAchievements: data.unlockedAchievements || [],
         league: data.league || 'bronze',
         disciplineStreak: data.disciplineStreak || 0,
-        hasCompletedTutorial: data.hasCompletedTutorial || false
+        hasCompletedTutorial: data.hasCompletedTutorial || false,
+        customTitle: data.customTitle || ''
       });
     }
   });
@@ -327,7 +329,8 @@ export const getUserProfileById = async (userId: string): Promise<PublicUserProf
     unlockedAchievements: data.unlockedAchievements || [],
     league: data.league || 'bronze',
     disciplineStreak: data.disciplineStreak || 0,
-    hasCompletedTutorial: data.hasCompletedTutorial || false
+    hasCompletedTutorial: data.hasCompletedTutorial || false,
+    customTitle: data.customTitle || ''
   };
 };
 

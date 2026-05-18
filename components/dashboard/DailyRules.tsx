@@ -171,7 +171,7 @@ export function DailyRules() {
         </button>
       </div>
 
-      <div className="flex items-center gap-3 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 hide-scrollbar w-full">
+      <div className={rules.length > 0 ? "flex items-center gap-3 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 hide-scrollbar w-full" : "w-full"}>
         <AnimatePresence mode="wait">
           {rules.length === 0 ? (
             <motion.div
@@ -183,16 +183,16 @@ export function DailyRules() {
               style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border)' }}
             >
               <div className="flex items-start gap-3">
-                <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-400 flex-shrink-0">
-                  <Flame className="w-5 h-5 animate-pulse" />
+                <div className="p-2.5 rounded-xl bg-red-500/10 text-red-400 flex-shrink-0 border border-red-500/20 shadow-[0_0_15px_rgba(239,68,68,0.15)]">
+                  <Ban className="w-5 h-5 animate-pulse" />
                 </div>
-                <div className="space-y-1">
-                  <h3 className="text-sm font-extrabold" style={{ color: 'var(--text-primary)' }}>
-                    Mulai Komitmen Disiplinmu 🛡️
+                <div className="space-y-1.5">
+                  <h3 className="text-sm font-black uppercase tracking-wider" style={{ color: 'var(--text-primary)' }}>
+                    Mulai Komitmen Disiplinmu
                   </h3>
                   <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
                     Aturan harian adalah komitmen personal untuk menjaga produktivitas Anda. 
-                    Klik salah satu **rekomendasi aturan populer** di bawah untuk ditambahkan secara instan, atau buat aturan kustom Anda sendiri!
+                    Klik salah satu <span className="text-indigo-400 font-black">Rekomendasi Aturan Populer</span> di bawah untuk ditambahkan secara instan, atau buat aturan kustom Anda sendiri!
                   </p>
                 </div>
               </div>

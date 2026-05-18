@@ -11,7 +11,7 @@ export const useAuth = () => {
   const { 
     setUser, setLoading, setTotalXP, setTodayStats, setUnlockedAchievements, 
     setPrayerCity, setCustomCategories, setCustomHabits, setCustomGoals, 
-    setDisciplineStreak, setLeague, setHasCompletedTutorial, isLoading, user 
+    setDisciplineStreak, setLeague, setHasCompletedTutorial, setCustomTitle, isLoading, user 
   } = useAppStore();
 
   useEffect(() => {
@@ -65,6 +65,9 @@ export const useAuth = () => {
             if (userProfile.hasCompletedTutorial !== undefined) {
               setHasCompletedTutorial(userProfile.hasCompletedTutorial);
             }
+            if (userProfile.customTitle !== undefined) {
+              setCustomTitle(userProfile.customTitle);
+            }
           } else {
             // Initial sync of local goals to Cloud
             const { customGoals } = useAppStore.getState();
@@ -78,7 +81,8 @@ export const useAuth = () => {
                 customGoals,
                 prayerCityName: cityConfig?.prayerCityName || 'Kota Jakarta',
                 disciplineStreak: 0,
-                league: 'bronze'
+                league: 'bronze',
+                customTitle: ''
               });
             }
           }
@@ -96,6 +100,7 @@ export const useAuth = () => {
         setDisciplineStreak(0);
         setLeague('bronze');
         setHasCompletedTutorial(false);
+        setCustomTitle('');
       }
 
       setLoading(false);

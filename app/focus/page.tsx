@@ -5,7 +5,7 @@ import { FocusTimer } from '@/components/focus/FocusTimer';
 import { useAppStore } from '@/store/useAppStore';
 import { formatDuration } from '@/lib/utils/time';
 import { useFocusStore } from '@/store/useFocusStore';
-import { Timer, Zap, Target } from 'lucide-react';
+import { Timer, Zap, Target, Lightbulb, BellOff, Headphones, Droplet } from 'lucide-react';
 
 export default function FocusPage() {
   const { todayStats } = useAppStore();
@@ -61,13 +61,24 @@ export default function FocusPage() {
 
       {/* Tips */}
       {status === 'idle' && (
-        <div className="card" style={{ background: 'rgba(99,102,241,0.05)', border: '1px solid rgba(99,102,241,0.2)' }}>
-          <p className="text-xs font-semibold mb-2" style={{ color: 'var(--accent)' }}>💡 Tips Fokus:</p>
-          <ul className="space-y-1 text-xs" style={{ color: 'var(--text-muted)' }}>
-            <li>📵 Matikan notifikasi HP</li>
-            <li>🎧 Pakai musik lo-fi atau white noise</li>
-            <li>🚿 Pastikan sudah mandi sebelum fokus</li>
-            <li>💧 Siapkan air minum di meja</li>
+        <div className="card p-4 space-y-3" style={{ background: 'rgba(99,102,241,0.05)', border: '1px solid rgba(99,102,241,0.2)' }}>
+          <div className="flex items-center gap-1.5 text-xs font-bold text-indigo-400">
+            <Lightbulb className="w-4 h-4 text-amber-400" />
+            <span>Tips Fokus:</span>
+          </div>
+          <ul className="space-y-2 text-xs" style={{ color: 'var(--text-muted)' }}>
+            <li className="flex items-center gap-2">
+              <BellOff className="w-4 h-4 text-rose-500 flex-shrink-0" />
+              <span>Matikan notifikasi HP</span>
+            </li>
+            <li className="flex items-center gap-2">
+              <Headphones className="w-4 h-4 text-sky-400 flex-shrink-0" />
+              <span>Pakai musik lo-fi atau white noise</span>
+            </li>
+            <li className="flex items-center gap-2">
+              <Droplet className="w-4 h-4 text-blue-400 flex-shrink-0" />
+              <span>Siapkan air minum di meja</span>
+            </li>
           </ul>
         </div>
       )}
