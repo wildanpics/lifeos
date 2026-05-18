@@ -74,7 +74,6 @@ export function SleepOverlay() {
     try {
       playCrystalChime();
     } catch (e) {}
-    triggerConfetti();
 
     updateMood(moodValue);
     try {
@@ -133,12 +132,24 @@ export function SleepOverlay() {
                 </p>
               </div>
 
-              <button
-                onClick={handleWakeUp}
-                className="w-full py-4 rounded-2xl font-black text-xs uppercase tracking-widest text-slate-900 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 shadow-lg shadow-amber-500/20 transition-all active:scale-[0.98]"
-              >
-                Aku Sudah Bangun ☀️
-              </button>
+              <div className="flex flex-col gap-2.5">
+                <button
+                  onClick={handleWakeUp}
+                  className="w-full py-4 rounded-2xl font-black text-xs uppercase tracking-widest text-slate-900 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 shadow-lg shadow-amber-500/20 transition-all active:scale-[0.98]"
+                >
+                  Aku Sudah Bangun ☀️
+                </button>
+
+                <button
+                  onClick={() => {
+                    try { playMechanicalClick(); } catch (e) {}
+                    toggleSleep();
+                  }}
+                  className="w-full py-2.5 rounded-2xl font-bold text-xs uppercase tracking-widest text-slate-400 hover:text-red-400 transition-colors border border-dashed border-white/10 hover:border-red-500/30"
+                >
+                  Batalkan ❌
+                </button>
+              </div>
             </div>
           ) : (
             <motion.div 

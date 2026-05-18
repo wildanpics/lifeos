@@ -63,6 +63,18 @@ export function HeroCard() {
   const [quote, setQuote] = useState("");
   const [greetingData, setGreetingData] = useState({ text: 'Selamat pagi', icon: Coffee, color: 'text-amber-400' });
   const [subPhrase, setSubPhrase] = useState('ayo bangkit!');
+  const [showSleepButton, setShowSleepButton] = useState(false);
+
+  useEffect(() => {
+    const checkTime = () => {
+      const currentHour = new Date().getHours();
+      // Show sleep button starting at 9:00 PM (21:00) until morning (6:00 AM), or if currently sleeping
+      setShowSleepButton(isSleeping || currentHour >= 21 || currentHour < 6);
+    };
+    checkTime();
+    const interval = setInterval(checkTime, 30000);
+    return () => clearInterval(interval);
+  }, [isSleeping]);
 
   useEffect(() => {
     const day = new Date().getDate();
@@ -257,26 +269,30 @@ export function HeroCard() {
               {completed} / {target}
             </p>
           </div>
-          <div className="h-8 w-[1px] bg-white/10 hidden sm:block" />
-          <div>
-            <div className="flex items-center gap-1.5 mb-1 select-none">
-              <Moon className="w-4 h-4 text-indigo-300" />
-              <span className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>Pelacak Tidur</span>
-            </div>
-            <button
-              onClick={() => {
-                try { playMechanicalClick(); } catch(e) {}
-                toggleSleep();
-              }}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all select-none border active:scale-[0.97] ${
-                isSleeping
-                  ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
-                  : 'bg-indigo-500/10 text-indigo-300 border-indigo-500/20 hover:bg-indigo-500/20'
-              }`}
-            >
-              {isSleeping ? '⏳ Sedang Tidur...' : '🌙 Mulai Tidur'}
-            </button>
-          </div>
+          {showSleepButton && (
+            <>
+              <div className="h-8 w-[1px] bg-white/10 hidden sm:block" />
+              <div>
+                <div className="flex items-center gap-1.5 mb-1 select-none">
+                  <Moon className="w-4 h-4 text-indigo-300" />
+                  <span className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>Pelacak Tidur</span>
+                </div>
+                <button
+                  onClick={() => {
+                    try { playMechanicalClick(); } catch(e) {}
+                    toggleSleep();
+                  }}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all select-none border active:scale-[0.97] ${
+                    isSleeping
+                      ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+                      : 'bg-indigo-500/10 text-indigo-300 border-indigo-500/20 hover:bg-indigo-500/20'
+                  }`}
+                >
+                  {isSleeping ? '⏳ Sedang Tidur...' : '🌙 Mulai Tidur'}
+                </button>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Horizontal Progress Bar */}
