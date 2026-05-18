@@ -147,7 +147,7 @@ input:-webkit-autofill:active {
 .card:hover {
   background: var(--bg-card-hover);
   box-shadow: var(--shadow-md);
-  transform: translateY(-1px);
+  border-color: var(--accent);
 }
 
 .card-glass {
@@ -584,4 +584,28 @@ input:-webkit-autofill:active {
 /* Override transition for animations that should NOT inherit it */
 .no-transition-override {
   transition: none !important;
+}
+
+/* ===================================
+   RPG GOLD PULSE PRAYER ANIMATION
+   =================================== */
+@keyframes gold-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4);
+    border-color: rgba(245, 158, 11, 0.6);
+  }
+  50% {
+    box-shadow: 0 0 15px 4px rgba(245, 158, 11, 0.25);
+    border-color: rgba(245, 158, 11, 1);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
+    border-color: rgba(245, 158, 11, 0.6);
+  }
+}
+
+.gold-pulse-active {
+  animation: gold-pulse 2s infinite ease-in-out !important;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(251, 191, 36, 0.06)) !important;
+  border: 1px solid rgba(245, 158, 11, 0.6) !important;
 }

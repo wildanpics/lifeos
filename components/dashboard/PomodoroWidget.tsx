@@ -6,6 +6,7 @@ import { Play, Pause, Square, Sparkles } from 'lucide-react';
 import { useFocusStore } from '@/store/useFocusStore';
 import { useAppStore } from '@/store/useAppStore';
 import { formatTime, getToday } from '@/lib/utils/time';
+import { playMechanicalClick, playCrystalChime } from '@/lib/utils/sound';
 
 export function PomodoroWidget() {
   const { status, elapsedSeconds, plannedDuration, startSession, pauseSession, resumeSession, tick, reset, setPlannedDuration, completeSession } = useFocusStore();
@@ -35,6 +36,7 @@ export function PomodoroWidget() {
             updateFocusMinutes(newMinutes);
             await updateDailyStats(user.uid, todayStats.date, { focusMinutes: newMinutes });
           }
+          playCrystalChime(); // Satisfying bell chime upon completion!
           // Complete session properly in store to prevent re-triggering
           completeSession();
           setTimeout(() => reset(), 3000); // Reset after 3 seconds so user sees completion
@@ -50,6 +52,7 @@ export function PomodoroWidget() {
   const remainingSeconds = totalSeconds - elapsedSeconds;
   
   const handlePlayPause = () => {
+    playMechanicalClick();
     if (status === 'idle') {
       startSession({ 
         id: Date.now().toString(), 
@@ -67,7 +70,10 @@ export function PomodoroWidget() {
     }
   };
 
-  const handleStop = () => reset();
+  const handleStop = () => {
+    playMechanicalClick();
+    reset();
+  };
 
   const progress = (elapsedSeconds / totalSeconds) * 100;
   const radius = 60;
@@ -126,7 +132,7 @@ export function PomodoroWidget() {
           {modes.map((m) => (
             <button 
               key={m.label}
-              onClick={() => { reset(); setPlannedDuration(m.duration); }}
+              onClick={() => { playMechanicalClick(); reset(); setPlannedDuration(m.duration); }}
               className="flex items-center justify-between p-3 rounded-xl transition-colors"
               style={{ 
                 background: plannedDuration === m.duration ? 'rgba(99,102,241,0.1)' : 'var(--bg-primary)',

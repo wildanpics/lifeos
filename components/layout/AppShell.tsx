@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
 import { BottomNav } from './BottomNav';
-import { MorningLock } from '@/components/dashboard/MorningLock';
 import { AchievementToast } from '@/components/ui/AchievementToast';
 import { usePrayer } from '@/lib/hooks/usePrayer';
 import { useAppStore } from '@/store/useAppStore';
@@ -21,7 +20,6 @@ export function AppShell({ children, topBarTitle }: AppShellProps) {
   const { alert } = usePrayer();
   
   const [lastTriggeredPrayer, setLastTriggeredPrayer] = useState<string | null>(null);
-  const [lastReminderDate, setLastReminderDate] = useState<string | null>(null);
 
   // Observer 1: Prayer Alert Trigger (Urgent: <= 15 minutes)
   useEffect(() => {
@@ -34,29 +32,6 @@ export function AppShell({ children, topBarTitle }: AppShellProps) {
       setLastTriggeredPrayer(alert.prayer);
     }
   }, [alert, lastTriggeredPrayer, addNotification]);
-
-  // Observer 2: Morning Reset Tasks Reminder
-  useEffect(() => {
-    if (!todayStats) return;
-    const now = new Date();
-    const todayStr = now.toISOString().split('T')[0];
-    const currentHour = now.getHours();
-
-    // Trigger morning reset reminder between 5 AM and 10 AM if not fully completed
-    if (
-      currentHour >= 5 && 
-      currentHour < 10 && 
-      (!todayStats.morningResetComplete || todayStats.morningResetComplete.length < 4) && 
-      lastReminderDate !== todayStr
-    ) {
-      addNotification(
-        '🌅 Pengingat Morning Reset',
-        'Morning Reset hari ini belum selesai! Selesaikan seluruh tugas pagi Anda untuk mengaktifkan fokus hari ini.',
-        'lock'
-      );
-      setLastReminderDate(todayStr);
-    }
-  }, [todayStats, lastReminderDate, addNotification]);
 
   return (
     // Outer container: full viewport, no flex (sidebar is fixed so no flex needed)
@@ -95,8 +70,6 @@ export function AppShell({ children, topBarTitle }: AppShellProps) {
       {/* Mobile bottom nav */}
       <BottomNav />
 
-      {/* Morning lock overlay */}
-      <MorningLock />
       <AchievementToast />
     </div>
   );

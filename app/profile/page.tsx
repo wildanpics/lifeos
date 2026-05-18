@@ -7,10 +7,10 @@ import { signOutUser } from '@/lib/firebase/auth';
 import { getLevelFromXP, getProgressToNextLevel, getXPToNextLevel } from '@/lib/constants/levels';
 import { CitySelectorModal } from '@/components/profile/CitySelectorModal';
 import { useState } from 'react';
-import { Sun, Moon, LogOut, MapPin, Star, Zap, Shield, User, ChevronRight } from 'lucide-react';
+import { Sun, Moon, LogOut, MapPin, Star, Zap, Shield, User, ChevronRight, Volume2, VolumeX } from 'lucide-react';
 
 export default function ProfilePage() {
-  const { user, totalXP, todayStats, theme, toggleTheme, setUser } = useAppStore();
+  const { user, totalXP, todayStats, theme, toggleTheme, setUser, soundEnabled, setSoundEnabled } = useAppStore();
   const router = useRouter();
   const level = getLevelFromXP(totalXP);
   const progress = getProgressToNextLevel(totalXP);
@@ -109,6 +109,23 @@ export default function ProfilePage() {
               style={{ background: theme === 'dark' ? 'var(--border)' : 'var(--accent)' }}>
               <div className="absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all"
                 style={{ left: theme === 'dark' ? '2px' : 'calc(100% - 18px)' }} />
+            </div>
+          </button>
+
+          {/* Sound toggle */}
+          <button onClick={() => setSoundEnabled(!soundEnabled)}
+            className="w-full flex items-center justify-between p-3 rounded-xl transition-all"
+            style={{ background: 'var(--bg-secondary)' }}>
+            <div className="flex items-center gap-3">
+              {soundEnabled ? <Volume2 className="w-4 h-4 text-emerald-400" /> : <VolumeX className="w-4 h-4 text-slate-500" />}
+              <span className="text-sm" style={{ color: 'var(--text-primary)' }}>
+                Efek Suara Dopamin
+              </span>
+            </div>
+            <div className="w-10 h-5 rounded-full relative transition-all"
+              style={{ background: soundEnabled ? 'var(--accent)' : 'var(--border)' }}>
+              <div className="absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all"
+                style={{ left: soundEnabled ? 'calc(100% - 18px)' : '2px' }} />
             </div>
           </button>
 

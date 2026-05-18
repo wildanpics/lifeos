@@ -55,23 +55,20 @@ export function PrayerList() {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: i * 0.05 }}
-              className="flex items-center justify-between p-2 rounded-lg"
-              style={{
-                background: isNext ? 'rgba(99,102,241,0.1)' : 'transparent',
-              }}
+              className={`flex items-center justify-between p-2.5 rounded-xl transition-all ${isNext ? 'gold-pulse-active' : ''}`}
             >
               <div className="flex items-center gap-3">
-                <span className="text-xs font-medium w-14" style={{ color: isNext ? '#818CF8' : 'var(--text-secondary)' }}>
+                <span className="text-xs font-bold w-14" style={{ color: isNext ? '#F59E0B' : 'var(--text-secondary)' }}>
                   {p.name}
                 </span>
-                <span className="text-sm font-bold tabular-nums" style={{ color: isNext ? '#818CF8' : 'var(--text-primary)' }}>
+                <span className="text-sm font-black tabular-nums" style={{ color: isNext ? '#F59E0B' : 'var(--text-primary)' }}>
                   {p.time}
                 </span>
               </div>
               
               <div className="flex items-center gap-3">
                 {isNext && countdown > 0 && (
-                  <span className="text-[10px] font-bold" style={{ color: '#818CF8' }}>
+                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-yellow-500/10 border border-yellow-500/25" style={{ color: '#F59E0B' }}>
                     {formatCountdown(countdown)}
                   </span>
                 )}
@@ -79,9 +76,9 @@ export function PrayerList() {
                   <CheckCircle2 className="w-4 h-4 text-emerald-500" />
                 ) : isNext ? (
                   <motion.div 
-                    animate={{ scale: [1, 1.2, 1] }} 
-                    transition={{ repeat: Infinity, duration: 2 }}
-                    className="w-4 h-4 rounded-full border-2 border-indigo-400" 
+                    animate={{ scale: [1, 1.2, 1], rotate: 360 }} 
+                    transition={{ repeat: Infinity, duration: 4, ease: 'linear' }}
+                    className="w-4 h-4 rounded-full border-2 border-dashed border-yellow-500" 
                   />
                 ) : (
                   <Circle className="w-4 h-4" style={{ color: 'var(--border)' }} />

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Search, MapPin, Loader2 } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
+import { updateUserCity } from '@/lib/firebase/firestore';
 
 interface City {
   id: string;
@@ -16,7 +17,7 @@ interface CitySelectorModalProps {
 }
 
 export function CitySelectorModal({ isOpen, onClose }: CitySelectorModalProps) {
-  const { setPrayerCity, prayerCityId } = useAppStore();
+  const { setPrayerCity, prayerCityId, user } = useAppStore();
   const [cities, setCities] = useState<City[]>([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(false);
@@ -40,8 +41,15 @@ export function CitySelectorModal({ isOpen, onClose }: CitySelectorModalProps) {
     city.lokasi.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleSelect = (city: City) => {
+  const handleSelect = async (city: City) => {
     setPrayerCity(city.id, city.lokasi);
+    if (user) {
+      try {
+        await updateUserCity(user.uid, city.id, city.lokasi);
+      } catch (err) {
+        console.error('Failed to save city to Firestore:', err);
+      }
+    }
     onClose();
   };
 

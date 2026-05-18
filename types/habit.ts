@@ -1,25 +1,13 @@
 // Habit Types
-export type HabitId =
-  | 'sweep'
-  | 'shower'
-  | 'no_tiktok_morning'
-  | 'prayer_fajr'
-  | 'prayer_dhuhr'
-  | 'prayer_asr'
-  | 'prayer_maghrib'
-  | 'prayer_isya'
-  | 'focus_1h'
-  | 'no_tiktok_night'
-  | 'sleep_before_23'
-  | 'eat_breakfast'
-  | 'eat_lunch'
-  | 'eat_dinner'
-  | 'eat_snack'
-  | 'water_8'
-  | 'exercise'
-  | 'freelance_work';
+export type HabitId = string;
+export type HabitCategory = string;
 
-export type HabitCategory = 'morning' | 'prayer' | 'focus' | 'health' | 'night' | 'freelance';
+export interface CustomCategory {
+  id: string;
+  label: string;
+  emoji: string;
+  order: number;
+}
 
 export interface HabitDefinition {
   id: HabitId;

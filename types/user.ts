@@ -3,7 +3,7 @@ export interface UserProfile {
   uid: string;
   email: string;
   displayName: string;
-  photoURL?: string;
+  photoURL?: string | null;
   city?: string;
   cityId?: number;
   createdAt: Date;
@@ -22,6 +22,15 @@ export interface FocusTask {
   label: string;
   tag: string;
   done: boolean;
+}
+
+export interface DailyQuest {
+  id: string;
+  label: string;
+  targetType: 'water' | 'meals' | 'sleep' | 'focus' | 'habit_count' | 'morning_habits' | 'screen_time_limit';
+  targetValue: number;
+  completed: boolean;
+  xpBonus: number;
 }
 
 export interface DailyStats {
@@ -43,6 +52,7 @@ export interface DailyStats {
   morningResetComplete?: number[]; // IDs of completed morning routines
   focusTasks?: FocusTask[]; // User's daily main focus tasks
   breakTheLoopDone?: boolean;
+  dailyQuests?: DailyQuest[];
 }
 
 export interface Reflection {

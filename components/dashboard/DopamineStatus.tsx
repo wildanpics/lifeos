@@ -1,12 +1,16 @@
 'use client';
 
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useAppStore } from '@/store/useAppStore';
 import { analyzeDopamine, getDopamineColor } from '@/lib/utils/dopamine';
 import { Brain, Info, MoreVertical, ChevronRight } from 'lucide-react';
+import { DopamineHeatmapModal } from './DopamineHeatmapModal';
 
 export function DopamineStatus() {
   const { todayStats } = useAppStore();
+  const [isHeatmapOpen, setIsHeatmapOpen] = useState(false);
+  
   const analysis = analyzeDopamine(todayStats || {});
   const color = getDopamineColor(analysis.status);
 
@@ -52,14 +56,23 @@ export function DopamineStatus() {
         {analysis.recommendationId}
       </p>
 
-      <button className="w-full flex items-center justify-between py-3 px-4 rounded-xl text-xs font-medium transition-colors hover:bg-white/5"
-              style={{ background: 'var(--bg-primary)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}>
+      <button 
+        onClick={() => setIsHeatmapOpen(true)}
+        className="w-full flex items-center justify-between py-3 px-4 rounded-xl text-xs font-medium transition-colors hover:bg-white/5 cursor-pointer"
+        style={{ background: 'var(--bg-primary)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}
+      >
         <div className="flex items-center gap-2">
           <div className="w-4 h-4 rounded-sm" style={{ background: `${color}20` }} />
           Lihat Heatmap
         </div>
         <ChevronRight className="w-4 h-4" />
       </button>
+
+      {/* Interactive Activity Heatmap Modal */}
+      <DopamineHeatmapModal 
+        isOpen={isHeatmapOpen} 
+        onClose={() => setIsHeatmapOpen(false)} 
+      />
     </div>
   );
 }

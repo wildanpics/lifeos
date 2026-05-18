@@ -7,11 +7,11 @@ import { HABIT_DEFINITIONS } from '@/lib/constants/habits';
 const CIRCUMFERENCE = 2 * Math.PI * 48; // r=48
 
 export function ProgressRing() {
-  const { todayStats } = useAppStore();
+  const { todayStats, customHabits } = useAppStore();
 
   const completedCount = todayStats?.completedHabits?.length || 0;
-  const totalCount = HABIT_DEFINITIONS.length;
-  const percentage = Math.round((completedCount / totalCount) * 100);
+  const totalCount = HABIT_DEFINITIONS.length + (customHabits?.length || 0);
+  const percentage = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
   const strokeDashoffset = CIRCUMFERENCE - (percentage / 100) * CIRCUMFERENCE;
 
   const getColor = () => {

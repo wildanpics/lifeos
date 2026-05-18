@@ -3,12 +3,99 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { User } from 'firebase/auth';
-import { DailyStats } from '@/types/user';
-import { HabitId } from '@/types/habit';
+import { HabitId, CustomCategory, HabitDefinition } from '@/types/habit';
 import { UserAchievement, Achievement } from '@/types/achievement';
 import { ACHIEVEMENTS } from '@/lib/constants/achievements';
 import { getLevelFromXP } from '@/lib/constants/levels';
 import { AppNotification, NotificationType } from '@/types/notification';
+import { playMechanicalClick, playCrystalChime } from '@/lib/utils/sound';
+import { DailyQuest, DailyStats } from '@/types/user';
+
+const checkQuestCompletions = (
+  stats: DailyStats | null,
+  totalXP: number,
+  addNotification: (title: string, message: string, type: NotificationType, xpReward?: number) => void,
+  silent: boolean = false
+): { stats: DailyStats | null; xpAdded: number } => {
+  if (!stats || !stats.dailyQuests || stats.dailyQuests.length === 0) return { stats, xpAdded: 0 };
+
+  let xpAdded = 0;
+  let hasChanges = false;
+
+  const updatedQuests = stats.dailyQuests.map((q) => {
+    if (q.completed) return q;
+
+    let isCompleted = false;
+    switch (q.targetType) {
+      case 'water':
+        isCompleted = (stats.waterGlasses || 0) >= q.targetValue;
+        break;
+      case 'meals':
+        isCompleted = (stats.meals || 0) >= q.targetValue;
+        break;
+      case 'sleep':
+        isCompleted = (stats.sleepHours || 0) >= q.targetValue;
+        break;
+      case 'focus':
+        isCompleted = (stats.focusMinutes || 0) >= q.targetValue;
+        break;
+      case 'habit_count':
+        isCompleted = (stats.completedHabits || []).length >= q.targetValue;
+        break;
+      case 'screen_time_limit':
+        isCompleted = (stats.screenTimeMinutes || 0) > 0 && (stats.screenTimeMinutes || 0) <= q.targetValue;
+        break;
+      case 'morning_habits':
+        const pagiHabits = ['mandi', 'sholat_subuh', 'morning_reset', 'baca_buku'];
+        isCompleted = pagiHabits.every((id) => stats.completedHabits.includes(id));
+        break;
+    }
+
+    if (isCompleted) {
+      xpAdded += q.xpBonus;
+      hasChanges = true;
+
+      // Trigger Confetti & Chime on client side if not silent
+      if (!silent && typeof window !== 'undefined') {
+        setTimeout(() => {
+          import('canvas-confetti').then((confetti) => {
+            confetti.default({
+              particleCount: 70,
+              spread: 60,
+              origin: { y: 0.6 },
+            });
+          });
+          playCrystalChime();
+        }, 100);
+      }
+
+      if (!silent) {
+        addNotification(
+          '🎯 Misi Harian Selesai!',
+          `Misi "${q.label}" berhasil diselesaikan. +${q.xpBonus} XP diperoleh!`,
+          'achievement',
+          q.xpBonus
+        );
+      }
+
+      return { ...q, completed: true };
+    }
+    return q;
+  });
+
+  if (hasChanges) {
+    return {
+      stats: {
+        ...stats,
+        dailyQuests: updatedQuests,
+        xpEarned: (stats.xpEarned || 0) + xpAdded,
+      },
+      xpAdded,
+    };
+  }
+
+  return { stats, xpAdded: 0 };
+};
 
 interface AppState {
   // Auth (not persisted — Firebase User is not serializable)
@@ -44,10 +131,16 @@ interface AppState {
   // Notifications
   notifications: AppNotification[];
 
+  // Soundscape & Level Up Celebration
+  soundEnabled: boolean;
+  setSoundEnabled: (enabled: boolean) => void;
+  levelUpCelebration: number | null;
+  setLevelUpCelebration: (level: number | null) => void;
+
   // Actions
   setUser: (user: User | null) => void;
   setTotalXP: (xp: number) => void;
-  setTodayStats: (stats: DailyStats) => void;
+  setTodayStats: (stats: DailyStats | null) => void;
   setTheme: (theme: 'dark' | 'light') => void;
   toggleTheme: () => void;
   setLoading: (loading: boolean) => void;
@@ -71,12 +164,23 @@ interface AppState {
   setNewAchievement: (a: Achievement | null) => void;
   unlockAchievementLocal: (achievementId: string) => void;
   checkAchievements: () => void;
+  setUnlockedAchievements: (achievements: UserAchievement[]) => void;
 
   // Notifications Actions
   addNotification: (title: string, message: string, type: NotificationType, xpReward?: number) => void;
   markAllAsRead: () => void;
   clearAllNotifications: () => void;
   removeNotification: (id: string) => void;
+
+  // Custom Categories & Habits
+  customCategories: CustomCategory[];
+  customHabits: HabitDefinition[];
+  setCustomCategories: (categories: CustomCategory[]) => void;
+  setCustomHabits: (habits: HabitDefinition[]) => void;
+  addCustomCategory: (label: string, emoji: string, id?: string) => void;
+  deleteCustomCategory: (id: string) => void;
+  addCustomHabit: (categoryId: string, labelId: string, icon: string, deadline?: string) => void;
+  deleteCustomHabit: (id: string) => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -97,12 +201,30 @@ export const useAppStore = create<AppState>()(
       unlockedAchievements: [],
       newAchievement: null,
       notifications: [],
+      customCategories: [],
+      customHabits: [],
+      soundEnabled: true,
+      levelUpCelebration: null,
 
       setUser: (user) => set({ user }),
       setTotalXP: (xp) => set({ totalXP: xp }),
-      setTodayStats: (stats) => set({ todayStats: stats }),
+      setTodayStats: (stats) => {
+        if (!stats) {
+          set({ todayStats: null });
+          return;
+        }
+        set((state) => {
+          const questResult = checkQuestCompletions(stats, state.totalXP, get().addNotification, true);
+          return {
+            todayStats: questResult.stats,
+            totalXP: state.totalXP + questResult.xpAdded,
+          };
+        });
+      },
       setTheme: (theme) => set({ theme }),
       toggleTheme: () => set((s) => ({ theme: s.theme === 'dark' ? 'light' : 'dark' })),
+      setSoundEnabled: (enabled) => set({ soundEnabled: enabled }),
+      setLevelUpCelebration: (level) => set({ levelUpCelebration: level }),
       setLoading: (loading) => set({ isLoading: loading }),
       setMorningLock: (open) => set({ morningLockOpen: open }),
       setEmergencyPanel: (open) => set({ emergencyPanelOpen: open }),
@@ -116,48 +238,90 @@ export const useAppStore = create<AppState>()(
       }),
 
       completeHabit: (habitId, xp) => {
+        playMechanicalClick();
+        const oldLevel = getLevelFromXP(get().totalXP).level;
         set((state) => {
           const stats = state.todayStats;
           if (!stats) return {};
           const completedHabits = stats.completedHabits.includes(habitId)
             ? stats.completedHabits
             : [...stats.completedHabits, habitId];
+          const interimStats = {
+            ...stats,
+            completedHabits,
+            xpEarned: stats.xpEarned + xp,
+          };
+          const questResult = checkQuestCompletions(interimStats, state.totalXP + xp, get().addNotification);
           return {
-            todayStats: {
-              ...stats,
-              completedHabits,
-              xpEarned: stats.xpEarned + xp,
-            },
-            totalXP: state.totalXP + xp,
+            todayStats: questResult.stats,
+            totalXP: state.totalXP + xp + questResult.xpAdded,
           };
         });
+        const newLevel = getLevelFromXP(get().totalXP).level;
+        if (newLevel > oldLevel) {
+          set({ levelUpCelebration: newLevel });
+          get().addNotification(
+            '⚡ Level Up!',
+            `Selamat! Anda telah naik ke Level ${newLevel}. Pertahankan disiplin Anda!`,
+            'streak'
+          );
+        }
         get().checkAchievements();
       },
 
       updateWater: (glasses) => {
-        set((state) => ({
-          todayStats: state.todayStats
-            ? { ...state.todayStats, waterGlasses: glasses }
-            : null,
-        }));
+        playMechanicalClick();
+        const oldLevel = getLevelFromXP(get().totalXP).level;
+        set((state) => {
+          if (!state.todayStats) return {};
+          const interimStats = { ...state.todayStats, waterGlasses: glasses };
+          const questResult = checkQuestCompletions(interimStats, state.totalXP, get().addNotification);
+          return {
+            todayStats: questResult.stats,
+            totalXP: state.totalXP + questResult.xpAdded
+          };
+        });
+        const newLevel = getLevelFromXP(get().totalXP).level;
+        if (newLevel > oldLevel) {
+          set({ levelUpCelebration: newLevel });
+        }
         get().checkAchievements();
       },
         
       updateMeals: (meals) => {
-        set((state) => ({
-          todayStats: state.todayStats
-            ? { ...state.todayStats, meals }
-            : null,
-        }));
+        playMechanicalClick();
+        const oldLevel = getLevelFromXP(get().totalXP).level;
+        set((state) => {
+          if (!state.todayStats) return {};
+          const interimStats = { ...state.todayStats, meals };
+          const questResult = checkQuestCompletions(interimStats, state.totalXP, get().addNotification);
+          return {
+            todayStats: questResult.stats,
+            totalXP: state.totalXP + questResult.xpAdded
+          };
+        });
+        const newLevel = getLevelFromXP(get().totalXP).level;
+        if (newLevel > oldLevel) {
+          set({ levelUpCelebration: newLevel });
+        }
         get().checkAchievements();
       },
 
       updateSleep: (hours) => {
-        set((state) => ({
-          todayStats: state.todayStats
-            ? { ...state.todayStats, sleepHours: hours }
-            : null,
-        }));
+        const oldLevel = getLevelFromXP(get().totalXP).level;
+        set((state) => {
+          if (!state.todayStats) return {};
+          const interimStats = { ...state.todayStats, sleepHours: hours };
+          const questResult = checkQuestCompletions(interimStats, state.totalXP, get().addNotification);
+          return {
+            todayStats: questResult.stats,
+            totalXP: state.totalXP + questResult.xpAdded
+          };
+        });
+        const newLevel = getLevelFromXP(get().totalXP).level;
+        if (newLevel > oldLevel) {
+          set({ levelUpCelebration: newLevel });
+        }
         get().checkAchievements();
       },
 
@@ -171,20 +335,38 @@ export const useAppStore = create<AppState>()(
       },
 
       updateScreenTime: (minutes) => {
-        set((state) => ({
-          todayStats: state.todayStats
-            ? { ...state.todayStats, screenTimeMinutes: minutes }
-            : null,
-        }));
+        const oldLevel = getLevelFromXP(get().totalXP).level;
+        set((state) => {
+          if (!state.todayStats) return {};
+          const interimStats = { ...state.todayStats, screenTimeMinutes: minutes };
+          const questResult = checkQuestCompletions(interimStats, state.totalXP, get().addNotification);
+          return {
+            todayStats: questResult.stats,
+            totalXP: state.totalXP + questResult.xpAdded
+          };
+        });
+        const newLevel = getLevelFromXP(get().totalXP).level;
+        if (newLevel > oldLevel) {
+          set({ levelUpCelebration: newLevel });
+        }
         get().checkAchievements();
       },
 
       updateFocusMinutes: (minutes) => {
-        set((state) => ({
-          todayStats: state.todayStats
-            ? { ...state.todayStats, focusMinutes: minutes }
-            : null,
-        }));
+        const oldLevel = getLevelFromXP(get().totalXP).level;
+        set((state) => {
+          if (!state.todayStats) return {};
+          const interimStats = { ...state.todayStats, focusMinutes: minutes };
+          const questResult = checkQuestCompletions(interimStats, state.totalXP, get().addNotification);
+          return {
+            todayStats: questResult.stats,
+            totalXP: state.totalXP + questResult.xpAdded
+          };
+        });
+        const newLevel = getLevelFromXP(get().totalXP).level;
+        if (newLevel > oldLevel) {
+          set({ levelUpCelebration: newLevel });
+        }
         get().checkAchievements();
       },
 
@@ -240,6 +422,7 @@ export const useAppStore = create<AppState>()(
         });
         const newLevel = getLevelFromXP(get().totalXP).level;
         if (newLevel > oldLevel) {
+          set({ levelUpCelebration: newLevel });
           get().addNotification(
             '⚡ Level Up!',
             `Selamat! Anda telah naik ke Level ${newLevel}. Pertahankan disiplin Anda!`,
@@ -250,6 +433,7 @@ export const useAppStore = create<AppState>()(
       },
 
       setNewAchievement: (a) => set({ newAchievement: a }),
+      setUnlockedAchievements: (achievements) => set({ unlockedAchievements: achievements }),
 
       addNotification: (title, message, type, xpReward) => {
         const id = Math.random().toString(36).substring(2, 9);
@@ -282,6 +466,75 @@ export const useAppStore = create<AppState>()(
         set((state) => ({
           notifications: (state.notifications || []).filter((n) => n.id !== id)
         }));
+      },
+
+      setCustomCategories: (categories) => set({ customCategories: categories }),
+      setCustomHabits: (habits) => set({ customHabits: habits }),
+
+      addCustomCategory: async (label, emoji, id) => {
+        const { customCategories, user } = get();
+        const newCat: CustomCategory = {
+          id: id || 'cat_' + Date.now(),
+          label,
+          emoji,
+          order: customCategories.length + 1
+        };
+        const updated = [...customCategories, newCat];
+        set({ customCategories: updated });
+        if (user) {
+          try {
+            const { saveCustomCategories } = await import('@/lib/firebase/firestore');
+            await saveCustomCategories(user.uid, updated);
+          } catch (e) { console.error(e); }
+        }
+      },
+
+      deleteCustomCategory: async (id) => {
+        const { customCategories, customHabits, user } = get();
+        const updatedCats = customCategories.filter(c => c.id !== id);
+        const updatedHabits = customHabits.filter(h => h.category !== id);
+        set({ customCategories: updatedCats, customHabits: updatedHabits });
+        if (user) {
+          try {
+            const { saveCustomCategories, saveCustomHabits } = await import('@/lib/firebase/firestore');
+            await saveCustomCategories(user.uid, updatedCats);
+            await saveCustomHabits(user.uid, updatedHabits);
+          } catch (e) { console.error(e); }
+        }
+      },
+
+      addCustomHabit: async (categoryId, labelId, icon, deadline) => {
+        const { customHabits, user } = get();
+        const newHabit: HabitDefinition = {
+          id: 'custom_' + Date.now(),
+          label: labelId,
+          labelId,
+          description: `Custom habit in category`,
+          category: categoryId,
+          icon,
+          xp: 15, // FLAT 15 XP!
+          deadline,
+        };
+        const updated = [...customHabits, newHabit];
+        set({ customHabits: updated });
+        if (user) {
+          try {
+            const { saveCustomHabits } = await import('@/lib/firebase/firestore');
+            await saveCustomHabits(user.uid, updated);
+          } catch (e) { console.error(e); }
+        }
+      },
+
+      deleteCustomHabit: async (id) => {
+        const { customHabits, user } = get();
+        const updated = customHabits.filter(h => h.id !== id);
+        set({ customHabits: updated });
+        if (user) {
+          try {
+            const { saveCustomHabits } = await import('@/lib/firebase/firestore');
+            await saveCustomHabits(user.uid, updated);
+          } catch (e) { console.error(e); }
+        }
       },
 
       unlockAchievementLocal: async (achievementId) => {
@@ -389,6 +642,8 @@ export const useAppStore = create<AppState>()(
         sleepStartTime: state.sleepStartTime,
         unlockedAchievements: state.unlockedAchievements,
         notifications: state.notifications,
+        customCategories: state.customCategories,
+        customHabits: state.customHabits,
       }),
     }
   )
