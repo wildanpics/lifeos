@@ -4,17 +4,17 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { signInWithGoogle, signInWithEmail, signUpWithEmail, handleGoogleRedirectResult } from '@/lib/firebase/auth';
-import { Zap, Mail, Lock, User, Eye, EyeOff, AlertCircle, ArrowRight, CheckCircle } from 'lucide-react';
+import { Zap, Mail, Lock, User, Eye, EyeOff, AlertCircle, ArrowRight, CheckCircle, Clock, Trophy, Target, Flame, Scroll, Activity } from 'lucide-react';
 
 type Mode = 'login' | 'signup';
 
 const FEATURES = [
-  { icon: '🕌', text: 'Prayer Time Realtime' },
-  { icon: '🎮', text: 'Gamifikasi XP & Level' },
-  { icon: '🎯', text: 'Focus Mode Pomodoro' },
-  { icon: '📊', text: 'Analytics Produktivitas' },
-  { icon: '💧', text: 'Hydration Tracker' },
-  { icon: '🔒', text: 'Morning Lock System' },
+  { icon: Clock, text: 'Jadwal Salat Realtime eQuran' },
+  { icon: Trophy, text: 'Sistem Liga & Gamifikasi XP' },
+  { icon: Target, text: 'Fokus Pomodoro & Duel Pejuang' },
+  { icon: Flame, text: 'Habit Tracker & Streak Multiplier' },
+  { icon: Scroll, text: 'Aturan Disiplin Harian Terjadwal' },
+  { icon: Activity, text: 'Analitik Dopamin & Produktivitas' },
 ];
 
 export default function LoginPage() {
@@ -50,9 +50,9 @@ export default function LoginPage() {
     } catch (e: any) {
       const msg =
         e.code === 'auth/unauthorized-domain'
-          ? '⚠️ Domain ini belum diizinkan di Firebase. Tambahkan localhost ke Authorized Domains di Firebase Console.'
+          ? 'Domain ini belum diizinkan di Firebase. Tambahkan localhost ke Authorized Domains di Firebase Console.'
           : e.code === 'auth/operation-not-allowed'
-          ? '⚠️ Google Sign-In belum diaktifkan. Aktifkan di Firebase Console → Authentication → Sign-in method.'
+          ? 'Google Sign-In belum diaktifkan. Aktifkan di Firebase Console → Authentication → Sign-in method.'
           : e.code === 'auth/network-request-failed'
           ? 'Koneksi gagal. Periksa internet kamu.'
           : e.code === 'auth/internal-error'
@@ -179,7 +179,7 @@ export default function LoginPage() {
                     border: `1px solid ${active ? 'rgba(99,102,241,0.35)' : 'transparent'}`,
                   }}
                 >
-                  <span style={{ fontSize: 16 }}>{f.icon}</span>
+                  <f.icon size={16} style={{ flexShrink: 0, color: active ? '#6366F1' : '#4B5563' }} />
                   <span style={{ fontSize: 13, fontWeight: 500, color: 'white', flex: 1 }}>{f.text}</span>
                   {active && (
                     <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}>
@@ -255,7 +255,7 @@ export default function LoginPage() {
           {/* Desktop heading */}
           <div className="lg-show-heading" style={{ marginBottom: 28 }}>
             <h2 style={{ fontSize: 22, fontWeight: 700, color: 'white', marginBottom: 6 }}>
-              {mode === 'login' ? 'Selamat datang kembali 👋' : 'Mulai perjalananmu ⚡'}
+              {mode === 'login' ? 'Selamat datang kembali' : 'Mulai perjalananmu'}
             </h2>
             <p style={{ fontSize: 13, color: '#6B7280' }}>
               {mode === 'login'
@@ -426,7 +426,7 @@ export default function LoginPage() {
           </div>
 
           <p style={{ textAlign: 'center', fontSize: 11, color: '#374151', marginTop: 16 }}>
-            Dengan masuk, kamu berkomitmen membangun disiplin diri. 💪
+            Dengan masuk, kamu berkomitmen membangun disiplin diri.
           </p>
         </motion.div>
       </div>
