@@ -10,7 +10,7 @@ import {
   onAuthStateChanged,
   User,
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from './config';
 import { UserProfile } from '@/types/user';
 
@@ -84,12 +84,17 @@ export const ensureUserProfile = async (user: User) => {
   const userRef = doc(db, 'users', user.uid);
   const userDoc = await getDoc(userRef);
 
+  // Extract latest photo and display name from Google provider data if available
+  const googleProfile = user.providerData.find((p) => p.providerId === 'google.com');
+  const latestPhotoURL = googleProfile?.photoURL || user.photoURL || null;
+  const latestDisplayName = googleProfile?.displayName || user.displayName || 'Life OS User';
+
   if (!userDoc.exists()) {
     const profile: Omit<UserProfile, 'createdAt'> & { createdAt: ReturnType<typeof serverTimestamp> } = {
       uid: user.uid,
       email: user.email || '',
-      displayName: user.displayName || 'Life OS User',
-      photoURL: user.photoURL || null,
+      displayName: latestDisplayName,
+      photoURL: latestPhotoURL,
       cityId: 29,
       city: 'Jakarta',
       onboardingComplete: false,
@@ -101,6 +106,19 @@ export const ensureUserProfile = async (user: User) => {
       },
     };
     await setDoc(userRef, profile);
+  } else {
+    // If profile exists, update displayName and photoURL if they are empty/outdated in Firestore
+    const existing = userDoc.data();
+    const updates: any = {};
+    if (latestDisplayName && existing.displayName !== latestDisplayName) {
+      updates.displayName = latestDisplayName;
+    }
+    if (latestPhotoURL && existing.photoURL !== latestPhotoURL) {
+      updates.photoURL = latestPhotoURL;
+    }
+    if (Object.keys(updates).length > 0) {
+      await updateDoc(userRef, updates);
+    }
   }
 };
 

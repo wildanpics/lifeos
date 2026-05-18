@@ -53,6 +53,34 @@ export const useAuth = () => {
           // Hydrate custom goals, streak, and league
           const userProfile = await getUserProfileById(firebaseUser.uid);
           if (userProfile) {
+            // Extract latest photo and display name from Google provider data if available
+            const googleProfile = firebaseUser.providerData.find((p) => p.providerId === 'google.com');
+            const latestPhotoURL = googleProfile?.photoURL || firebaseUser.photoURL || null;
+            const latestDisplayName = googleProfile?.displayName || firebaseUser.displayName || 'Life OS User';
+
+            let needsProfileSync = false;
+            const profileUpdates: any = {};
+
+            if (latestDisplayName && userProfile.displayName !== latestDisplayName) {
+              userProfile.displayName = latestDisplayName;
+              profileUpdates.displayName = latestDisplayName;
+              needsProfileSync = true;
+            }
+            if (latestPhotoURL && userProfile.photoURL !== latestPhotoURL) {
+              userProfile.photoURL = latestPhotoURL;
+              profileUpdates.photoURL = latestPhotoURL;
+              needsProfileSync = true;
+            }
+
+            if (needsProfileSync) {
+              try {
+                const { syncUserProfile } = await import('@/lib/firebase/firestore');
+                await syncUserProfile(firebaseUser.uid, profileUpdates);
+              } catch (syncErr) {
+                console.warn('Background profile sync failed:', syncErr);
+              }
+            }
+
             if (userProfile.customGoals !== undefined) {
               setCustomGoals(userProfile.customGoals);
             }
@@ -71,12 +99,16 @@ export const useAuth = () => {
           } else {
             // Initial sync of local goals to Cloud
             const { customGoals } = useAppStore.getState();
+            const googleProfile = firebaseUser.providerData.find((p) => p.providerId === 'google.com');
+            const latestPhotoURL = googleProfile?.photoURL || firebaseUser.photoURL || null;
+            const latestDisplayName = googleProfile?.displayName || firebaseUser.displayName || 'Life OS User';
+
             if (customGoals && customGoals.length > 0) {
               const { syncUserProfile } = await import('@/lib/firebase/firestore');
               syncUserProfile(firebaseUser.uid, {
                 uid: firebaseUser.uid,
-                displayName: firebaseUser.displayName || 'Life OS User',
-                photoURL: firebaseUser.photoURL || null,
+                displayName: latestDisplayName,
+                photoURL: latestPhotoURL,
                 totalXP: xp,
                 customGoals,
                 prayerCityName: cityConfig?.prayerCityName || 'Kota Jakarta',

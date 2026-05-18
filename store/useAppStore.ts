@@ -97,6 +97,52 @@ const checkQuestCompletions = (
   return { stats, xpAdded: 0 };
 };
 
+const autoCheckDailyRules = (key: 'sleep' | 'water' | 'screen_time' | 'focus', value: number) => {
+  if (typeof window === 'undefined') return;
+  try {
+    const saved = localStorage.getItem('life_os_daily_rules');
+    if (!saved) return;
+    const rules = JSON.parse(saved);
+    let changed = false;
+    let xpAwarded = 0;
+    const updated = rules.map((r: any) => {
+      if (r.completed) return r;
+      let completed = false;
+      const lbl = r.label.toLowerCase();
+      
+      if (key === 'water' && (lbl.includes('minum') || lbl.includes('air') || lbl.includes('gelas')) && value >= 8) {
+        completed = true;
+      } else if (key === 'screen_time' && (lbl.includes('screen time') || lbl.includes('detox') || lbl.includes('hp') || lbl.includes('tiktok') || lbl.includes('layar')) && value > 0 && value <= 120) {
+        completed = true;
+      } else if (key === 'sleep' && (lbl.includes('tidur') || lbl.includes('sleep') || lbl.includes('ranjang')) && value > 0) {
+        completed = true;
+      } else if (key === 'focus' && (lbl.includes('fokus') || lbl.includes('focus') || lbl.includes('pomodoro') || lbl.includes('kerja')) && value >= 60) {
+        completed = true;
+      }
+      
+      if (completed) {
+        changed = true;
+        xpAwarded += 10;
+        return { ...r, completed: true };
+      }
+      return r;
+    });
+    
+    if (changed) {
+      localStorage.setItem('life_os_daily_rules', JSON.stringify(updated));
+      window.dispatchEvent(new Event('storage'));
+      window.dispatchEvent(new Event('life-os-rules-updated'));
+      if (xpAwarded > 0) {
+        try {
+          useAppStore.getState().addXP(xpAwarded);
+        } catch (e) {}
+      }
+    }
+  } catch (e) {
+    console.error('Error in autoCheckDailyRules:', e);
+  }
+};
+
 export interface CustomGoal {
   id: string;
   label: string;
@@ -369,6 +415,7 @@ export const useAppStore = create<AppState>()(
           set({ levelUpCelebration: newLevel });
         }
         get().checkAchievements();
+        autoCheckDailyRules('water', glasses);
       },
         
       updateMeals: (meals) => {
@@ -406,6 +453,7 @@ export const useAppStore = create<AppState>()(
           set({ levelUpCelebration: newLevel });
         }
         get().checkAchievements();
+        autoCheckDailyRules('sleep', hours);
       },
 
       updateMood: (mood) => {
@@ -433,6 +481,7 @@ export const useAppStore = create<AppState>()(
           set({ levelUpCelebration: newLevel });
         }
         get().checkAchievements();
+        autoCheckDailyRules('screen_time', minutes);
       },
 
       updateFocusMinutes: (minutes) => {
@@ -451,6 +500,7 @@ export const useAppStore = create<AppState>()(
           set({ levelUpCelebration: newLevel });
         }
         get().checkAchievements();
+        autoCheckDailyRules('focus', minutes);
       },
 
       toggleMorningReset: (taskId) => {
