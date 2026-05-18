@@ -11,17 +11,17 @@ import {
   Zap,
   Moon,
   Sun,
-  Trophy,
+  Crown,
 } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
-import { getLevelFromXP, getProgressToNextLevel } from '@/lib/constants/levels';
+import { getLevelFromXP, getProgressToNextLevel, getLevelBadgeStyle, getLevelCardStyle } from '@/lib/constants/levels';
 import { LevelRoadmapModal } from '@/components/dashboard/LevelRoadmapModal';
 
 const navItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Beranda' },
   { href: '/focus', icon: Timer, label: 'Fokus' },
   { href: '/habits', icon: CheckSquare, label: 'Kebiasaan' },
-  { href: '/achievements', icon: Trophy, label: 'Pencapaian' },
+  { href: '/achievements', icon: Crown, label: 'Leaderboard' },
   { href: '/analytics', icon: BarChart3, label: 'Analitik' },
   { href: '/profile', icon: User, label: 'Profil' },
 ];
@@ -118,11 +118,15 @@ export function Sidebar() {
               }}>
                 {user?.displayName || 'Life OS User'}
               </p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', marginTop: '2px' }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.7rem', color: level.color, fontWeight: 600 }}>
-                  <level.icon className="w-3 h-3" /> Lv.{level.level}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '4px' }}>
+                <span 
+                  className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold"
+                  style={getLevelBadgeStyle(level.level, level.color)}
+                >
+                  <level.icon className="w-2.5 h-2.5" /> 
+                  <span>Lv.{level.level}</span>
                 </span>
-                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 500 }}>
                   {level.titleId}
                 </span>
               </div>
@@ -220,18 +224,14 @@ export function Sidebar() {
 
         {/* Level Roadmap Promo */}
         <div style={{ padding: '0 1rem 1rem' }}>
-          <div style={{
-            background: 'rgba(99, 102, 241, 0.05)',
-            border: '1px solid var(--border)',
-            borderRadius: '16px',
-            padding: '1rem',
-          }}>
+          <div style={getLevelCardStyle(level.level, level.color)}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
               <div style={{
                 width: '32px',
                 height: '32px',
                 borderRadius: '8px',
-                background: 'linear-gradient(135deg, #6366F1, #8B5CF6)',
+                background: level.level <= 3 ? 'linear-gradient(135deg, #6366F1, #8B5CF6)' : level.color,
+                boxShadow: level.level > 30 ? `0 0 10px ${level.color}` : 'none',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',

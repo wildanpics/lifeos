@@ -16,14 +16,19 @@ interface AppShellProps {
 const SIDEBAR_WIDTH = 256; // px — must match Sidebar component
 
 export function AppShell({ children, topBarTitle }: AppShellProps) {
-  const { addNotification, todayStats } = useAppStore();
+  const { 
+    addNotification, 
+    todayStats, 
+    prayerAlertsEnabled, 
+    prayerAlertBeforeMins 
+  } = useAppStore();
   const { alert } = usePrayer();
   
   const [lastTriggeredPrayer, setLastTriggeredPrayer] = useState<string | null>(null);
 
-  // Observer 1: Prayer Alert Trigger (Urgent: <= 15 minutes)
+  // Observer 1: Prayer Alert Trigger (Dynamic before adzan)
   useEffect(() => {
-    if (alert && alert.level === 'urgent' && alert.prayer !== lastTriggeredPrayer) {
+    if (prayerAlertsEnabled && alert && alert.minutesUntil <= prayerAlertBeforeMins && alert.prayer !== lastTriggeredPrayer) {
       addNotification(
         '🕌 Waktu Sholat Mendekat',
         `Waktu sholat ${alert.prayer} akan tiba dalam ${alert.minutesUntil} menit. Mari bersiap!`,
@@ -31,7 +36,7 @@ export function AppShell({ children, topBarTitle }: AppShellProps) {
       );
       setLastTriggeredPrayer(alert.prayer);
     }
-  }, [alert, lastTriggeredPrayer, addNotification]);
+  }, [alert, lastTriggeredPrayer, addNotification, prayerAlertsEnabled, prayerAlertBeforeMins]);
 
   return (
     // Outer container: full viewport, no flex (sidebar is fixed so no flex needed)

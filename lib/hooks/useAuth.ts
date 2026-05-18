@@ -4,11 +4,15 @@ import { useEffect } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '@/lib/firebase/config';
 import { useAppStore } from '@/store/useAppStore';
-import { getUserXP, getTodayStats, initTodayStats, getUserAchievements, getUserCity, getCustomCategories, getCustomHabits, saveCustomCategories } from '@/lib/firebase/firestore';
+import { getUserXP, getTodayStats, initTodayStats, getUserAchievements, getUserCity, getCustomCategories, getCustomHabits, getUserProfileById } from '@/lib/firebase/firestore';
 import { getToday } from '@/lib/utils/time';
 
 export const useAuth = () => {
-  const { setUser, setLoading, setTotalXP, setTodayStats, setUnlockedAchievements, setPrayerCity, setCustomCategories, setCustomHabits, isLoading, user } = useAppStore();
+  const { 
+    setUser, setLoading, setTotalXP, setTodayStats, setUnlockedAchievements, 
+    setPrayerCity, setCustomCategories, setCustomHabits, setCustomGoals, 
+    setDisciplineStreak, setLeague, setHasCompletedTutorial, isLoading, user 
+  } = useAppStore();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -45,6 +49,39 @@ export const useAuth = () => {
           // Hydrate custom habits
           const habits = await getCustomHabits(firebaseUser.uid);
           setCustomHabits(habits);
+
+          // Hydrate custom goals, streak, and league
+          const userProfile = await getUserProfileById(firebaseUser.uid);
+          if (userProfile) {
+            if (userProfile.customGoals !== undefined) {
+              setCustomGoals(userProfile.customGoals);
+            }
+            if (userProfile.disciplineStreak !== undefined) {
+              setDisciplineStreak(userProfile.disciplineStreak);
+            }
+            if (userProfile.league) {
+              setLeague(userProfile.league);
+            }
+            if (userProfile.hasCompletedTutorial !== undefined) {
+              setHasCompletedTutorial(userProfile.hasCompletedTutorial);
+            }
+          } else {
+            // Initial sync of local goals to Cloud
+            const { customGoals } = useAppStore.getState();
+            if (customGoals && customGoals.length > 0) {
+              const { syncUserProfile } = await import('@/lib/firebase/firestore');
+              syncUserProfile(firebaseUser.uid, {
+                uid: firebaseUser.uid,
+                displayName: firebaseUser.displayName || 'Life OS User',
+                photoURL: firebaseUser.photoURL || null,
+                totalXP: xp,
+                customGoals,
+                prayerCityName: cityConfig?.prayerCityName || 'Kota Jakarta',
+                disciplineStreak: 0,
+                league: 'bronze'
+              });
+            }
+          }
         } catch (error) {
           console.error('Error loading user data:', error);
         }
@@ -55,6 +92,10 @@ export const useAuth = () => {
         setUnlockedAchievements([]);
         setCustomCategories([]);
         setCustomHabits([]);
+        setCustomGoals([]);
+        setDisciplineStreak(0);
+        setLeague('bronze');
+        setHasCompletedTutorial(false);
       }
 
       setLoading(false);
