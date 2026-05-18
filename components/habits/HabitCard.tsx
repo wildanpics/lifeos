@@ -6,11 +6,66 @@ import { useAppStore } from '@/store/useAppStore';
 import { HABIT_DEFINITIONS } from '@/lib/constants/habits';
 import { logHabit } from '@/lib/firebase/firestore';
 import { getToday } from '@/lib/utils/time';
-import { CheckCircle, Circle, Trash2, Plus, AlertTriangle, Compass, Heart, Sunrise, Sun, Sunset, Moon, Sparkles } from 'lucide-react';
+import { CheckCircle, Circle, Trash2, Plus, AlertTriangle, Compass, Heart, Sunrise, Sun, Sunset, Moon, Sparkles, Lightbulb } from 'lucide-react';
 import { triggerConfetti, triggerPremiumSuccessConfetti } from '@/lib/utils/confetti';
 import { cn } from '@/lib/utils';
 import { CustomHabitModal } from '@/components/habits/CustomHabitModal';
+import { playMechanicalClick } from '@/lib/utils/sound';
 import type { HabitId } from '@/types/habit';
+
+interface CoachContent {
+  quote: string;
+  author: string;
+  tip: string;
+}
+
+const COACH_CONTENTS: CoachContent[] = [
+  {
+    quote: "Anda tidak naik ke tingkat tujuan Anda. Anda jatuh ke tingkat sistem Anda.",
+    author: "James Clear, Atomic Habits",
+    tip: "Fokuslah membangun rutinitas kecil yang mudah diulangi setiap hari daripada hanya memikirkan target besar."
+  },
+  {
+    quote: "Kemenangan pertama dan terbaik adalah menaklukkan diri sendiri.",
+    author: "Plato",
+    tip: "Saat malas melanda, gunakan aturan 2 menit: mulailah kebiasaan tersebut selama 2 menit saja untuk memecah kelembaman."
+  },
+  {
+    quote: "Hambatan untuk bertindak memajukan tindakan. Apa yang menghalangi jalan menjadi jalan.",
+    author: "Marcus Aurelius, Stoicism",
+    tip: "Jadikan rasa malas atau rintangan hari ini sebagai latihan kekuatan mental dan disiplin diri Anda."
+  },
+  {
+    quote: "Disiplin adalah memilih antara apa yang Anda inginkan sekarang dan apa yang paling Anda inginkan.",
+    author: "Abraham Lincoln",
+    tip: "Saat tergoda untuk menunda, ingatkan diri Anda tentang identitas disiplin jangka panjang yang sedang Anda bangun."
+  },
+  {
+    quote: "Kita adalah apa yang kita lakukan berulang kali. Keunggulan, bukanlah tindakan, melainkan kebiasaan.",
+    author: "Aristoteles",
+    tip: "Konsistensi kecil yang dilakukan setiap hari jauh lebih kuat daripada ledakan motivasi besar yang hanya bertahan seminggu."
+  },
+  {
+    quote: "Kekuatan kebiasaan bertumpu pada pengulangan, bukan intensitas.",
+    author: "James Clear, Atomic Habits",
+    tip: "Lebih baik minum 4 gelas air sehari secara konsisten daripada minum 8 gelas hari ini tapi besok sama sekali tidak."
+  },
+  {
+    quote: "Kuasai pagimu, maka kamu akan menguasai harimu.",
+    author: "Seneca, Stoicism",
+    tip: "Selesaikan kebiasaan tersulit Anda di pagi hari (Eat The Frog) untuk memicu produktivitas beruntun sepanjang hari."
+  },
+  {
+    quote: "Jika kamu menginginkan ketenangan pikiran, lakukanlah lebih sedikit hal tetapi lakukan dengan lebih baik.",
+    author: "Marcus Aurelius, Stoicism",
+    tip: "Jangan penuhi hari Anda dengan puluhan target. Pilih 3-5 kebiasaan inti dan lakukan dengan fokus penuh."
+  },
+  {
+    quote: "Satu-satunya kegagalan sejati dalam membangun kebiasaan adalah ketika Anda berhenti mencobanya.",
+    author: "James Clear, Atomic Habits",
+    tip: "Jika hari ini Anda melewatkan satu kebiasaan, pastikan Anda tidak melewatkannya dua kali berturut-turut."
+  }
+];
 
 export function HabitCard() {
   const { 
@@ -22,13 +77,35 @@ export function HabitCard() {
     customCategories, 
     customHabits, 
     deleteCustomCategory, 
-    deleteCustomHabit 
+    deleteCustomHabit,
+    theme
   } = useAppStore();
 
   const [activeCategory, setActiveCategory] = useState<string>('morning');
   const [showXP, setShowXP] = useState<{ id: string; xp: number } | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ type: 'category' | 'habit'; id: string; name: string } | null>(null);
+
+  const [showCoaching, setShowCoaching] = useState(false);
+  const [currentCoachContent, setCurrentCoachContent] = useState<CoachContent>(COACH_CONTENTS[0]);
+
+  // Sync a random coaching quote on mount
+  useEffect(() => {
+    const randomIdx = Math.floor(Math.random() * COACH_CONTENTS.length);
+    setCurrentCoachContent(COACH_CONTENTS[randomIdx]);
+  }, []);
+
+  const handleRefreshCoaching = () => {
+    try {
+      playMechanicalClick();
+    } catch (e) {}
+
+    let newIdx = Math.floor(Math.random() * COACH_CONTENTS.length);
+    while (COACH_CONTENTS.length > 1 && COACH_CONTENTS[newIdx].quote === currentCoachContent.quote) {
+      newIdx = Math.floor(Math.random() * COACH_CONTENTS.length);
+    }
+    setCurrentCoachContent(COACH_CONTENTS[newIdx]);
+  };
 
   // Merge default system categories (which are protected) with dynamic custom categories
   const mergedCategories = [
@@ -134,11 +211,88 @@ export function HabitCard() {
     : completedCount >= 3 ? '💪 Kamu sedang membangun karakter yang kuat!'
     : '🌱 Setiap langkah kecil membentuk disiplinmu.';
 
+  const isDark = theme === 'dark';
+
   return (
     <div className="card">
-      <div className="px-3 py-2 rounded-xl mb-4 text-xs font-medium" style={{ background: 'var(--bg-secondary)', color: 'var(--accent)' }}>
-        {identityMessage}
+      <div className="flex items-center justify-between gap-3 px-3 py-2 rounded-xl mb-4 text-xs font-medium" style={{ background: 'var(--bg-secondary)', color: 'var(--accent)' }}>
+        <span>{identityMessage}</span>
+        <button 
+          onClick={() => {
+            try { playMechanicalClick(); } catch(e) {}
+            setShowCoaching(!showCoaching);
+          }} 
+          className="relative flex items-center justify-center p-1.5 rounded-lg hover:bg-white/5 transition-all text-amber-400 focus:outline-none shrink-0"
+          title="Refleksi Disiplin & Motivasi Cerdas"
+        >
+          {/* Soft glowing ambient aura behind the lightbulb */}
+          <span className="absolute inset-0 rounded-full bg-amber-400/20 blur-md animate-pulse pointer-events-none" />
+          <Lightbulb className="w-4 h-4 text-amber-400 relative z-10 animate-bounce" style={{ animationDuration: '3s' }} />
+        </button>
       </div>
+
+      {/* AI Micro-Coaching Reflection Card */}
+      <AnimatePresence initial={false}>
+        {showCoaching && (
+          <motion.div
+            initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+            animate={{ opacity: 1, height: 'auto', marginBottom: 16 }}
+            exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
+            className="overflow-hidden"
+          >
+            <div 
+              className="p-4 rounded-xl border relative overflow-hidden flex flex-col gap-3"
+              style={{ 
+                background: isDark 
+                  ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.04) 0%, rgba(99, 102, 241, 0.04) 100%)' 
+                  : 'linear-gradient(135deg, rgba(245, 158, 11, 0.06) 0%, rgba(99, 102, 241, 0.06) 100%)',
+                borderColor: 'var(--border)'
+              }}
+            >
+              {/* Decorative particles / accent glows */}
+              <div className="absolute -top-12 -right-12 w-24 h-24 bg-amber-500/10 rounded-full blur-xl pointer-events-none" />
+              <div className="absolute -bottom-12 -left-12 w-24 h-24 bg-indigo-500/10 rounded-full blur-xl pointer-events-none" />
+
+              <div className="flex items-start gap-2.5 relative z-10">
+                <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-500 shrink-0">
+                  <Sparkles className="w-4 h-4 text-amber-400 animate-spin" style={{ animationDuration: '8s' }} />
+                </div>
+                <div className="space-y-1.5 flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-amber-500">
+                      AI Refleksi & Motivasi
+                    </span>
+                    <button 
+                      onClick={() => handleRefreshCoaching()}
+                      className="text-[9px] font-bold text-indigo-400 hover:text-indigo-500 uppercase tracking-wider transition-all select-none"
+                    >
+                      Segarkan 🔄
+                    </button>
+                  </div>
+                  <p className="text-xs font-bold leading-relaxed italic" style={{ color: 'var(--text-primary)' }}>
+                    "{currentCoachContent.quote}"
+                  </p>
+                  <p className="text-[10px] font-black text-right tracking-wide uppercase" style={{ color: 'var(--text-muted)' }}>
+                    — {currentCoachContent.author}
+                  </p>
+                  
+                  {/* Smart Tips divider */}
+                  <div className="h-[1px] w-full my-2 bg-gradient-to-r from-transparent via-amber-500/20 to-transparent" />
+                  
+                  <div className="flex gap-2 items-start text-[11px] leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                    <span className="text-xs shrink-0">💡</span>
+                    <div className="min-w-0">
+                      <span className="text-amber-500 font-extrabold uppercase text-[9px] tracking-wide mr-1.5">[AI TIPS]</span>
+                      {currentCoachContent.tip}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Categories Tabs Bar */}
       <div className="flex gap-1.5 overflow-x-auto pb-2 mb-4 items-center">

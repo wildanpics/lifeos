@@ -1175,10 +1175,12 @@ export default function ProfilePage() {
                                   setTotalXP(val);
                                   const { syncUserProfile } = await import('@/lib/firebase/firestore');
                                   await syncUserProfile(user!.uid, { totalXP: val });
+                                  setUsersList(prev => prev.map(u => u.uid === user!.uid ? { ...u, totalXP: val } : u));
                                 } else {
                                   setSelectedDevUser({ ...selectedDevUser!, totalXP: val });
                                   const { syncUserProfile } = await import('@/lib/firebase/firestore');
                                   await syncUserProfile(selectedDevUser!.uid, { totalXP: val });
+                                  setUsersList(prev => prev.map(u => u.uid === selectedDevUser!.uid ? { ...u, totalXP: val } : u));
                                 }
                               }}
                               className="w-full px-3 py-2 rounded-xl bg-neutral-900 border border-neutral-800 text-white text-xs font-bold focus:outline-none focus:border-violet-500"
@@ -1193,10 +1195,12 @@ export default function ProfilePage() {
                                       setTotalXP(nextXP);
                                       const { syncUserProfile } = await import('@/lib/firebase/firestore');
                                       await syncUserProfile(user!.uid, { totalXP: nextXP });
+                                      setUsersList(prev => prev.map(u => u.uid === user!.uid ? { ...u, totalXP: nextXP } : u));
                                     } else {
                                       setSelectedDevUser({ ...selectedDevUser!, totalXP: nextXP });
                                       const { syncUserProfile } = await import('@/lib/firebase/firestore');
                                       await syncUserProfile(selectedDevUser!.uid, { totalXP: nextXP });
+                                      setUsersList(prev => prev.map(u => u.uid === selectedDevUser!.uid ? { ...u, totalXP: nextXP } : u));
                                     }
                                   }}
                                   className="px-2 py-0.5 rounded bg-neutral-850 hover:bg-violet-900/40 border border-neutral-800 text-[9px] font-bold text-neutral-300 hover:text-white transition-all"
@@ -1217,10 +1221,12 @@ export default function ProfilePage() {
                                 const val = parseInt(e.target.value) || 0;
                                 if (isEditingSelf) {
                                   setDisciplineStreak(val);
+                                  setUsersList(prev => prev.map(u => u.uid === user!.uid ? { ...u, disciplineStreak: val } : u));
                                 } else {
                                   setSelectedDevUser({ ...selectedDevUser!, disciplineStreak: val });
                                   const { syncUserProfile } = await import('@/lib/firebase/firestore');
                                   await syncUserProfile(selectedDevUser!.uid, { disciplineStreak: val });
+                                  setUsersList(prev => prev.map(u => u.uid === selectedDevUser!.uid ? { ...u, disciplineStreak: val } : u));
                                 }
                               }}
                               className="w-full px-3 py-2 rounded-xl bg-neutral-900 border border-neutral-800 text-white text-xs font-bold focus:outline-none focus:border-violet-500"
@@ -1232,10 +1238,12 @@ export default function ProfilePage() {
                                   onClick={async () => {
                                     if (isEditingSelf) {
                                       setDisciplineStreak(val);
+                                      setUsersList(prev => prev.map(u => u.uid === user!.uid ? { ...u, disciplineStreak: val } : u));
                                     } else {
                                       setSelectedDevUser({ ...selectedDevUser!, disciplineStreak: val });
                                       const { syncUserProfile } = await import('@/lib/firebase/firestore');
                                       await syncUserProfile(selectedDevUser!.uid, { disciplineStreak: val });
+                                      setUsersList(prev => prev.map(u => u.uid === selectedDevUser!.uid ? { ...u, disciplineStreak: val } : u));
                                     }
                                   }}
                                   className="px-2 py-0.5 rounded bg-neutral-850 hover:bg-violet-900/40 border border-neutral-800 text-[9px] font-bold text-neutral-300 hover:text-white transition-all"
@@ -1262,10 +1270,12 @@ export default function ProfilePage() {
                                 setCustomTitle(val);
                                 const { syncUserProfile } = await import('@/lib/firebase/firestore');
                                 await syncUserProfile(user!.uid, { customTitle: val });
+                                setUsersList(prev => prev.map(u => u.uid === user!.uid ? { ...u, customTitle: val } : u));
                               } else {
                                 setSelectedDevUser({ ...selectedDevUser!, customTitle: val });
                                 const { syncUserProfile } = await import('@/lib/firebase/firestore');
                                 await syncUserProfile(selectedDevUser!.uid, { customTitle: val });
+                                setUsersList(prev => prev.map(u => u.uid === selectedDevUser!.uid ? { ...u, customTitle: val } : u));
                               }
                             }}
                             className="w-full px-3 py-2 rounded-xl bg-neutral-900 border border-neutral-800 text-white text-xs font-bold focus:outline-none focus:border-violet-500"
@@ -1279,10 +1289,12 @@ export default function ProfilePage() {
                                     setCustomTitle(preset);
                                     const { syncUserProfile } = await import('@/lib/firebase/firestore');
                                     await syncUserProfile(user!.uid, { customTitle: preset });
+                                    setUsersList(prev => prev.map(u => u.uid === user!.uid ? { ...u, customTitle: preset } : u));
                                   } else {
                                     setSelectedDevUser({ ...selectedDevUser!, customTitle: preset });
                                     const { syncUserProfile } = await import('@/lib/firebase/firestore');
                                     await syncUserProfile(selectedDevUser!.uid, { customTitle: preset });
+                                    setUsersList(prev => prev.map(u => u.uid === selectedDevUser!.uid ? { ...u, customTitle: preset } : u));
                                   }
                                 }}
                                 className="px-2 py-1 rounded bg-neutral-850 hover:bg-violet-900/40 border border-neutral-800 text-[9px] font-bold text-neutral-300 hover:text-white transition-all select-none"
@@ -1304,10 +1316,12 @@ export default function ProfilePage() {
                                   onClick={async () => {
                                     if (isEditingSelf) {
                                       setLeague(l);
+                                      setUsersList(prev => prev.map(u => u.uid === user!.uid ? { ...u, league: l } : u));
                                     } else {
                                       setSelectedDevUser({ ...selectedDevUser!, league: l });
                                       const { syncUserProfile } = await import('@/lib/firebase/firestore');
                                       await syncUserProfile(selectedDevUser!.uid, { league: l });
+                                      setUsersList(prev => prev.map(u => u.uid === selectedDevUser!.uid ? { ...u, league: l } : u));
                                     }
                                   }}
                                   className={`py-2 px-1 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border ${
@@ -1334,10 +1348,12 @@ export default function ProfilePage() {
                                   const fullAchievements = ACHIEVEMENTS.map(a => ({ id: a.id, unlockedAt: new Date().toISOString() }));
                                   if (isEditingSelf) {
                                     setUnlockedAchievements(fullAchievements);
+                                    setUsersList(prev => prev.map(u => u.uid === user!.uid ? { ...u, unlockedAchievements: fullAchievements } : u));
                                   } else {
                                     setSelectedDevUser({ ...selectedDevUser!, unlockedAchievements: fullAchievements });
                                     const { syncUserProfile } = await import('@/lib/firebase/firestore');
                                     await syncUserProfile(selectedDevUser!.uid, { unlockedAchievements: fullAchievements });
+                                    setUsersList(prev => prev.map(u => u.uid === selectedDevUser!.uid ? { ...u, unlockedAchievements: fullAchievements } : u));
                                   }
                                 }}
                                 className="flex-1 py-2 px-3 rounded-xl border border-violet-500/20 bg-violet-950/20 hover:bg-violet-900/30 text-violet-400 text-[10px] font-black uppercase tracking-wider transition-all select-none"
@@ -1348,10 +1364,12 @@ export default function ProfilePage() {
                                 onClick={async () => {
                                   if (isEditingSelf) {
                                     setUnlockedAchievements([]);
+                                    setUsersList(prev => prev.map(u => u.uid === user!.uid ? { ...u, unlockedAchievements: [] } : u));
                                   } else {
                                     setSelectedDevUser({ ...selectedDevUser!, unlockedAchievements: [] });
                                     const { syncUserProfile } = await import('@/lib/firebase/firestore');
                                     await syncUserProfile(selectedDevUser!.uid, { unlockedAchievements: [] });
+                                    setUsersList(prev => prev.map(u => u.uid === selectedDevUser!.uid ? { ...u, unlockedAchievements: [] } : u));
                                   }
                                 }}
                                 className="flex-1 py-2 px-3 rounded-xl border border-red-500/20 bg-red-950/20 hover:bg-red-900/30 text-red-400 text-[10px] font-black uppercase tracking-wider transition-all select-none"
@@ -1749,10 +1767,12 @@ export default function ProfilePage() {
                                 setTotalXP(nextXP);
                                 const { syncUserProfile } = await import('@/lib/firebase/firestore');
                                 await syncUserProfile(user!.uid, { totalXP: nextXP });
+                                setUsersList(prev => prev.map(u => u.uid === user!.uid ? { ...u, totalXP: nextXP } : u));
                               } else {
                                 setSelectedDevUser({ ...selectedDevUser!, totalXP: nextXP });
                                 const { syncUserProfile } = await import('@/lib/firebase/firestore');
                                 await syncUserProfile(selectedDevUser!.uid, { totalXP: nextXP });
+                                setUsersList(prev => prev.map(u => u.uid === selectedDevUser!.uid ? { ...u, totalXP: nextXP } : u));
                               }
                             }}
                             className="p-3 rounded-xl border border-dashed border-amber-500/40 text-amber-500 hover:bg-amber-500/10 hover:border-amber-500 text-[10px] font-black uppercase tracking-wider text-center transition-all"

@@ -77,13 +77,7 @@ export function LevelRoadmapModal({ isOpen, onClose }: LevelRoadmapModalProps) {
                       opacity: isLocked ? 0.6 : 1
                     }}
                   >
-                    {/* Visual Indicator Line (if not last) */}
-                    {lvl.level !== LEVELS[LEVELS.length - 1].level && (
-                      <div 
-                        className="absolute left-[29px] sm:left-[35px] top-[42px] sm:top-[48px] w-[2px] h-[16px] sm:h-[24px] rounded-full z-0" 
-                        style={{ background: isPassed ? 'var(--accent)' : 'var(--border)' }} 
-                      />
-                    )}
+
 
                     {/* Icon / Status */}
                     <div className="relative z-10 w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center shrink-0"

@@ -149,6 +149,17 @@ const TIER_TITLES: [string, string][] = [
 
 export const LEVELS: Level[] = [];
 
+const hslToHex = (h: number, s: number, l: number): string => {
+  l /= 100;
+  const a = (s * Math.min(l, 1 - l)) / 100;
+  const f = (n: number) => {
+    const k = (n + h / 30) % 12;
+    const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+    return Math.round(255 * color).toString(16).padStart(2, '0');
+  };
+  return `#${f(0)}${f(8)}${f(4)}`;
+};
+
 // Programmatic Level generator up to Level 100
 const generateLevels = () => {
   const baseRanges = [
@@ -188,7 +199,7 @@ const generateLevels = () => {
       currentMin = maxXP + 1;
     }
 
-    // Dynamic HSL colors for levels
+    // Dynamic HSL colors for levels converted to HEX strings
     let color = '';
     if (L === 1) color = '#9CA3AF'; // Novice Slate
     else if (L === 2) color = '#34D399'; // Emerald
@@ -196,7 +207,7 @@ const generateLevels = () => {
     else {
       // Golden spiral hue distribution for dynamic beautiful HSL values
       const hue = Math.round((L * 137.5) % 360);
-      color = `hsl(${hue}, 85%, 60%)`;
+      color = hslToHex(hue, 85, 60);
     }
 
     // Cycles beautifully through premium discipline icons
