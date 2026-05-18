@@ -97,6 +97,14 @@ const checkQuestCompletions = (
   return { stats, xpAdded: 0 };
 };
 
+export interface CustomGoal {
+  id: string;
+  label: string;
+  done: boolean;
+  iconName: string;
+  createdAt: number;
+}
+
 interface AppState {
   // Auth (not persisted — Firebase User is not serializable)
   user: User | null;
@@ -110,6 +118,10 @@ interface AppState {
   // Theme
   theme: 'dark' | 'light';
 
+  // Gamifikasi Liga & Streak
+  disciplineStreak: number;
+  league: 'bronze' | 'silver' | 'gold' | 'diamond';
+
   // Morning Lock
   morningLockOpen: boolean;
 
@@ -119,6 +131,12 @@ interface AppState {
   // Prayer Location
   prayerCityId: string;
   prayerCityName: string;
+
+  // Prayer Notification / Alert Settings
+  prayerAlertsEnabled: boolean;
+  prayerAlertBeforeMins: number; // 0 (off), 5, 10, 15
+  tahajjudAlertEnabled: boolean;
+  dhuhaAlertEnabled: boolean;
 
   // Sleep Tracker
   isSleeping: boolean;
@@ -137,8 +155,15 @@ interface AppState {
   levelUpCelebration: number | null;
   setLevelUpCelebration: (level: number | null) => void;
 
+  setPrayerAlertsEnabled: (enabled: boolean) => void;
+  setPrayerAlertBeforeMins: (mins: number) => void;
+  setTahajjudAlertEnabled: (enabled: boolean) => void;
+  setDhuhaAlertEnabled: (enabled: boolean) => void;
+
   // Actions
   setUser: (user: User | null) => void;
+  setDisciplineStreak: (streak: number) => void;
+  setLeague: (league: 'bronze' | 'silver' | 'gold' | 'diamond') => void;
   setTotalXP: (xp: number) => void;
   setTodayStats: (stats: DailyStats | null) => void;
   setTheme: (theme: 'dark' | 'light') => void;
@@ -181,6 +206,17 @@ interface AppState {
   deleteCustomCategory: (id: string) => void;
   addCustomHabit: (categoryId: string, labelId: string, icon: string, deadline?: string) => void;
   deleteCustomHabit: (id: string) => void;
+
+  // Custom Goals
+  customGoals: CustomGoal[];
+  setCustomGoals: (goals: CustomGoal[]) => void;
+  addCustomGoal: (label: string, iconName: string) => void;
+  toggleCustomGoal: (id: string) => void;
+  deleteCustomGoal: (id: string) => void;
+
+  // Tutorial Walkthrough
+  hasCompletedTutorial: boolean;
+  setHasCompletedTutorial: (val: boolean) => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -192,10 +228,16 @@ export const useAppStore = create<AppState>()(
       todayDate: '',
       isLoading: true,
       theme: 'dark',
+      disciplineStreak: 0,
+      league: 'bronze',
       morningLockOpen: false,
       emergencyPanelOpen: false,
       prayerCityId: '1301',
       prayerCityName: 'Kota Jakarta',
+      prayerAlertsEnabled: true,
+      prayerAlertBeforeMins: 15,
+      tahajjudAlertEnabled: false,
+      dhuhaAlertEnabled: false,
       isSleeping: false,
       sleepStartTime: null,
       unlockedAchievements: [],
@@ -205,8 +247,37 @@ export const useAppStore = create<AppState>()(
       customHabits: [],
       soundEnabled: true,
       levelUpCelebration: null,
+      hasCompletedTutorial: false,
+      customGoals: [
+        { id: 'g1', label: 'Upload Pertama di Marketplace', done: false, iconName: 'Rocket', createdAt: Date.now() },
+        { id: 'g2', label: 'Klien Freelance Pertama', done: false, iconName: 'Trophy', createdAt: Date.now() },
+        { id: 'g3', label: 'Streak 7 Hari', done: false, iconName: 'Flame', createdAt: Date.now() },
+        { id: 'g4', label: 'Naik ke Level 5', done: false, iconName: 'Zap', createdAt: Date.now() },
+      ],
 
       setUser: (user) => set({ user }),
+      setDisciplineStreak: (streak) => {
+        set({ disciplineStreak: streak });
+        const { user, league } = get();
+        if (user) {
+          import('@/lib/firebase/firestore').then(({ syncUserProfile }) => {
+            syncUserProfile(user.uid, { disciplineStreak: streak, league });
+          });
+        }
+      },
+      setLeague: (league) => {
+        set({ league });
+        const { user, disciplineStreak } = get();
+        if (user) {
+          import('@/lib/firebase/firestore').then(({ syncUserProfile }) => {
+            syncUserProfile(user.uid, { league, disciplineStreak });
+          });
+        }
+      },
+      setPrayerAlertsEnabled: (enabled) => set({ prayerAlertsEnabled: enabled }),
+      setPrayerAlertBeforeMins: (mins) => set({ prayerAlertBeforeMins: mins }),
+      setTahajjudAlertEnabled: (enabled) => set({ tahajjudAlertEnabled: enabled }),
+      setDhuhaAlertEnabled: (enabled) => set({ dhuhaAlertEnabled: enabled }),
       setTotalXP: (xp) => set({ totalXP: xp }),
       setTodayStats: (stats) => {
         if (!stats) {
@@ -412,14 +483,30 @@ export const useAppStore = create<AppState>()(
         }),
 
       addXP: (amount) => {
+        const { disciplineStreak, user, league } = get();
+        const hasMultiplier = disciplineStreak >= 7;
+        const multiplier = hasMultiplier ? 1.2 : 1.0;
+        const originalAmount = amount;
+        const finalAmount = Math.round(amount * multiplier);
+        const bonusAmount = finalAmount - originalAmount;
+
         const oldLevel = getLevelFromXP(get().totalXP).level;
         set((state) => {
-          if (!state.todayStats) return { totalXP: state.totalXP + amount };
+          if (!state.todayStats) return { totalXP: state.totalXP + finalAmount };
           return {
-            todayStats: { ...state.todayStats, xpEarned: (state.todayStats.xpEarned || 0) + amount },
-            totalXP: state.totalXP + amount
+            todayStats: { ...state.todayStats, xpEarned: (state.todayStats.xpEarned || 0) + finalAmount },
+            totalXP: state.totalXP + finalAmount
           };
         });
+
+        if (bonusAmount > 0) {
+          get().addNotification(
+            '🔥 Pengganda XP Aktif!',
+            `Mendapat +${finalAmount} XP (Bonus +${bonusAmount} XP dari ${disciplineStreak} Hari Streak!)`,
+            'streak'
+          );
+        }
+
         const newLevel = getLevelFromXP(get().totalXP).level;
         if (newLevel > oldLevel) {
           set({ levelUpCelebration: newLevel });
@@ -429,6 +516,17 @@ export const useAppStore = create<AppState>()(
             'streak'
           );
         }
+
+        if (user) {
+          import('@/lib/firebase/firestore').then(({ syncUserProfile }) => {
+            syncUserProfile(user.uid, {
+              totalXP: get().totalXP,
+              disciplineStreak,
+              league
+            });
+          });
+        }
+
         get().checkAchievements();
       },
 
@@ -629,6 +727,103 @@ export const useAppStore = create<AppState>()(
         if (!unlockedAchievements.some(a => a.id === 'perfect_day')) {
           if ((todayStats.completedHabits?.length || 0) >= 16) get().unlockAchievementLocal('perfect_day');
         }
+      },
+
+      setCustomGoals: (goals) => {
+        set({ customGoals: goals });
+        // Sync to cloud
+        const userId = get().user?.uid;
+        if (userId) {
+          import('@/lib/firebase/firestore').then(({ syncUserProfile }) => {
+            syncUserProfile(userId, { customGoals: goals });
+          });
+        }
+      },
+      addCustomGoal: (label, iconName) => {
+        const newGoal = {
+          id: `goal_${Date.now()}`,
+          label,
+          done: false,
+          iconName,
+          createdAt: Date.now()
+        };
+        const updated = [...get().customGoals, newGoal];
+        set({ customGoals: updated });
+
+        if (get().soundEnabled) playMechanicalClick();
+
+        // Sync to cloud
+        const userId = get().user?.uid;
+        if (userId) {
+          import('@/lib/firebase/firestore').then(({ syncUserProfile }) => {
+            syncUserProfile(userId, { customGoals: updated });
+          });
+        }
+      },
+      toggleCustomGoal: (id) => {
+        const oldGoals = get().customGoals;
+        let goalCompletedNow = false;
+        const updated = oldGoals.map((g) => {
+          if (g.id === id) {
+            const nextDone = !g.done;
+            if (nextDone) {
+              goalCompletedNow = true;
+            }
+            return { ...g, done: nextDone };
+          }
+          return g;
+        });
+        set({ customGoals: updated });
+
+        if (get().soundEnabled) {
+          if (goalCompletedNow) {
+            playCrystalChime();
+          } else {
+            playMechanicalClick();
+          }
+        }
+
+        if (goalCompletedNow) {
+          get().addXP(100);
+          get().addNotification(
+            '🏆 Goal Tercapai!',
+            `Selamat! Anda menyelesaikan goal kustom Anda. +100 XP diperoleh!`,
+            'achievement',
+            100
+          );
+        }
+
+        // Sync to cloud
+        const userId = get().user?.uid;
+        if (userId) {
+          import('@/lib/firebase/firestore').then(({ syncUserProfile }) => {
+            syncUserProfile(userId, { customGoals: updated });
+          });
+        }
+      },
+      deleteCustomGoal: (id) => {
+        const updated = get().customGoals.filter((g) => g.id !== id);
+        set({ customGoals: updated });
+
+        if (get().soundEnabled) playMechanicalClick();
+
+        // Sync to cloud
+        const userId = get().user?.uid;
+        if (userId) {
+          import('@/lib/firebase/firestore').then(({ syncUserProfile }) => {
+            syncUserProfile(userId, { customGoals: updated });
+          });
+        }
+      },
+
+      setHasCompletedTutorial: (val) => {
+        set({ hasCompletedTutorial: val });
+        const userId = get().user?.uid;
+        if (userId) {
+          import('@/lib/firebase/firestore').then(({ syncUserProfile }) => {
+            syncUserProfile(userId, { hasCompletedTutorial: val });
+          });
+        }
       }
     }),
     {
@@ -644,6 +839,12 @@ export const useAppStore = create<AppState>()(
         notifications: state.notifications,
         customCategories: state.customCategories,
         customHabits: state.customHabits,
+        prayerAlertsEnabled: state.prayerAlertsEnabled,
+        prayerAlertBeforeMins: state.prayerAlertBeforeMins,
+        tahajjudAlertEnabled: state.tahajjudAlertEnabled,
+        dhuhaAlertEnabled: state.dhuhaAlertEnabled,
+        customGoals: state.customGoals,
+        hasCompletedTutorial: state.hasCompletedTutorial,
       }),
     }
   )

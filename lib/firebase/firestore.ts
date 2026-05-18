@@ -10,6 +10,7 @@ import {
   orderBy,
   limit,
   serverTimestamp,
+  deleteDoc,
 } from 'firebase/firestore';
 import { db } from './config';
 import { DailyStats, Reflection, DailyQuest } from '@/types/user';
@@ -251,4 +252,86 @@ export const getCustomHabits = async (userId: string): Promise<HabitDefinition[]
 export const saveCustomHabits = async (userId: string, habits: HabitDefinition[]) => {
   const ref = doc(db, 'users', userId);
   await setDoc(ref, cleanUndefined({ customHabits: habits }), { merge: true });
+};
+
+// === Social Profiles & Custom Goals Sync ===
+export interface PublicUserProfile {
+  uid: string;
+  email?: string;
+  displayName: string;
+  photoURL: string | null;
+  totalXP: number;
+  customGoals: {
+    id: string;
+    label: string;
+    done: boolean;
+    iconName: string;
+    createdAt: number;
+  }[];
+  prayerCityName: string;
+  unlockedAchievements?: {
+    id: string;
+    unlockedAt: string;
+  }[];
+  league?: 'bronze' | 'silver' | 'gold' | 'diamond';
+  disciplineStreak?: number;
+  hasCompletedTutorial?: boolean;
+}
+
+export const syncUserProfile = async (userId: string, data: Partial<PublicUserProfile>) => {
+  const ref = doc(db, 'users', userId);
+  await setDoc(ref, cleanUndefined({
+    ...data,
+    updatedAt: serverTimestamp()
+  }), { merge: true });
+};
+
+export const getAllUserProfiles = async (): Promise<PublicUserProfile[]> => {
+  const q = query(collection(db, 'users'), limit(50));
+  const snap = await getDocs(q);
+  const profiles: PublicUserProfile[] = [];
+  snap.forEach((docSnap) => {
+    const data = docSnap.data();
+    if (data.uid) {
+      profiles.push({
+        uid: data.uid,
+        email: data.email || '',
+        displayName: data.displayName || 'Life OS User',
+        photoURL: data.photoURL || null,
+        totalXP: data.totalXP || 0,
+        customGoals: data.customGoals || [],
+        prayerCityName: data.prayerCityName || 'Kota Jakarta',
+        unlockedAchievements: data.unlockedAchievements || [],
+        league: data.league || 'bronze',
+        disciplineStreak: data.disciplineStreak || 0,
+        hasCompletedTutorial: data.hasCompletedTutorial || false
+      });
+    }
+  });
+  return profiles;
+};
+
+export const getUserProfileById = async (userId: string): Promise<PublicUserProfile | null> => {
+  const ref = doc(db, 'users', userId);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) return null;
+  const data = snap.data();
+  return {
+    uid: data.uid || userId,
+    email: data.email || '',
+    displayName: data.displayName || 'Life OS User',
+    photoURL: data.photoURL || null,
+    totalXP: data.totalXP || 0,
+    customGoals: data.customGoals || [],
+    prayerCityName: data.prayerCityName || 'Kota Jakarta',
+    unlockedAchievements: data.unlockedAchievements || [],
+    league: data.league || 'bronze',
+    disciplineStreak: data.disciplineStreak || 0,
+    hasCompletedTutorial: data.hasCompletedTutorial || false
+  };
+};
+
+export const deleteUserProfile = async (userId: string) => {
+  const ref = doc(db, 'users', userId);
+  await deleteDoc(ref);
 };

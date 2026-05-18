@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion';
 import { useAppStore } from '@/store/useAppStore';
 import { getLevelFromXP } from '@/lib/constants/levels';
-import { Flame, Target } from 'lucide-react';
+import { Flame, Target, Coffee, Sun, Sunset, Moon } from 'lucide-react';
 import { HABIT_DEFINITIONS } from '@/lib/constants/habits';
 import { useEffect, useState } from 'react';
 import { getRecentStats } from '@/lib/firebase/firestore';
@@ -21,6 +21,25 @@ const MOTIVATIONAL_QUOTES = [
   "Hari ini adalah kesempatan terbaik untuk mengalahkan kemalasan kemarin."
 ];
 
+const MOTIVATIONAL_PHRASES = [
+  "ayo bangkit!",
+  "saatnya beraksi!",
+  "fokus hari ini!",
+  "taklukkan hari ini!",
+  "mulai langkahmu!",
+  "jangan menunda!",
+  "waktunya produktif!",
+  "disiplin adalah kunci!",
+  "tetap konsisten!",
+  "buat hari ini bermakna!",
+  "kamu pasti bisa!",
+  "maksimalkan potensimu!",
+  "buat dirimu bangga!",
+  "langkah demi langkah!",
+  "saatnya bertumbuh!",
+  "fokus pada tujuan!"
+];
+
 export function HeroCard() {
   const { user, totalXP, todayStats, customHabits } = useAppStore();
   const level = getLevelFromXP(totalXP);
@@ -32,11 +51,29 @@ export function HeroCard() {
   
   const [streak, setStreak] = useState(0);
   const [quote, setQuote] = useState("");
+  const [greetingData, setGreetingData] = useState({ text: 'Selamat pagi', icon: Coffee, color: 'text-amber-400' });
+  const [subPhrase, setSubPhrase] = useState('ayo bangkit!');
 
   useEffect(() => {
     const day = new Date().getDate();
     const index = day % MOTIVATIONAL_QUOTES.length;
     setQuote(MOTIVATIONAL_QUOTES[index]);
+
+    // Determine dynamic greeting based on hour
+    const hour = new Date().getHours();
+    if (hour >= 4 && hour < 12) {
+      setGreetingData({ text: 'Selamat pagi', icon: Coffee, color: 'text-amber-400' });
+    } else if (hour >= 12 && hour < 17) {
+      setGreetingData({ text: 'Selamat siang', icon: Sun, color: 'text-amber-500' });
+    } else if (hour >= 17 && hour < 20) {
+      setGreetingData({ text: 'Selamat sore', icon: Sunset, color: 'text-rose-400' });
+    } else {
+      setGreetingData({ text: 'Selamat malam', icon: Moon, color: 'text-indigo-300' });
+    }
+
+    // Determine dynamic motivational sub-phrase based on date
+    const phraseIndex = day % MOTIVATIONAL_PHRASES.length;
+    setSubPhrase(MOTIVATIONAL_PHRASES[phraseIndex]);
   }, []);
 
   const getContextMessage = () => {
@@ -103,9 +140,10 @@ export function HeroCard() {
       {/* Header Info (Mobile Top) */}
       <div className="md:hidden w-full mb-4">
         <h1 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>
-          Selamat pagi,<br/>
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">
-            {user?.displayName?.split(' ')[0] || 'Teman'}, ayo bangkit! 👋
+          {greetingData.text},<br/>
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400 inline-flex items-center gap-1.5 flex-wrap">
+            {user?.displayName?.split(' ')[0] || 'Teman'}, {subPhrase}
+            <greetingData.icon className={`w-5 h-5 ${greetingData.color} animate-bounce`} style={{ animationDuration: '3s' }} />
           </span>
         </h1>
         <p className="text-xs mt-1 leading-relaxed font-medium" style={{ color: 'var(--text-secondary)' }}>
@@ -177,9 +215,10 @@ export function HeroCard() {
         {/* Header Info (Desktop Left) */}
         <div className="hidden md:block mb-6">
           <h1 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
-            Selamat pagi,<br/>
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">
-              {user?.displayName?.split(' ')[0] || 'Teman'}, ayo bangkit! 👋
+            {greetingData.text},<br/>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400 inline-flex items-center gap-2">
+              {user?.displayName?.split(' ')[0] || 'Teman'}, {subPhrase}
+              <greetingData.icon className={`w-6 h-6 ${greetingData.color} animate-bounce`} style={{ animationDuration: '3s' }} />
             </span>
           </h1>
           <p className="text-sm mt-1 leading-relaxed font-medium" style={{ color: 'var(--text-secondary)' }}>

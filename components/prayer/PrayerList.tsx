@@ -1,15 +1,20 @@
 'use client';
 
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { usePrayer } from '@/lib/hooks/usePrayer';
 import { formatCountdown } from '@/lib/utils/time';
 import { MapPin, CheckCircle2, Circle } from 'lucide-react';
-
 import { useAppStore } from '@/store/useAppStore';
+import { PrayerModal } from './PrayerModal';
+import { triggerConfetti } from '@/lib/utils/confetti';
+import { getToday } from '@/lib/utils/time';
+import { cn } from '@/lib/utils';
 
 export function PrayerList() {
   const { schedule, nextPrayer, countdown, loading } = usePrayer();
-  const { prayerCityName } = useAppStore();
+  const { todayStats, user, completeHabit, prayerCityName } = useAppStore();
+  const [modalOpen, setModalOpen] = useState(false);
 
   if (loading) {
     return (
@@ -22,14 +27,49 @@ export function PrayerList() {
     );
   }
 
+  const handleCompleteSholat = async (habitId: string, xp: number) => {
+    if (!user || todayStats?.completedHabits?.includes(habitId)) return;
+    
+    // Satisfying confetti splash!
+    triggerConfetti();
+    
+    // 1. Local zustand update
+    completeHabit(habitId, xp);
+    
+    // 2. Persistent Firestore sync
+    try {
+      const today = getToday();
+      const { logHabit, updateDailyStats, addXP } = await import('@/lib/firebase/firestore');
+      await logHabit({ habitId, userId: user.uid, date: today, completedAt: new Date(), xpEarned: xp });
+      
+      const newCompleted = [...(todayStats?.completedHabits || []), habitId];
+      const newXp = (todayStats?.xpEarned || 0) + xp;
+      await updateDailyStats(user.uid, today, {
+        completedHabits: newCompleted,
+        xpEarned: newXp
+      });
+      await addXP(user.uid, xp);
+    } catch (e) {
+      console.error('Failed to log prayer in Firestore', e);
+    }
+  };
+
+  const sholatList = [
+    { name: 'Subuh', id: 'prayer_fajr', time: schedule?.prayers.fajr || '04:30', xp: 25 },
+    { name: 'Dzuhur', id: 'prayer_dhuhr', time: schedule?.prayers.dhuhr || '12:02', xp: 25 },
+    { name: 'Ashar', id: 'prayer_asr', time: schedule?.prayers.asr || '15:23', xp: 25 },
+    { name: 'Maghrib', id: 'prayer_maghrib', time: schedule?.prayers.maghrib || '17:58', xp: 25 },
+    { name: 'Isya', id: 'prayer_isya', time: schedule?.prayers.isya || '19:10', xp: 25 },
+  ];
+
   const prayerNames = schedule?.prayers
-    ? [
-        { name: 'Subuh', time: schedule.prayers.fajr, done: true },
-        { name: 'Dzuhur', time: schedule.prayers.dhuhr, done: true },
-        { name: 'Ashar', time: schedule.prayers.asr, done: false },
-        { name: 'Maghrib', time: schedule.prayers.maghrib, done: false },
-        { name: 'Isya', time: schedule.prayers.isya, done: false },
-      ]
+    ? sholatList.map(s => ({
+        name: s.name,
+        id: s.id,
+        time: s.time,
+        done: todayStats?.completedHabits?.includes(s.id) || false,
+        xp: s.xp
+      }))
     : [];
 
   // Remove "KOTA " or "KAB. " prefix if it exists to make it cleaner
@@ -55,7 +95,12 @@ export function PrayerList() {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: i * 0.05 }}
-              className={`flex items-center justify-between p-2.5 rounded-xl transition-all ${isNext ? 'gold-pulse-active' : ''}`}
+              onClick={() => !p.done && handleCompleteSholat(p.id, p.xp)}
+              className={cn(
+                "flex items-center justify-between p-2.5 rounded-xl transition-all",
+                isNext ? 'gold-pulse-active' : '',
+                !p.done ? 'cursor-pointer hover:bg-white/5 active:scale-[0.98]' : ''
+              )}
             >
               <div className="flex items-center gap-3">
                 <span className="text-xs font-bold w-14" style={{ color: isNext ? '#F59E0B' : 'var(--text-secondary)' }}>
@@ -89,10 +134,17 @@ export function PrayerList() {
         })}
       </div>
       
-      <button className="w-full mt-4 py-2 text-xs font-medium rounded-lg transition-colors hover:bg-white/5" 
-              style={{ color: 'var(--text-secondary)', border: '1px solid var(--border)' }}>
+      <button 
+        onClick={() => setModalOpen(true)}
+        className="w-full mt-4 py-2 text-xs font-medium rounded-lg transition-colors hover:bg-white/5" 
+        style={{ color: 'var(--text-secondary)', border: '1px solid var(--border)' }}
+      >
         Lihat Semua
       </button>
+
+      {/* Modern Multi-Tab Modal */}
+      <PrayerModal isOpen={modalOpen} onClose={() => setModalOpen(false)} />
     </div>
   );
 }
+

@@ -12,10 +12,14 @@ import { PomodoroWidget } from '@/components/dashboard/PomodoroWidget';
 import { QuoteFooter } from '@/components/dashboard/QuoteFooter';
 import { EmergencyPanel } from '@/components/dashboard/EmergencyPanel';
 import { DailyQuestsWidget } from '@/components/dashboard/DailyQuestsWidget';
+import { OnboardingTutorial } from '@/components/dashboard/OnboardingTutorial';
 
 export default function DashboardPage() {
   return (
     <div className="flex flex-col gap-6 pb-24 lg:pb-8">
+      {/* Onboarding Tutorial Guide for New Users */}
+      <OnboardingTutorial />
+
       {/* Emergency Panel (conditional) */}
       <EmergencyPanel />
 

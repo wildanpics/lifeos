@@ -1,9 +1,9 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Sun, Moon, Bell, CalendarDays } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
-import { getLevelFromXP } from '@/lib/constants/levels';
+import { getLevelFromXP, getLevelBadgeStyle } from '@/lib/constants/levels';
 import { useEffect, useState, useRef } from 'react';
 import { NotificationCenter } from './NotificationCenter';
 import { LevelRoadmapModal } from '@/components/dashboard/LevelRoadmapModal';
@@ -18,6 +18,7 @@ export function TopBar({ title }: TopBarProps) {
   const [dateStr, setDateStr] = useState('');
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isRoadmapOpen, setIsRoadmapOpen] = useState(false);
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
   const unreadCount = notifications.filter(n => !n.read).length;
@@ -32,6 +33,16 @@ export function TopBar({ title }: TopBarProps) {
     });
     setDateStr(formatter.format(now));
   }, []);
+
+  // Collapse calendar back to icon after 5 seconds on mobile
+  useEffect(() => {
+    if (isCalendarOpen) {
+      const timer = setTimeout(() => {
+        setIsCalendarOpen(false);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [isCalendarOpen]);
 
   return (
     <header
@@ -54,33 +65,61 @@ export function TopBar({ title }: TopBarProps) {
 
       {/* Right side */}
       <div className="flex-1 flex justify-end items-center gap-1.5 sm:gap-3">
-        {/* Date Badge - visible on desktop and mobile near notifications */}
-        <div 
-          className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-1.5 rounded-xl sm:rounded-2xl text-[10px] sm:text-xs font-medium flex-shrink-0"
-          style={{ 
-            background: 'var(--bg-secondary)', 
-            border: '1px solid var(--border)',
-            color: 'var(--text-secondary)'
-          }}
-        >
-          <CalendarDays className="w-3.5 h-3.5" />
-          <span>{dateStr}</span>
-        </div>
-
-        {/* Level badge - mobile only (interactive button) */}
+        {/* Level badge - mobile only (interactive button) - SWAPPED to the left */}
         <motion.button
           whileTap={{ scale: 0.95 }}
           onClick={() => setIsRoadmapOpen(true)}
-          className="lg:hidden flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold cursor-pointer select-none active:scale-95 transition-all flex-shrink-0"
-          style={{
-            background: `${level.color}20`,
-            color: level.color,
-            border: `1px solid ${level.color}40`,
-          }}
+          className="lg:hidden flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold cursor-pointer select-none active:scale-95 transition-all flex-shrink-0"
+          style={getLevelBadgeStyle(level.level, level.color)}
         >
           <level.icon className="w-3.5 h-3.5" />
           <span>Lv.{level.level}</span>
         </motion.button>
+
+        {/* Date Badge / Interactive Button - visible near notifications */}
+        <div className="relative flex items-center justify-end">
+          {/* Desktop version (always expanded) */}
+          <div 
+            className="hidden sm:flex items-center gap-1.5 px-4 py-1.5 rounded-2xl text-xs font-medium flex-shrink-0"
+            style={{ 
+              background: 'var(--bg-secondary)', 
+              border: '1px solid var(--border)',
+              color: 'var(--text-secondary)'
+            }}
+          >
+            <CalendarDays className="w-3.5 h-3.5" />
+            <span>{dateStr}</span>
+          </div>
+
+          {/* Mobile version (dynamic width-expanding button container) */}
+          <motion.button
+            layout
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setIsCalendarOpen(!isCalendarOpen)}
+            className="sm:hidden flex items-center justify-center h-8.5 rounded-xl transition-all duration-300 overflow-hidden px-2 flex-shrink-0"
+            style={{ 
+              background: 'var(--bg-secondary)', 
+              border: isCalendarOpen ? '1px solid var(--text-primary)' : '1px solid var(--border)',
+              width: isCalendarOpen ? 'auto' : '34px',
+            }}
+          >
+            <CalendarDays className="w-4 h-4 flex-shrink-0" style={{ color: isCalendarOpen ? 'var(--text-primary)' : 'var(--text-secondary)' }} />
+            <AnimatePresence initial={false}>
+              {isCalendarOpen && (
+                <motion.span
+                  initial={{ opacity: 0, width: 0, marginLeft: 0 }}
+                  animate={{ opacity: 1, width: 'auto', marginLeft: 6 }}
+                  exit={{ opacity: 0, width: 0, marginLeft: 0 }}
+                  transition={{ duration: 0.25, ease: 'easeInOut' }}
+                  className="text-[10px] font-extrabold whitespace-nowrap overflow-hidden flex-shrink-0"
+                  style={{ color: 'var(--text-primary)' }}
+                >
+                  {dateStr}
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </motion.button>
+        </div>
 
         {/* Notifications */}
         <div className="relative">

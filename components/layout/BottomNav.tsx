@@ -3,14 +3,14 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { LayoutDashboard, Timer, CheckSquare, BarChart3, User, Trophy } from 'lucide-react';
+import { LayoutDashboard, Timer, CheckSquare, BarChart3, User, Crown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Beranda' },
   { href: '/focus', icon: Timer, label: 'Fokus' },
   { href: '/habits', icon: CheckSquare, label: 'Habit' },
-  { href: '/achievements', icon: Trophy, label: 'Piala' },
+  { href: '/achievements', icon: Crown, label: 'Leaderboard' },
   { href: '/analytics', icon: BarChart3, label: 'Analitik' },
   { href: '/profile', icon: User, label: 'Profil' },
 ];
