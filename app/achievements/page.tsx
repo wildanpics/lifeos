@@ -861,8 +861,12 @@ export default function LeaderboardPage() {
                   2
                 </div>
                 <CommunityAvatar photoURL={top2.photoURL} displayName={top2.displayName} className="w-14 h-14 border-2 border-slate-400 mb-3" onClick={() => handleAvatarClick(top2)} />
-                <h3 className={`text-xs font-black line-clamp-1 ${isDark ? 'text-white' : 'text-neutral-900'}`}>{top2.displayName}</h3>
-                {renderCustomTitleBadge(top2.customTitle, isDark)}
+                <h3 className={`text-xs font-black truncate w-full px-1 text-center block ${isDark ? 'text-white' : 'text-neutral-900'}`} title={top2.displayName}>{top2.displayName}</h3>
+                {top2.customTitle && (
+                  <div className="mt-1.5 flex justify-center">
+                    {renderCustomTitleBadge(top2.customTitle, isDark)}
+                  </div>
+                )}
                 {top2.email === 'mwildanfiqri88@gmail.com' && (
                   <span className="text-[8px] uppercase tracking-wider font-extrabold text-violet-500 flex items-center gap-0.5 mt-0.5 select-none">
                     <Terminal className="w-2.5 h-2.5" /> Dev Creator
@@ -918,8 +922,12 @@ export default function LeaderboardPage() {
                   <Crown className="w-4.5 h-4.5" />
                 </div>
                 <CommunityAvatar photoURL={top1.photoURL} displayName={top1.displayName} className="w-16 h-16 border-2 border-yellow-500 mb-3 shadow-lg shadow-yellow-500/20" onClick={() => handleAvatarClick(top1)} />
-                <h3 className={`text-sm font-black line-clamp-1 ${isDark ? 'text-white' : 'text-neutral-900'}`}>{top1.displayName}</h3>
-                {renderCustomTitleBadge(top1.customTitle, isDark)}
+                <h3 className={`text-sm font-black truncate w-full px-1 text-center block ${isDark ? 'text-white' : 'text-neutral-900'}`} title={top1.displayName}>{top1.displayName}</h3>
+                {top1.customTitle && (
+                  <div className="mt-1.5 flex justify-center">
+                    {renderCustomTitleBadge(top1.customTitle, isDark)}
+                  </div>
+                )}
                 {top1.email === 'mwildanfiqri88@gmail.com' && (
                   <span className="text-[8px] uppercase tracking-wider font-extrabold text-violet-500 flex items-center gap-0.5 mt-0.5 select-none animate-pulse">
                     <Terminal className="w-2.5 h-2.5" /> Dev Creator
@@ -976,8 +984,12 @@ export default function LeaderboardPage() {
                   3
                 </div>
                 <CommunityAvatar photoURL={top3.photoURL} displayName={top3.displayName} className="w-14 h-14 border-2 border-amber-600 mb-3" onClick={() => handleAvatarClick(top3)} />
-                <h3 className={`text-xs font-black line-clamp-1 ${isDark ? 'text-white' : 'text-neutral-900'}`}>{top3.displayName}</h3>
-                {renderCustomTitleBadge(top3.customTitle, isDark)}
+                <h3 className={`text-xs font-black truncate w-full px-1 text-center block ${isDark ? 'text-white' : 'text-neutral-900'}`} title={top3.displayName}>{top3.displayName}</h3>
+                {top3.customTitle && (
+                  <div className="mt-1.5 flex justify-center">
+                    {renderCustomTitleBadge(top3.customTitle, isDark)}
+                  </div>
+                )}
                 {top3.email === 'mwildanfiqri88@gmail.com' && (
                   <span className="text-[8px] uppercase tracking-wider font-extrabold text-violet-500 flex items-center gap-0.5 mt-0.5 select-none">
                     <Terminal className="w-2.5 h-2.5" /> Dev Creator

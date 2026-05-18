@@ -58,7 +58,10 @@ export default function AnalyticsPage() {
     <div className="space-y-5">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>📊 Analitik</h1>
+          <h1 className="text-xl font-bold flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+            <BarChart3 className="w-5 h-5 text-indigo-500" />
+            Analitik
+          </h1>
           <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Pantau tren dan pola hidupmu.</p>
         </div>
         <div className="flex gap-1 rounded-xl p-1" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>

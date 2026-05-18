@@ -18,8 +18,9 @@ export default function FocusPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>
-          🎯 Mode Fokus
+        <h1 className="text-xl font-bold flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+          <Target className="w-5 h-5 text-indigo-500" />
+          Mode Fokus
         </h1>
         <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
           Deep work tanpa distraksi. Satu sesi = +30 XP
