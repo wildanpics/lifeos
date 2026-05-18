@@ -421,11 +421,15 @@ export default function ProfilePage() {
   // Sync profile when XP, streak, league, or goals change
   useEffect(() => {
     if (user) {
+      const googleProfile = user.providerData.find((p) => p.providerId === 'google.com');
+      const latestPhotoURL = googleProfile?.photoURL || user.photoURL || null;
+      const latestDisplayName = googleProfile?.displayName || user.displayName || 'Life OS User';
+
       import('@/lib/firebase/firestore').then(({ syncUserProfile }) => {
         syncUserProfile(user.uid, {
           uid: user.uid,
-          displayName: user.displayName || 'Life OS User',
-          photoURL: user.photoURL || null,
+          displayName: latestDisplayName,
+          photoURL: latestPhotoURL,
           totalXP,
           customGoals,
           prayerCityName: prayerCityName || 'Kota Jakarta',

@@ -42,6 +42,7 @@ const CommunityAvatar = ({
       <img
         src={photoURL}
         alt={displayName}
+        referrerPolicy="no-referrer"
         onError={() => setImgError(true)}
         onClick={onClick}
         className={`${className} ${clickClass} rounded-full object-cover border border-[var(--border)] shadow-sm`}

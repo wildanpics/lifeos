@@ -17,6 +17,7 @@ const DuelAvatar = ({ photoURL, displayName, className = "w-16 h-16" }: { photoU
       <img
         src={photoURL}
         alt={displayName}
+        referrerPolicy="no-referrer"
         className={`${className} rounded-full object-cover border-2 border-indigo-500 shadow-md`}
       />
     );
