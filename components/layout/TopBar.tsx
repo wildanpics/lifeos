@@ -4,8 +4,9 @@ import { motion } from 'framer-motion';
 import { Sun, Moon, Bell, CalendarDays } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { getLevelFromXP } from '@/lib/constants/levels';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { NotificationCenter } from './NotificationCenter';
+import { LevelRoadmapModal } from '@/components/dashboard/LevelRoadmapModal';
 
 interface TopBarProps {
   title?: string;
@@ -16,6 +17,8 @@ export function TopBar({ title }: TopBarProps) {
   const level = getLevelFromXP(totalXP);
   const [dateStr, setDateStr] = useState('');
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [isRoadmapOpen, setIsRoadmapOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -50,10 +53,10 @@ export function TopBar({ title }: TopBarProps) {
       <div className="hidden lg:flex flex-1 items-center justify-center"></div>
 
       {/* Right side */}
-      <div className="flex-1 flex justify-end items-center gap-3">
-        {/* Date Badge */}
+      <div className="flex-1 flex justify-end items-center gap-1.5 sm:gap-3">
+        {/* Date Badge - visible on desktop and mobile near notifications */}
         <div 
-          className="hidden lg:flex items-center gap-2 px-4 py-1.5 rounded-2xl text-xs font-medium"
+          className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-1.5 rounded-xl sm:rounded-2xl text-[10px] sm:text-xs font-medium flex-shrink-0"
           style={{ 
             background: 'var(--bg-secondary)', 
             border: '1px solid var(--border)',
@@ -64,9 +67,11 @@ export function TopBar({ title }: TopBarProps) {
           <span>{dateStr}</span>
         </div>
 
-        {/* Level badge - mobile only */}
-        <div
-          className="lg:hidden flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold"
+        {/* Level badge - mobile only (interactive button) */}
+        <motion.button
+          whileTap={{ scale: 0.95 }}
+          onClick={() => setIsRoadmapOpen(true)}
+          className="lg:hidden flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold cursor-pointer select-none active:scale-95 transition-all flex-shrink-0"
           style={{
             background: `${level.color}20`,
             color: level.color,
@@ -75,11 +80,12 @@ export function TopBar({ title }: TopBarProps) {
         >
           <level.icon className="w-3.5 h-3.5" />
           <span>Lv.{level.level}</span>
-        </div>
+        </motion.button>
 
         {/* Notifications */}
         <div className="relative">
           <motion.button
+            ref={triggerRef}
             whileTap={{ scale: 0.9 }}
             onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
             className="relative p-2 rounded-xl transition-colors hover:bg-white/5"
@@ -101,6 +107,7 @@ export function TopBar({ title }: TopBarProps) {
           <NotificationCenter 
             isOpen={isNotificationsOpen} 
             onClose={() => setIsNotificationsOpen(false)} 
+            triggerRef={triggerRef}
           />
         </div>
 
@@ -118,6 +125,12 @@ export function TopBar({ title }: TopBarProps) {
           )}
         </motion.button>
       </div>
+
+      {/* Discipline level roadmap modal overlay */}
+      <LevelRoadmapModal 
+        isOpen={isRoadmapOpen} 
+        onClose={() => setIsRoadmapOpen(false)} 
+      />
     </header>
   );
 }

@@ -12,17 +12,75 @@ import {
   serverTimestamp,
 } from 'firebase/firestore';
 import { db } from './config';
-import { DailyStats, Reflection } from '@/types/user';
-import { HabitLog, HabitStreak } from '@/types/habit';
+import { DailyStats, Reflection, DailyQuest } from '@/types/user';
+import { HabitLog, HabitStreak, CustomCategory, HabitDefinition } from '@/types/habit';
 import { FocusSession } from '@/types/focus';
 import { UserAchievement } from '@/types/achievement';
 
+// Helper to recursively strip undefined values to prevent Firestore setDoc/addDoc crashes
+function cleanUndefined(obj: any): any {
+  if (obj === null || obj === undefined) {
+    return null;
+  }
+  if (Array.isArray(obj)) {
+    return obj.map(cleanUndefined);
+  }
+  if (Object.prototype.toString.call(obj) === '[object Object]') {
+    // Return custom non-plain Firestore object types like FieldValue/Timestamp directly
+    if (obj.constructor && obj.constructor !== Object) {
+      return obj;
+    }
+    const cleaned: any = {};
+    for (const key in obj) {
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
+        const val = obj[key];
+        if (val !== undefined) {
+          cleaned[key] = cleanUndefined(val);
+        }
+      }
+    }
+    return cleaned;
+  }
+  return obj;
+}
+
 // === Daily Stats ===
+const QUEST_POOL = [
+  { label: "Minum 8 gelas air hari ini", targetType: "water", targetValue: 8, xpBonus: 50 },
+  { label: "Makan teratur 3 kali hari ini", targetType: "meals", targetValue: 3, xpBonus: 50 },
+  { label: "Tidur berkualitas minimal 7 jam", targetType: "sleep", targetValue: 7, xpBonus: 50 },
+  { label: "Selesaikan sesi fokus 30 menit", targetType: "focus", targetValue: 30, xpBonus: 50 },
+  { label: "Selesaikan minimal 5 habit hari ini", targetType: "habit_count", targetValue: 5, xpBonus: 50 },
+  { label: "Digital detox: screen time di bawah 120m", targetType: "screen_time_limit", targetValue: 120, xpBonus: 50 },
+  { label: "Selesaikan minimal 7 habit hari ini", targetType: "habit_count", targetValue: 7, xpBonus: 50 }
+];
+
+const getRandomQuests = (): DailyQuest[] => {
+  const shuffled = [...QUEST_POOL].sort(() => 0.5 - Math.random());
+  return shuffled.slice(0, 3).map((q, idx) => ({
+    id: `quest_${idx}_${Date.now()}`,
+    label: q.label,
+    targetType: q.targetType as any,
+    targetValue: q.targetValue,
+    completed: false,
+    xpBonus: q.xpBonus
+  }));
+};
+
 export const getTodayStats = async (userId: string, date: string): Promise<DailyStats | null> => {
   const ref = doc(db, 'users', userId, 'dailyStats', date);
   const snap = await getDoc(ref);
   if (!snap.exists()) return null;
-  return snap.data() as DailyStats;
+  const stats = snap.data() as DailyStats;
+
+  // Self-heal: If document exists but dailyQuests is missing, generate and merge to Firestore
+  if (!stats.dailyQuests || stats.dailyQuests.length === 0) {
+    const dailyQuests = getRandomQuests();
+    stats.dailyQuests = dailyQuests;
+    await setDoc(ref, { dailyQuests }, { merge: true });
+  }
+
+  return stats;
 };
 
 export const initTodayStats = async (userId: string, date: string): Promise<DailyStats> => {
@@ -40,8 +98,9 @@ export const initTodayStats = async (userId: string, date: string): Promise<Dail
     completedHabits: [],
     morningLockUnlocked: false,
     dopamineStatus: 'clean',
+    dailyQuests: getRandomQuests()
   };
-  await setDoc(ref, initial, { merge: true });
+  await setDoc(ref, cleanUndefined(initial), { merge: true });
   return initial;
 };
 
@@ -51,13 +110,13 @@ export const updateDailyStats = async (
   updates: Partial<DailyStats>
 ) => {
   const ref = doc(db, 'users', userId, 'dailyStats', date);
-  await setDoc(ref, updates, { merge: true });
+  await setDoc(ref, cleanUndefined(updates), { merge: true });
 };
 
 // === Habit Logs ===
 export const logHabit = async (log: HabitLog) => {
   const ref = doc(db, 'users', log.userId, 'habitLogs', `${log.date}_${log.habitId}`);
-  await setDoc(ref, { ...log, completedAt: serverTimestamp() });
+  await setDoc(ref, cleanUndefined({ ...log, completedAt: serverTimestamp() }));
 };
 
 export const getHabitLogsForDate = async (userId: string, date: string): Promise<HabitLog[]> => {
@@ -77,13 +136,13 @@ export const getHabitStreak = async (userId: string, habitId: string): Promise<H
 
 export const updateHabitStreak = async (userId: string, habitId: string, streak: Partial<HabitStreak>) => {
   const ref = doc(db, 'users', userId, 'habitStreaks', habitId);
-  await setDoc(ref, streak, { merge: true });
+  await setDoc(ref, cleanUndefined(streak), { merge: true });
 };
 
 // === Focus Sessions ===
 export const saveFocusSession = async (session: FocusSession) => {
   const ref = doc(db, 'users', session.userId, 'focusSessions', session.id);
-  await setDoc(ref, session);
+  await setDoc(ref, cleanUndefined(session));
 };
 
 export const getFocusSessionsForDate = async (userId: string, date: string): Promise<FocusSession[]> => {
@@ -96,7 +155,7 @@ export const getFocusSessionsForDate = async (userId: string, date: string): Pro
 // === Reflection ===
 export const saveReflection = async (reflection: Reflection) => {
   const ref = doc(db, 'users', reflection.userId, 'reflections', reflection.date);
-  await setDoc(ref, { ...reflection, createdAt: serverTimestamp() });
+  await setDoc(ref, cleanUndefined({ ...reflection, createdAt: serverTimestamp() }));
 };
 
 export const getReflection = async (userId: string, date: string): Promise<Reflection | null> => {
@@ -127,7 +186,7 @@ export const addXP = async (userId: string, amount: number): Promise<number> => 
   const snap = await getDoc(ref);
   const current = snap.exists() ? (snap.data().totalXP || 0) : 0;
   const newTotal = current + amount;
-  await setDoc(ref, { totalXP: newTotal }, { merge: true });
+  await setDoc(ref, cleanUndefined({ totalXP: newTotal }), { merge: true });
   return newTotal;
 };
 
@@ -148,5 +207,48 @@ export const unlockAchievement = async (userId: string, achievement: UserAchieve
   if (current.some((a: UserAchievement) => a.id === achievement.id)) return;
   
   const newAchievements = [...current, achievement];
-  await setDoc(ref, { unlockedAchievements: newAchievements }, { merge: true });
+  await setDoc(ref, cleanUndefined({ unlockedAchievements: newAchievements }), { merge: true });
+};
+
+// === User Settings ===
+export const updateUserCity = async (userId: string, cityId: string, cityName: string) => {
+  const ref = doc(db, 'users', userId);
+  await setDoc(ref, cleanUndefined({ prayerCityId: cityId, prayerCityName: cityName }), { merge: true });
+};
+
+export const getUserCity = async (userId: string): Promise<{ prayerCityId?: string; prayerCityName?: string } | null> => {
+  const ref = doc(db, 'users', userId);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) return null;
+  const data = snap.data();
+  return {
+    prayerCityId: data.prayerCityId,
+    prayerCityName: data.prayerCityName,
+  };
+};
+
+// === Custom Categories ===
+export const getCustomCategories = async (userId: string): Promise<CustomCategory[]> => {
+  const ref = doc(db, 'users', userId);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) return [];
+  return snap.data().customCategories || [];
+};
+
+export const saveCustomCategories = async (userId: string, categories: CustomCategory[]) => {
+  const ref = doc(db, 'users', userId);
+  await setDoc(ref, cleanUndefined({ customCategories: categories }), { merge: true });
+};
+
+// === Custom Habits ===
+export const getCustomHabits = async (userId: string): Promise<HabitDefinition[]> => {
+  const ref = doc(db, 'users', userId);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) return [];
+  return snap.data().customHabits || [];
+};
+
+export const saveCustomHabits = async (userId: string, habits: HabitDefinition[]) => {
+  const ref = doc(db, 'users', userId);
+  await setDoc(ref, cleanUndefined({ customHabits: habits }), { merge: true });
 };

@@ -6,12 +6,12 @@ import { DailyRules } from '@/components/dashboard/DailyRules';
 import { QuickStats } from '@/components/dashboard/QuickStats';
 import { DopamineStatus } from '@/components/dashboard/DopamineStatus';
 import { PrayerList } from '@/components/prayer/PrayerList';
-import { MorningReset } from '@/components/dashboard/MorningReset';
 import { BreakTheLoop } from '@/components/dashboard/BreakTheLoop';
 import { FocusList } from '@/components/dashboard/FocusList';
 import { PomodoroWidget } from '@/components/dashboard/PomodoroWidget';
 import { QuoteFooter } from '@/components/dashboard/QuoteFooter';
 import { EmergencyPanel } from '@/components/dashboard/EmergencyPanel';
+import { DailyQuestsWidget } from '@/components/dashboard/DailyQuestsWidget';
 
 export default function DashboardPage() {
   return (
@@ -47,9 +47,9 @@ export default function DashboardPage() {
 
         {/* Right Column (Sidebar-ish) */}
         <div className="xl:col-span-4 2xl:col-span-3 flex flex-col gap-6">
+          <DailyQuestsWidget />
           <DopamineStatus />
           <PrayerList />
-          <MorningReset />
         </div>
       </div>
 

@@ -4,19 +4,89 @@ import { motion } from 'framer-motion';
 import { useAppStore } from '@/store/useAppStore';
 import { getLevelFromXP } from '@/lib/constants/levels';
 import { Flame, Target } from 'lucide-react';
+import { HABIT_DEFINITIONS } from '@/lib/constants/habits';
+import { useEffect, useState } from 'react';
+import { getRecentStats } from '@/lib/firebase/firestore';
+
+const MOTIVATIONAL_QUOTES = [
+  "Disiplin adalah jembatan antara impian dan kenyataan.",
+  "Kita adalah apa yang kita lakukan berulang kali. Keunggulan adalah kebiasaan.",
+  "Kuasai pagimu, maka kamu akan menguasai harimu.",
+  "Musuh terbesar produktivitas adalah menunda hal kecil yang berdampak besar.",
+  "Fokuslah pada proses harian, maka hasil akan mengikuti dengan sendirinya.",
+  "Satu persen lebih baik setiap hari akumulasi menuju kesuksesan luar biasa.",
+  "Rasa sakit karena disiplin jauh lebih ringan daripada rasa penyesalan.",
+  "Jangan kurangi sasaranmu, tingkatkan kedisiplinan harianmu hari ini.",
+  "Fokus adalah kemampuan menolak ribuan hal menarik demi satu hal penting.",
+  "Hari ini adalah kesempatan terbaik untuk mengalahkan kemalasan kemarin."
+];
 
 export function HeroCard() {
-  const { user, totalXP, todayStats } = useAppStore();
+  const { user, totalXP, todayStats, customHabits } = useAppStore();
   const level = getLevelFromXP(totalXP);
   
   // Example dummy calculation for progress
-  const { HABIT_DEFINITIONS } = require('@/lib/constants/habits');
   const completed = todayStats?.completedHabits?.length || 0;
-  const target = HABIT_DEFINITIONS?.length || 12;
-  const percentage = Math.min(100, Math.round((completed / target) * 100));
+  const target = HABIT_DEFINITIONS.length + (customHabits?.length || 0);
+  const percentage = target > 0 ? Math.min(100, Math.round((completed / target) * 100)) : 0;
   
-  // Real streak would require a global counter, using 0 for now
-  const streak = 0;
+  const [streak, setStreak] = useState(0);
+  const [quote, setQuote] = useState("");
+
+  useEffect(() => {
+    const day = new Date().getDate();
+    const index = day % MOTIVATIONAL_QUOTES.length;
+    setQuote(MOTIVATIONAL_QUOTES[index]);
+  }, []);
+
+  const getContextMessage = () => {
+    if (percentage === 0) {
+      return "Hari baru, lembaran baru! Ayo mulai dengan mencentang satu habit kecil hari ini.";
+    }
+    if (percentage > 0 && percentage < 50) {
+      return "Langkah awal yang luar biasa! Pertahankan momentum untuk menaklukkan target harian Anda.";
+    }
+    if (percentage >= 50 && percentage < 100) {
+      return "Lebih dari setengah target tercapai! Sedikit lagi menuju hari yang sempurna!";
+    }
+    if (percentage === 100) {
+      return "Luar biasa! Hari sempurna tercapai sepenuhnya. Anda adalah penguasa disiplin diri! 🏆";
+    }
+    return quote;
+  };
+
+  useEffect(() => {
+    if (user) {
+      getRecentStats(user.uid, 90).then(data => {
+        let currentStreak = 0;
+        const sortedHistory = [...data].sort((a, b) => b.date.localeCompare(a.date));
+        const todayStr = new Date().toISOString().split('T')[0];
+        const yesterdayStr = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+
+        let hasStreak = false;
+        if (sortedHistory.length > 0) {
+          const latest = sortedHistory[0];
+          if (latest.date === todayStr || latest.date === yesterdayStr) {
+            hasStreak = true;
+          }
+        }
+
+        if (hasStreak) {
+          for (let i = 0; i < sortedHistory.length; i++) {
+            const day = sortedHistory[i];
+            if (day.completedHabits && day.completedHabits.length > 0) {
+              currentStreak++;
+            } else {
+              break;
+            }
+          }
+        }
+        setStreak(currentStreak);
+      }).catch(err => {
+        console.error("Failed to load streak count", err);
+      });
+    }
+  }, [user, todayStats?.completedHabits]);
 
   const radius = 60;
   const circumference = 2 * Math.PI * radius;
@@ -38,8 +108,8 @@ export function HeroCard() {
             {user?.displayName?.split(' ')[0] || 'Teman'}, ayo bangkit! 👋
           </span>
         </h1>
-        <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
-          Hari baru adalah kesempatan baru untuk menjadi lebih baik.
+        <p className="text-xs mt-1 leading-relaxed font-medium" style={{ color: 'var(--text-secondary)' }}>
+          {getContextMessage()}
         </p>
       </div>
 
@@ -112,8 +182,8 @@ export function HeroCard() {
               {user?.displayName?.split(' ')[0] || 'Teman'}, ayo bangkit! 👋
             </span>
           </h1>
-          <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
-            Hari baru adalah kesempatan baru untuk menjadi lebih baik.
+          <p className="text-sm mt-1 leading-relaxed font-medium" style={{ color: 'var(--text-secondary)' }}>
+            {getContextMessage()}
           </p>
         </div>
 

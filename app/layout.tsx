@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { ThemeProvider } from '@/components/providers/ThemeProvider';
 import { AuthProvider } from '@/components/providers/AuthProvider';
+import { LevelUpCelebrationModal } from '@/components/dashboard/LevelUpCelebrationModal';
 
 export const metadata: Metadata = {
   title: 'LIFE OS — Personal Discipline & Productivity System',
@@ -51,6 +52,7 @@ export default function RootLayout({
         <AuthProvider>
           <ThemeProvider>
             {children}
+            <LevelUpCelebrationModal />
           </ThemeProvider>
         </AuthProvider>
       </body>

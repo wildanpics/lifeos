@@ -7,10 +7,10 @@ import { HABIT_DEFINITIONS } from '@/lib/constants/habits';
 import { CheckSquare, Flame } from 'lucide-react';
 
 export default function HabitsPage() {
-  const { todayStats } = useAppStore();
+  const { todayStats, customHabits } = useAppStore();
   const completed = todayStats?.completedHabits?.length || 0;
-  const total = HABIT_DEFINITIONS.length;
-  const pct = Math.round((completed / total) * 100);
+  const total = HABIT_DEFINITIONS.length + (customHabits?.length || 0);
+  const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
   const xpToday = todayStats?.xpEarned || 0;
 
   return (

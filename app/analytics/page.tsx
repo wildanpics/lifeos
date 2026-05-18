@@ -10,6 +10,7 @@ import {
   LineChart, Line, ScatterChart, Scatter, CartesianGrid, Legend,
 } from 'recharts';
 import { BarChart3, TrendingUp, Moon, Brain } from 'lucide-react';
+import { AIInsights } from '@/components/dashboard/AIInsights';
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null;
@@ -24,7 +25,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 export default function AnalyticsPage() {
-  const { user } = useAppStore();
+  const { user, theme } = useAppStore();
   const [stats, setStats] = useState<DailyStats[]>([]);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<7 | 14 | 30>(7);
@@ -87,6 +88,11 @@ export default function AnalyticsPage() {
           </motion.div>
         ))}
       </div>
+
+      {/* AI Smart Correlation Insights Panel */}
+      {!loading && stats.length > 0 && (
+        <AIInsights stats={stats} theme={theme} />
+      )}
 
       {loading ? (
         <div className="space-y-3">

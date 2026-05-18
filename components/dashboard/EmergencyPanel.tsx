@@ -14,12 +14,12 @@ const EMERGENCY_TASKS = [
 ];
 
 export function EmergencyPanel() {
-  const { todayStats, setEmergencyPanel } = useAppStore();
+  const { todayStats, setEmergencyPanel, customHabits } = useAppStore();
   const [completedTasks, setCompletedTasks] = useState<number[]>([]);
   const [dismissed, setDismissed] = useState(false);
 
   const completedCount = todayStats?.completedHabits?.length || 0;
-  const totalHabits = HABIT_DEFINITIONS.length;
+  const totalHabits = HABIT_DEFINITIONS.length + (customHabits?.length || 0);
   const progress = totalHabits > 0 ? (completedCount / totalHabits) * 100 : 0;
 
   // Show emergency if: after 09:00 and less than 10% done

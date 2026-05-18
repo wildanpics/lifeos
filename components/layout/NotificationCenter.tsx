@@ -12,9 +12,10 @@ import {
 interface NotificationCenterProps {
   isOpen: boolean;
   onClose: () => void;
+  triggerRef?: React.RefObject<HTMLButtonElement | null>;
 }
 
-export function NotificationCenter({ isOpen, onClose }: NotificationCenterProps) {
+export function NotificationCenter({ isOpen, onClose, triggerRef }: NotificationCenterProps) {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { 
     notifications = [], 
@@ -28,6 +29,11 @@ export function NotificationCenter({ isOpen, onClose }: NotificationCenterProps)
   // Handle click outside to close
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
+      // If clicking the trigger button, ignore and let the button's toggle logic handle it
+      if (triggerRef?.current && triggerRef.current.contains(event.target as Node)) {
+        return;
+      }
+
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         onClose();
       }
@@ -39,7 +45,7 @@ export function NotificationCenter({ isOpen, onClose }: NotificationCenterProps)
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, triggerRef]);
 
   // Map notification type to Lucide icons & color schemes
   const getIconAndStyle = (type: NotificationType) => {
@@ -126,7 +132,7 @@ export function NotificationCenter({ isOpen, onClose }: NotificationCenterProps)
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 10, scale: 0.95 }}
           transition={{ duration: 0.2, ease: 'easeOut' }}
-          className="absolute right-0 mt-3 w-[360px] md:w-[400px] rounded-2xl overflow-hidden z-50"
+          className="fixed md:absolute left-4 right-4 md:left-auto md:right-0 top-16 md:top-auto md:mt-3 w-auto md:w-[400px] rounded-2xl overflow-hidden z-50"
           style={{
             background: 'var(--bg-secondary)',
             backdropFilter: 'blur(16px)',

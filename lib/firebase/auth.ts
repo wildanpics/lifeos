@@ -89,7 +89,7 @@ export const ensureUserProfile = async (user: User) => {
       uid: user.uid,
       email: user.email || '',
       displayName: user.displayName || 'Life OS User',
-      photoURL: user.photoURL || undefined,
+      photoURL: user.photoURL || null,
       cityId: 29,
       city: 'Jakarta',
       onboardingComplete: false,
