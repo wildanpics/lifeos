@@ -61,18 +61,27 @@ export function DailyRules() {
   const [newIcon, setNewIcon] = useState('CheckCircle2');
   const [newColor, setNewColor] = useState<'emerald' | 'indigo' | 'blue' | 'red' | 'amber' | 'purple'>('indigo');
 
-  // Load from local storage on mount
+  // Load from local storage and keep in sync dynamically
   useEffect(() => {
-    const saved = localStorage.getItem('life_os_daily_rules');
-    if (saved) {
-      try {
-        setRules(JSON.parse(saved));
-      } catch (e) {
+    const loadRules = () => {
+      const saved = localStorage.getItem('life_os_daily_rules');
+      if (saved) {
+        try {
+          setRules(JSON.parse(saved));
+        } catch (e) {
+          setRules(DEFAULT_RULES);
+        }
+      } else {
         setRules(DEFAULT_RULES);
       }
-    } else {
-      setRules(DEFAULT_RULES);
-    }
+    };
+    loadRules();
+    window.addEventListener('storage', loadRules);
+    window.addEventListener('life-os-rules-updated', loadRules);
+    return () => {
+      window.removeEventListener('storage', loadRules);
+      window.removeEventListener('life-os-rules-updated', loadRules);
+    };
   }, []);
 
   // Save to local storage whenever rules change
