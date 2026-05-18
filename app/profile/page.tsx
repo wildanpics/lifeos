@@ -193,6 +193,91 @@ const CommunityAvatar = ({ photoURL, displayName, className = "w-11 h-11" }: { p
   );
 };
 
+const renderCustomTitleBadge = (title: string | undefined | null, isDark: boolean) => {
+  if (!title) return null;
+  const upper = title.toUpperCase();
+  
+  // Clean emojis and trim extra spacing
+  const cleanTitle = title
+    .replace(/👑|🔥|⭐|🎯|🛡️/g, '')
+    .replace(/[\u{1F300}-\u{1F9FF}]|[\u{2700}-\u{27BF}]|[\u{1F600}-\u{1F64F}]|[\u{1F680}-\u{1F6FF}]|[\u{2600}-\u{26FF}]/gu, '')
+    .trim();
+
+  if (upper.includes('DEVELOPER') || upper.includes('DEV')) {
+    return (
+      <motion.span 
+        animate={{ 
+          boxShadow: isDark 
+            ? ["0 0 4px rgba(239,68,68,0.2)", "0 0 12px rgba(239,68,68,0.5)", "0 0 4px rgba(239,68,68,0.2)"]
+            : ["0 0 2px rgba(239,68,68,0.1)", "0 0 8px rgba(239,68,68,0.25)", "0 0 2px rgba(239,68,68,0.1)"]
+        }}
+        transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+        className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 text-[8.5px] font-black tracking-widest uppercase rounded-md border select-none relative overflow-hidden ${
+          isDark 
+            ? 'bg-red-500/10 border-red-500/40 text-red-400' 
+            : 'bg-red-50 border-red-200 text-red-650 shadow-red-200/20'
+        }`}
+      >
+        <Terminal className="w-2.5 h-2.5 text-red-500 animate-pulse" />
+        <span>{cleanTitle}</span>
+      </motion.span>
+    );
+  }
+
+  if (upper.includes('SUHU') || upper.includes('🔥') || upper.includes('FIRE')) {
+    return (
+      <motion.span 
+        animate={{ 
+          boxShadow: isDark 
+            ? ["0 0 4px rgba(245,158,11,0.2)", "0 0 12px rgba(245,158,11,0.5)", "0 0 4px rgba(245,158,11,0.2)"]
+            : ["0 0 2px rgba(245,158,11,0.1)", "0 0 8px rgba(245,158,11,0.25)", "0 0 2px rgba(245,158,11,0.1)"]
+        }}
+        transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+        className={`inline-flex items-center gap-1 px-2 py-0.5 text-[8.5px] font-black tracking-wider uppercase rounded-md border select-none relative overflow-hidden ${
+          isDark 
+            ? 'bg-amber-500/10 border-amber-500/40 text-amber-400' 
+            : 'bg-amber-50 border-amber-200 text-amber-650 shadow-amber-200/20'
+        }`}
+      >
+        <Flame className="w-2.5 h-2.5 text-amber-500 animate-bounce" />
+        <span>{cleanTitle}</span>
+      </motion.span>
+    );
+  }
+
+  if (upper.includes('VIP') || upper.includes('👑') || upper.includes('⭐') || upper.includes('CROWN')) {
+    return (
+      <motion.span 
+        animate={{ 
+          boxShadow: isDark 
+            ? ["0 0 4px rgba(139,92,246,0.2)", "0 0 12px rgba(139,92,246,0.5)", "0 0 4px rgba(139,92,246,0.2)"]
+            : ["0 0 2px rgba(139,92,246,0.1)", "0 0 8px rgba(139,92,246,0.25)", "0 0 2px rgba(139,92,246,0.1)"]
+        }}
+        transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+        className={`inline-flex items-center gap-1 px-2 py-0.5 text-[8.5px] font-black tracking-wider uppercase rounded-md border select-none relative overflow-hidden ${
+          isDark 
+            ? 'bg-violet-500/10 border-violet-500/40 text-violet-300' 
+            : 'bg-violet-50 border-violet-200 text-violet-650 shadow-violet-200/20'
+        }`}
+      >
+        <Crown className="w-2.5 h-2.5 text-violet-400" />
+        <span>{cleanTitle}</span>
+      </motion.span>
+    );
+  }
+
+  return (
+    <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-[8.5px] font-black tracking-wider uppercase rounded-md border select-none ${
+      isDark 
+        ? 'bg-violet-650/45 border-violet-500/35 text-violet-300 shadow-sm' 
+        : 'bg-violet-50 border-violet-200 text-violet-650 shadow-sm'
+    }`}>
+      <Sparkles className="w-2.5 h-2.5 text-violet-400" />
+      <span>{cleanTitle}</span>
+    </span>
+  );
+};
+
 export default function ProfilePage() {
   const { 
     user, 
@@ -210,15 +295,25 @@ export default function ProfilePage() {
     prayerCityName,
     unlockedAchievements,
     disciplineStreak,
-    league
+    league,
+    setTotalXP,
+    setDisciplineStreak,
+    setLeague,
+    setTodayStats,
+    setUnlockedAchievements,
+    customTitle,
+    setCustomTitle,
+    setLevelUpCelebration,
+    setNewAchievement
   } = useAppStore();
 
   const router = useRouter();
   const level = getLevelFromXP(totalXP);
   const progress = getProgressToNextLevel(totalXP);
   const xpToNext = getXPToNextLevel(totalXP);
+  const isDark = theme === 'dark';
   
-  const [activeTab, setActiveTab] = useState<'me' | 'explore'>('me');
+  const [activeTab, setActiveTab] = useState<'me' | 'dev' | 'explore'>('me');
   const [isCityModalOpen, setIsCityModalOpen] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
 
@@ -248,6 +343,80 @@ export default function ProfilePage() {
   const [selectedAchievement, setSelectedAchievement] = useState<any | null>(null);
   const [isAchievementsModalOpen, setIsAchievementsModalOpen] = useState(false);
   const [isUserAchievementsModalOpen, setIsUserAchievementsModalOpen] = useState(false);
+  const [selectedDevUser, setSelectedDevUser] = useState<PublicUserProfile | null>(null);
+  const [devUserStats, setDevUserStats] = useState<any | null>(null);
+  const [isEditingSelf, setIsEditingSelf] = useState(true);
+  const [sandboxToastText, setSandboxToastText] = useState('Uji coba sistem developer berjalan lancar! 🎉');
+
+  // Diagnostic Metrics States
+  const [dbLatency, setDbLatency] = useState<number | null>(null);
+  const [dbStatus, setDbStatus] = useState<'testing' | 'optimal' | 'offline'>('testing');
+  const [dbMetrics, setDbMetrics] = useState<{
+    avgXP: number;
+    avgLevel: number;
+    leaderUser: PublicUserProfile | null;
+  } | null>(null);
+
+  // Load user profiles & system metrics dynamically for Dev Hub
+  useEffect(() => {
+    if (activeTab === 'dev' && user?.email === 'mwildanfiqri88@gmail.com') {
+      const loadMetricsAndProfiles = async () => {
+        setDbStatus('testing');
+        const startTime = performance.now();
+        try {
+          const data = await getAllUserProfiles();
+          const latency = Math.round(performance.now() - startTime);
+          setDbLatency(latency);
+          setDbStatus('optimal');
+          setUsersList(data);
+
+          if (data.length > 0) {
+            const totalXP = data.reduce((sum, u) => sum + (u.totalXP || 0), 0);
+            const avgXP = Math.round(totalXP / data.length);
+            const avgLevel = getLevelFromXP(avgXP).level;
+            
+            // Find highest XP user as defending champion
+            const sorted = [...data].sort((a, b) => b.totalXP - a.totalXP);
+            const leaderUser = sorted[0];
+
+            setDbMetrics({
+              avgXP,
+              avgLevel,
+              leaderUser
+            });
+          }
+        } catch (err) {
+          console.error('Failed to load dev metrics:', err);
+          setDbStatus('offline');
+        }
+      };
+      loadMetricsAndProfiles();
+    }
+  }, [activeTab, user]);
+
+  const fetchDevUserStats = async (targetUid: string) => {
+    try {
+      const { getTodayStats, initTodayStats } = await import('@/lib/firebase/firestore');
+      const today = todayStats?.date || new Date().toISOString().split('T')[0];
+      let stats = await getTodayStats(targetUid, today);
+      if (!stats) {
+        stats = await initTodayStats(targetUid, today);
+      }
+      setDevUserStats(stats);
+    } catch (e) {
+      console.error('Failed to load daily stats for dev target:', e);
+    }
+  };
+
+  const handleSelectDevUser = async (targetUser: PublicUserProfile | null) => {
+    setSelectedDevUser(targetUser);
+    if (targetUser) {
+      setDevUserStats(null);
+      await fetchDevUserStats(targetUser.uid);
+    } else {
+      setDevUserStats(null);
+    }
+  };
 
   // Sync profile when XP, streak, league, or goals change
   useEffect(() => {
@@ -334,6 +503,23 @@ export default function ProfilePage() {
           <User className="w-4 h-4" />
           Profil Saya
         </button>
+
+        {user?.email === 'mwildanfiqri88@gmail.com' && (
+          <button
+            onClick={() => setActiveTab('dev')}
+            className="flex-1 py-3 px-4 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 border border-transparent"
+            style={{
+              background: activeTab === 'dev' ? 'var(--bg-primary)' : 'transparent',
+              color: activeTab === 'dev' ? '#c084fc' : 'var(--text-secondary)',
+              boxShadow: activeTab === 'dev' ? '0 4px 12px rgba(139, 92, 246, 0.15)' : 'none',
+              border: activeTab === 'dev' ? '1px solid rgba(139, 92, 246, 0.4)' : '1px solid transparent'
+            }}
+          >
+            <Terminal className="w-4 h-4 text-violet-400" />
+            Developer Hub
+          </button>
+        )}
+
         <button
           onClick={() => setActiveTab('explore')}
           className="flex-1 py-3 px-4 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2"
@@ -354,6 +540,18 @@ export default function ProfilePage() {
           
           {/* Profile Header */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="card text-center py-6 relative overflow-hidden">
+            {user?.email === 'mwildanfiqri88@gmail.com' && (
+              <button 
+                onClick={() => {
+                  playMechanicalClick();
+                  setActiveTab('dev');
+                }}
+                className="absolute top-4 right-4 p-2 rounded-xl border border-violet-500/35 bg-violet-600/10 text-violet-300 hover:bg-violet-650 hover:text-white transition-all shadow-md shadow-violet-500/10 hover:scale-105 flex items-center gap-1.5 text-[9px] font-black uppercase tracking-wider animate-pulse select-none z-20"
+              >
+                <Terminal className="w-3.5 h-3.5" />
+                Dev Menu
+              </button>
+            )}
             {/* Dynamic Background glow of active level */}
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 rounded-full blur-3xl pointer-events-none opacity-20"
               style={{ background: level.color }} />
@@ -364,8 +562,9 @@ export default function ProfilePage() {
               className="w-20 h-20 mx-auto mb-3 relative z-10 text-3xl shadow-lg" 
             />
             
-            <h2 className="text-lg font-bold relative z-10" style={{ color: 'var(--text-primary)' }}>
+            <h2 className="text-lg font-bold relative z-10 flex items-center justify-center gap-1.5 flex-wrap" style={{ color: 'var(--text-primary)' }}>
               {user?.displayName}
+              {renderCustomTitleBadge(customTitle, isDark)}
             </h2>
             <p className="text-sm relative z-10" style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>
               {user?.email}
@@ -382,34 +581,47 @@ export default function ProfilePage() {
               </span>
 
               {/* League Badge */}
-              <span className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all select-none border ${
-                league === 'diamond' 
-                  ? 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400' 
+              {(() => {
+                const isDark = theme === 'dark';
+                const LeagueIcon = league === 'diamond' ? Gem : league === 'gold' ? Trophy : league === 'silver' ? Award : Medal;
+                const leagueStyle = league === 'diamond' 
+                  ? (isDark ? 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400' : 'bg-cyan-50 border-cyan-200 text-cyan-700')
                   : league === 'gold' 
-                    ? 'bg-yellow-500/10 border-yellow-500/30 text-yellow-400' 
+                    ? (isDark ? 'bg-yellow-500/10 border-yellow-500/30 text-yellow-400' : 'bg-yellow-50 border-yellow-250 text-yellow-750')
                     : league === 'silver' 
-                      ? 'bg-slate-400/10 border-slate-450/30 text-slate-350' 
-                      : 'bg-amber-600/10 border-amber-600/30 text-amber-500'
-              }`}>
-                {league === 'diamond' ? '💎' : league === 'gold' ? '🥇' : league === 'silver' ? '🥈' : '🥉'}
-                <span>Liga {league ? league.charAt(0).toUpperCase() + league.slice(1) : 'Bronze'}</span>
-              </span>
+                      ? (isDark ? 'bg-slate-400/10 border-slate-450/30 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-700')
+                      : (isDark ? 'bg-amber-600/10 border-amber-600/30 text-amber-500' : 'bg-amber-50 border-amber-200 text-amber-800');
 
-              {/* Streak Badge */}
-              <span className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all select-none border ${
-                disciplineStreak >= 7 
-                  ? 'bg-orange-500/15 border-orange-500/30 text-orange-400 animate-pulse' 
-                  : 'bg-neutral-800/40 border-neutral-750 text-neutral-400'
-              }`}>
-                🔥 {disciplineStreak || 0} Hari Streak
-              </span>
+                const streakStyle = disciplineStreak >= 7 
+                  ? (isDark ? 'bg-orange-500/15 border-orange-500/30 text-orange-400 animate-pulse' : 'bg-orange-50 border-orange-200 text-orange-700 animate-pulse')
+                  : (isDark ? 'bg-neutral-800/40 border-neutral-750 text-neutral-400' : 'bg-neutral-50 border-neutral-200 text-neutral-600');
 
-              {/* Multiplier Badge */}
-              {disciplineStreak >= 7 && (
-                <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest bg-yellow-500/15 border border-yellow-500/35 text-yellow-500 animate-pulse shadow-sm shadow-yellow-500/5 select-none">
-                  ⚡ 1.2x XP Aktif
-                </span>
-              )}
+                const multiplierStyle = isDark 
+                  ? 'bg-yellow-500/15 border-yellow-500/35 text-yellow-500 animate-pulse shadow-sm shadow-yellow-500/5' 
+                  : 'bg-yellow-50 border-yellow-250 text-yellow-750 animate-pulse';
+
+                return (
+                  <>
+                    {/* League Badge */}
+                    <span className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all select-none border ${leagueStyle}`}>
+                      <LeagueIcon className="w-3.5 h-3.5 flex-shrink-0 animate-pulse" />
+                      <span>Liga {league ? league.charAt(0).toUpperCase() + league.slice(1) : 'Bronze'}</span>
+                    </span>
+
+                    {/* Streak Badge */}
+                    <span className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all select-none border ${streakStyle}`}>
+                      🔥 {disciplineStreak || 0} Hari Streak
+                    </span>
+
+                    {/* Multiplier Badge */}
+                    {disciplineStreak >= 7 && (
+                      <span className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest select-none ${multiplierStyle}`}>
+                        ⚡ 1.2x XP Aktif
+                      </span>
+                    )}
+                  </>
+                );
+              })()}
             </div>
 
             {/* XP bar */}
@@ -734,6 +946,867 @@ export default function ProfilePage() {
           </motion.div>
 
         </div>
+      ) : activeTab === 'dev' && user?.email === 'mwildanfiqri88@gmail.com' ? (
+        /* Developer Hub Tab (Full Page Width & Premium Siber Style) */
+        <motion.div 
+          initial={{ opacity: 0, y: 15 }} 
+          animate={{ opacity: 1, y: 0 }} 
+          className="space-y-5 text-left"
+        >
+          <div 
+            className="card w-full rounded-2xl overflow-hidden shadow-2xl relative p-5 border"
+            style={{
+              borderColor: 'rgba(139, 92, 246, 0.4)',
+              background: 'linear-gradient(135deg, #09090E 0%, #110B22 100%)',
+              boxShadow: '0 25px 50px -12px rgba(139, 92, 246, 0.15)'
+            }}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between pb-4 border-b border-violet-500/20 mb-5 bg-transparent">
+              <div className="flex items-center gap-2 text-violet-400">
+                <Terminal className="w-5 h-5 animate-pulse" />
+                <div>
+                  <h3 className="text-base font-black tracking-tight text-white uppercase tracking-wider">
+                    Developer Control Hub
+                  </h3>
+                  <p className="text-[9px] text-violet-400/80 font-bold uppercase tracking-widest">
+                    Admin Creator Cheat Panel & Diagnostics
+                  </p>
+                </div>
+              </div>
+              <span className="px-2 py-0.5 rounded bg-violet-600/20 text-violet-300 text-[9px] font-black uppercase select-none">
+                ADMIN MODE ACTIVE
+              </span>
+            </div>
+
+            {/* Diagnostics & Content Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              
+              {/* Left Column: Diagnostics Panel & Target Selector (4 cols) */}
+              <div className="lg:col-span-4 space-y-4">
+                
+                {/* Diagnostics */}
+                <div className="p-4 rounded-xl border border-violet-500/20 bg-black/45 space-y-3 font-mono text-[11px] shadow-inner relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-violet-500/5 rounded-full blur-xl pointer-events-none" />
+                  <div className="flex items-center justify-between border-b border-violet-500/10 pb-2">
+                    <span className="text-violet-400 font-extrabold uppercase tracking-wider flex items-center gap-1.5 select-none">
+                      <Terminal className="w-3.5 h-3.5 text-violet-400" /> [SYSTEM_DIAGNOSTICS]
+                    </span>
+                    <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase select-none ${
+                      dbStatus === 'optimal' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 
+                      dbStatus === 'testing' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20 animate-pulse' : 
+                      'bg-red-500/10 text-red-400 border border-red-500/20'
+                    }`}>
+                      {dbStatus === 'optimal' ? '🟢 ONLINE_OPTIMAL' : dbStatus === 'testing' ? '🟡 TESTING...' : '🔴 OFFLINE_ERROR'}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-2 text-neutral-300">
+                    <div className="p-2 rounded bg-neutral-900/50 border border-neutral-850 flex justify-between items-center">
+                      <span className="text-neutral-500 text-[9px] uppercase font-bold tracking-wider select-none">Firestore Latency</span>
+                      <span className="text-xs font-black text-white">{dbLatency !== null ? `${dbLatency} ms` : 'Testing...'}</span>
+                    </div>
+                    <div className="p-2 rounded bg-neutral-900/50 border border-neutral-850 flex justify-between items-center">
+                      <span className="text-neutral-500 text-[9px] uppercase font-bold tracking-wider select-none">Total Accounts</span>
+                      <span className="text-xs font-black text-white">{usersList.length} users</span>
+                    </div>
+                    {dbMetrics && (
+                      <>
+                        <div className="p-2 rounded bg-neutral-900/50 border border-neutral-850 flex justify-between items-center">
+                          <span className="text-neutral-500 text-[9px] uppercase font-bold tracking-wider select-none">Avg Community XP</span>
+                          <span className="text-xs font-black text-violet-300">
+                            {dbMetrics.avgXP.toLocaleString()} XP (Lv.{dbMetrics.avgLevel})
+                          </span>
+                        </div>
+                        <div className="p-2 rounded bg-neutral-900/50 border border-neutral-850 flex justify-between items-center">
+                          <span className="text-neutral-500 text-[9px] uppercase font-bold tracking-wider select-none">Champion</span>
+                          <span className="text-xs font-black text-amber-400 truncate max-w-[120px]">
+                            🏆 {dbMetrics.leaderUser?.displayName}
+                          </span>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* Target Selector Switch */}
+                <div className="flex gap-2 p-1 rounded-xl bg-neutral-900 border border-neutral-800">
+                  <button
+                    onClick={() => {
+                      setIsEditingSelf(true);
+                      setSelectedDevUser(null);
+                      setDevUserStats(null);
+                    }}
+                    className={`flex-1 py-2 px-3 rounded-lg text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 ${
+                      isEditingSelf
+                        ? 'bg-violet-600 border border-violet-500/20 text-white shadow-md'
+                        : 'text-neutral-400 hover:text-neutral-200'
+                    }`}
+                  >
+                    <User className="w-3.5 h-3.5" />
+                    Saya (Wildan)
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsEditingSelf(false);
+                      if (!selectedDevUser && usersList.length > 0) {
+                        handleSelectDevUser(usersList[0]);
+                      }
+                    }}
+                    className={`flex-1 py-2 px-3 rounded-lg text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 ${
+                      !isEditingSelf
+                        ? 'bg-violet-600 border border-violet-500/20 text-white shadow-md'
+                        : 'text-neutral-400 hover:text-neutral-200'
+                    }`}
+                  >
+                    <Swords className="w-3.5 h-3.5" />
+                    Pengguna Lain
+                  </button>
+                </div>
+
+                {!isEditingSelf && (
+                  <div className="space-y-2 p-3.5 rounded-xl border border-violet-500/15 bg-violet-950/5">
+                    <label className="text-[10px] font-black uppercase text-violet-400 tracking-wider flex items-center gap-1">
+                      <Search className="w-3 h-3" /> Pilih Akun Pengguna Target:
+                    </label>
+                    <select
+                      value={selectedDevUser?.uid || ''}
+                      onChange={(e) => {
+                        const targetId = e.target.value;
+                        const match = usersList.find(u => u.uid === targetId);
+                        handleSelectDevUser(match || null);
+                      }}
+                      className="w-full px-3 py-2 rounded-xl bg-neutral-900 border border-neutral-800 text-white text-xs font-bold focus:outline-none focus:border-violet-500"
+                    >
+                      <option value="" disabled className="text-neutral-500">-- Pilih Pengguna --</option>
+                      {usersList.map((u) => (
+                        <option key={u.uid} value={u.uid}>
+                          {u.displayName} ({u.email || 'No email'}) - Level {getLevelFromXP(u.totalXP).level}
+                        </option>
+                      ))}
+                    </select>
+
+                    {selectedDevUser && (
+                      <div className="flex items-center gap-3 mt-3 pt-3 border-t border-violet-500/10">
+                        <CommunityAvatar
+                          photoURL={selectedDevUser.photoURL}
+                          displayName={selectedDevUser.displayName}
+                          className="w-10 h-10 text-sm shadow-md"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <h5 className="text-xs font-black text-white truncate">{selectedDevUser.displayName}</h5>
+                          <p className="text-[10px] text-neutral-400 truncate">{selectedDevUser.email}</p>
+                        </div>
+                        <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-violet-650 text-white uppercase tracking-wider">
+                          LVL {getLevelFromXP(selectedDevUser.totalXP).level}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Right Column: Settings & Mutation Panel (8 cols) */}
+              <div className="lg:col-span-8">
+                {(() => {
+                  const targetUser = isEditingSelf 
+                    ? {
+                        uid: user?.uid,
+                        displayName: user?.displayName || 'Wildan',
+                        email: user?.email || '',
+                        totalXP,
+                        disciplineStreak,
+                        league,
+                        unlockedAchievements,
+                        customTitle
+                      }
+                    : selectedDevUser;
+
+                  const targetStats = isEditingSelf 
+                    ? todayStats 
+                    : devUserStats;
+
+                  if (!targetUser) {
+                    return (
+                      <div className="text-center py-12 text-neutral-550 text-xs font-bold border border-dashed border-neutral-800 rounded-xl">
+                        Pilih akun pengguna target di kolom kiri untuk mulai menyunting.
+                      </div>
+                    );
+                  }
+
+                  const targetLevelObj = getLevelFromXP(targetUser.totalXP);
+                  const targetXpToNext = getXPToNextLevel(targetUser.totalXP);
+
+                  return (
+                    <div className="space-y-6">
+                      
+                      {/* Target Info Header */}
+                      <div className="p-3.5 rounded-xl border border-violet-500/25 bg-violet-600/5 grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <div className="flex flex-col">
+                          <span className="text-[9px] uppercase font-bold text-violet-400">Target Sunting</span>
+                          <span className="text-xs font-black text-white truncate">{isEditingSelf ? '👑 Saya (Developer)' : `👥 ${targetUser.displayName}`}</span>
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-[9px] uppercase font-bold text-violet-400">Email</span>
+                          <span className="text-xs font-black text-white truncate select-all">{targetUser.email || '(Tidak Ada)'}</span>
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-[9px] uppercase font-bold text-violet-400">UID Firestore</span>
+                          <span className="text-[10px] font-mono text-neutral-400 select-all truncate">{targetUser.uid}</span>
+                        </div>
+                      </div>
+
+                      {/* Gamifikasi Override */}
+                      <div className="space-y-4">
+                        <h4 className="text-xs font-black uppercase text-violet-400 tracking-wider flex items-center gap-1.5">
+                          <Zap className="w-3.5 h-3.5 animate-bounce" /> 1. Parameter Gamifikasi
+                        </h4>
+                        
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          {/* XP */}
+                          <div className="space-y-1.5">
+                            <label className="text-[10px] font-bold text-neutral-400 uppercase">Total XP ({targetUser.totalXP})</label>
+                            <input
+                              type="number"
+                              value={targetUser.totalXP}
+                              onChange={async (e) => {
+                                const val = parseInt(e.target.value) || 0;
+                                if (isEditingSelf) {
+                                  setTotalXP(val);
+                                  const { syncUserProfile } = await import('@/lib/firebase/firestore');
+                                  await syncUserProfile(user!.uid, { totalXP: val });
+                                } else {
+                                  setSelectedDevUser({ ...selectedDevUser!, totalXP: val });
+                                  const { syncUserProfile } = await import('@/lib/firebase/firestore');
+                                  await syncUserProfile(selectedDevUser!.uid, { totalXP: val });
+                                }
+                              }}
+                              className="w-full px-3 py-2 rounded-xl bg-neutral-900 border border-neutral-800 text-white text-xs font-bold focus:outline-none focus:border-violet-500"
+                            />
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {[-100, +100, +500, +1000].map((amount) => (
+                                <button
+                                  key={amount}
+                                  onClick={async () => {
+                                    const nextXP = Math.max(0, targetUser.totalXP + amount);
+                                    if (isEditingSelf) {
+                                      setTotalXP(nextXP);
+                                      const { syncUserProfile } = await import('@/lib/firebase/firestore');
+                                      await syncUserProfile(user!.uid, { totalXP: nextXP });
+                                    } else {
+                                      setSelectedDevUser({ ...selectedDevUser!, totalXP: nextXP });
+                                      const { syncUserProfile } = await import('@/lib/firebase/firestore');
+                                      await syncUserProfile(selectedDevUser!.uid, { totalXP: nextXP });
+                                    }
+                                  }}
+                                  className="px-2 py-0.5 rounded bg-neutral-850 hover:bg-violet-900/40 border border-neutral-800 text-[9px] font-bold text-neutral-300 hover:text-white transition-all"
+                                >
+                                  {amount > 0 ? `+${amount}` : amount}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Streak */}
+                          <div className="space-y-1.5">
+                            <label className="text-[10px] font-bold text-neutral-400 uppercase">Streak Hari ({targetUser.disciplineStreak || 0})</label>
+                            <input
+                              type="number"
+                              value={targetUser.disciplineStreak || 0}
+                              onChange={async (e) => {
+                                const val = parseInt(e.target.value) || 0;
+                                if (isEditingSelf) {
+                                  setDisciplineStreak(val);
+                                } else {
+                                  setSelectedDevUser({ ...selectedDevUser!, disciplineStreak: val });
+                                  const { syncUserProfile } = await import('@/lib/firebase/firestore');
+                                  await syncUserProfile(selectedDevUser!.uid, { disciplineStreak: val });
+                                }
+                              }}
+                              className="w-full px-3 py-2 rounded-xl bg-neutral-900 border border-neutral-800 text-white text-xs font-bold focus:outline-none focus:border-violet-500"
+                            />
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {[0, 7, 30, 100].map((val) => (
+                                <button
+                                  key={val}
+                                  onClick={async () => {
+                                    if (isEditingSelf) {
+                                      setDisciplineStreak(val);
+                                    } else {
+                                      setSelectedDevUser({ ...selectedDevUser!, disciplineStreak: val });
+                                      const { syncUserProfile } = await import('@/lib/firebase/firestore');
+                                      await syncUserProfile(selectedDevUser!.uid, { disciplineStreak: val });
+                                    }
+                                  }}
+                                  className="px-2 py-0.5 rounded bg-neutral-850 hover:bg-violet-900/40 border border-neutral-800 text-[9px] font-bold text-neutral-300 hover:text-white transition-all"
+                                >
+                                  {val} Hari
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Title & Badge VIP */}
+                        <div className="space-y-2 p-3.5 rounded-xl border border-violet-500/10 bg-neutral-950/40">
+                          <label className="text-[10px] font-black uppercase text-violet-400 tracking-wider flex items-center gap-1.5">
+                            🏷️ VIP Custom Title & Lencana Gelar ({targetUser.customTitle || 'Tidak ada'})
+                          </label>
+                          <input
+                            type="text"
+                            value={targetUser.customTitle || ''}
+                            placeholder="Contoh: 👑 DEVELOPER, 🔥 SUHU, ⭐ VIP..."
+                            onChange={async (e) => {
+                              const val = e.target.value;
+                              if (isEditingSelf) {
+                                setCustomTitle(val);
+                                const { syncUserProfile } = await import('@/lib/firebase/firestore');
+                                await syncUserProfile(user!.uid, { customTitle: val });
+                              } else {
+                                setSelectedDevUser({ ...selectedDevUser!, customTitle: val });
+                                const { syncUserProfile } = await import('@/lib/firebase/firestore');
+                                await syncUserProfile(selectedDevUser!.uid, { customTitle: val });
+                              }
+                            }}
+                            className="w-full px-3 py-2 rounded-xl bg-neutral-900 border border-neutral-800 text-white text-xs font-bold focus:outline-none focus:border-violet-500"
+                          />
+                          <div className="flex flex-wrap gap-1.5">
+                            {['👑 DEVELOPER', '🔥 SUHU', '⭐ VIP', '🎯 JUARA 1', ''].map((preset) => (
+                              <button
+                                key={preset}
+                                onClick={async () => {
+                                  if (isEditingSelf) {
+                                    setCustomTitle(preset);
+                                    const { syncUserProfile } = await import('@/lib/firebase/firestore');
+                                    await syncUserProfile(user!.uid, { customTitle: preset });
+                                  } else {
+                                    setSelectedDevUser({ ...selectedDevUser!, customTitle: preset });
+                                    const { syncUserProfile } = await import('@/lib/firebase/firestore');
+                                    await syncUserProfile(selectedDevUser!.uid, { customTitle: preset });
+                                  }
+                                }}
+                                className="px-2 py-1 rounded bg-neutral-850 hover:bg-violet-900/40 border border-neutral-800 text-[9px] font-bold text-neutral-300 hover:text-white transition-all select-none"
+                              >
+                                {preset === '' ? '🧹 Hapus' : preset}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          {/* League Selector */}
+                          <div className="space-y-1.5">
+                            <label className="text-[10px] font-bold text-neutral-400 uppercase">Override Liga ({targetUser.league || 'bronze'})</label>
+                            <div className="grid grid-cols-4 gap-2">
+                              {(['bronze', 'silver', 'gold', 'diamond'] as const).map((l) => (
+                                <button
+                                  key={l}
+                                  onClick={async () => {
+                                    if (isEditingSelf) {
+                                      setLeague(l);
+                                    } else {
+                                      setSelectedDevUser({ ...selectedDevUser!, league: l });
+                                      const { syncUserProfile } = await import('@/lib/firebase/firestore');
+                                      await syncUserProfile(selectedDevUser!.uid, { league: l });
+                                    }
+                                  }}
+                                  className={`py-2 px-1 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border ${
+                                    (targetUser.league || 'bronze') === l
+                                      ? 'bg-violet-600 border-violet-500 text-white shadow-md shadow-violet-500/20'
+                                      : 'bg-neutral-900 border-neutral-800 text-neutral-400 hover:bg-neutral-800'
+                                  }`}
+                                >
+                                  {(() => {
+                                    const LIcon = l === 'diamond' ? Gem : l === 'gold' ? Trophy : l === 'silver' ? Award : Medal;
+                                    return <LIcon className="w-4 h-4 mx-auto" />;
+                                  })()}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Achievements */}
+                          <div className="space-y-1.5">
+                            <label className="text-[10px] font-bold text-neutral-400 uppercase">Lemari Piala ({targetUser.unlockedAchievements?.length || 0} Terbuka)</label>
+                            <div className="flex gap-1.5">
+                              <button
+                                onClick={async () => {
+                                  const fullAchievements = ACHIEVEMENTS.map(a => ({ id: a.id, unlockedAt: new Date().toISOString() }));
+                                  if (isEditingSelf) {
+                                    setUnlockedAchievements(fullAchievements);
+                                  } else {
+                                    setSelectedDevUser({ ...selectedDevUser!, unlockedAchievements: fullAchievements });
+                                    const { syncUserProfile } = await import('@/lib/firebase/firestore');
+                                    await syncUserProfile(selectedDevUser!.uid, { unlockedAchievements: fullAchievements });
+                                  }
+                                }}
+                                className="flex-1 py-2 px-3 rounded-xl border border-violet-500/20 bg-violet-950/20 hover:bg-violet-900/30 text-violet-400 text-[10px] font-black uppercase tracking-wider transition-all select-none"
+                              >
+                                🏆 Buka Semua
+                              </button>
+                              <button
+                                onClick={async () => {
+                                  if (isEditingSelf) {
+                                    setUnlockedAchievements([]);
+                                  } else {
+                                    setSelectedDevUser({ ...selectedDevUser!, unlockedAchievements: [] });
+                                    const { syncUserProfile } = await import('@/lib/firebase/firestore');
+                                    await syncUserProfile(selectedDevUser!.uid, { unlockedAchievements: [] });
+                                  }
+                                }}
+                                className="flex-1 py-2 px-3 rounded-xl border border-red-500/20 bg-red-950/20 hover:bg-red-900/30 text-red-400 text-[10px] font-black uppercase tracking-wider transition-all select-none"
+                              >
+                                🔒 Kunci Semua
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="border-t border-neutral-800 my-2" />
+
+                      {/* Section: Today's Daily Stats */}
+                      {targetStats ? (
+                        <div className="space-y-3">
+                          <h4 className="text-xs font-black uppercase text-violet-400 tracking-wider flex items-center gap-1.5">
+                            <Activity className="w-3.5 h-3.5" /> 2. Statistik Aktivitas Hari Ini ({targetStats.date})
+                          </h4>
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                            {/* Water Glasses */}
+                            <div className="space-y-1">
+                              <label className="text-[9px] font-bold text-neutral-500 uppercase">Air ({targetStats.waterGlasses || 0}/8 Gls)</label>
+                              <input
+                                type="number"
+                                min={0}
+                                max={20}
+                                value={targetStats.waterGlasses || 0}
+                                onChange={async (e) => {
+                                  const val = Math.max(0, parseInt(e.target.value) || 0);
+                                  if (isEditingSelf) {
+                                    setTodayStats({ ...todayStats!, waterGlasses: val });
+                                    const { updateDailyStats } = await import('@/lib/firebase/firestore');
+                                    await updateDailyStats(user!.uid, todayStats!.date, { waterGlasses: val });
+                                  } else {
+                                    setDevUserStats({ ...devUserStats!, waterGlasses: val });
+                                    const { updateDailyStats } = await import('@/lib/firebase/firestore');
+                                    await updateDailyStats(selectedDevUser!.uid, devUserStats.date, { waterGlasses: val });
+                                  }
+                                }}
+                                className="w-full px-2.5 py-1.5 rounded-lg bg-neutral-900 border border-neutral-800 text-white text-xs font-bold focus:outline-none focus:border-violet-500"
+                              />
+                            </div>
+
+                            {/* Meals */}
+                            <div className="space-y-1">
+                              <label className="text-[9px] font-bold text-neutral-500 uppercase">Makan ({targetStats.meals || 0}/4 Prs)</label>
+                              <input
+                                type="number"
+                                min={0}
+                                max={10}
+                                value={targetStats.meals || 0}
+                                onChange={async (e) => {
+                                  const val = Math.max(0, parseInt(e.target.value) || 0);
+                                  if (isEditingSelf) {
+                                    setTodayStats({ ...todayStats!, meals: val });
+                                    const { updateDailyStats } = await import('@/lib/firebase/firestore');
+                                    await updateDailyStats(user!.uid, todayStats!.date, { meals: val });
+                                  } else {
+                                    setDevUserStats({ ...devUserStats!, meals: val });
+                                    const { updateDailyStats } = await import('@/lib/firebase/firestore');
+                                    await updateDailyStats(selectedDevUser!.uid, devUserStats.date, { meals: val });
+                                  }
+                                }}
+                                className="w-full px-2.5 py-1.5 rounded-lg bg-neutral-900 border border-neutral-800 text-white text-xs font-bold focus:outline-none focus:border-violet-500"
+                              />
+                            </div>
+
+                            {/* Sleep Hours */}
+                            <div className="space-y-1">
+                              <label className="text-[9px] font-bold text-neutral-500 uppercase">Tidur ({targetStats.sleepHours || 0} Jam)</label>
+                              <input
+                                type="number"
+                                min={0}
+                                max={24}
+                                value={targetStats.sleepHours || 0}
+                                onChange={async (e) => {
+                                  const val = Math.max(0, parseFloat(e.target.value) || 0);
+                                  if (isEditingSelf) {
+                                    setTodayStats({ ...todayStats!, sleepHours: val });
+                                    const { updateDailyStats } = await import('@/lib/firebase/firestore');
+                                    await updateDailyStats(user!.uid, todayStats!.date, { sleepHours: val });
+                                  } else {
+                                    setDevUserStats({ ...devUserStats!, sleepHours: val });
+                                    const { updateDailyStats } = await import('@/lib/firebase/firestore');
+                                    await updateDailyStats(selectedDevUser!.uid, devUserStats.date, { sleepHours: val });
+                                  }
+                                }}
+                                className="w-full px-2.5 py-1.5 rounded-lg bg-neutral-900 border border-neutral-800 text-white text-xs font-bold focus:outline-none focus:border-violet-500"
+                              />
+                            </div>
+
+                            {/* Focus Minutes */}
+                            <div className="space-y-1">
+                              <label className="text-[9px] font-bold text-neutral-500 uppercase">Fokus ({targetStats.focusMinutes || 0} Mnt)</label>
+                              <input
+                                type="number"
+                                min={0}
+                                value={targetStats.focusMinutes || 0}
+                                onChange={async (e) => {
+                                  const val = Math.max(0, parseInt(e.target.value) || 0);
+                                  if (isEditingSelf) {
+                                    setTodayStats({ ...todayStats!, focusMinutes: val });
+                                    const { updateDailyStats } = await import('@/lib/firebase/firestore');
+                                    await updateDailyStats(user!.uid, todayStats!.date, { focusMinutes: val });
+                                  } else {
+                                    setDevUserStats({ ...devUserStats!, focusMinutes: val });
+                                    const { updateDailyStats } = await import('@/lib/firebase/firestore');
+                                    await updateDailyStats(selectedDevUser!.uid, devUserStats.date, { focusMinutes: val });
+                                  }
+                                }}
+                                className="w-full px-2.5 py-1.5 rounded-lg bg-neutral-900 border border-neutral-800 text-white text-xs font-bold focus:outline-none focus:border-violet-500"
+                              />
+                            </div>
+
+                            {/* Screen Time */}
+                            <div className="space-y-1">
+                              <label className="text-[9px] font-bold text-neutral-500 uppercase">Layar ({targetStats.screenTimeMinutes || 0} Mnt)</label>
+                              <input
+                                type="number"
+                                min={0}
+                                value={targetStats.screenTimeMinutes || 0}
+                                onChange={async (e) => {
+                                  const val = Math.max(0, parseInt(e.target.value) || 0);
+                                  if (isEditingSelf) {
+                                    setTodayStats({ ...todayStats!, screenTimeMinutes: val });
+                                    const { updateDailyStats } = await import('@/lib/firebase/firestore');
+                                    await updateDailyStats(user!.uid, todayStats!.date, { screenTimeMinutes: val });
+                                  } else {
+                                    setDevUserStats({ ...devUserStats!, screenTimeMinutes: val });
+                                    const { updateDailyStats } = await import('@/lib/firebase/firestore');
+                                    await updateDailyStats(selectedDevUser!.uid, devUserStats.date, { screenTimeMinutes: val });
+                                  }
+                                }}
+                                className="w-full px-2.5 py-1.5 rounded-lg bg-neutral-900 border border-neutral-800 text-white text-xs font-bold focus:outline-none focus:border-violet-500"
+                              />
+                            </div>
+
+                            {/* Mood */}
+                            <div className="space-y-1">
+                              <label className="text-[9px] font-bold text-neutral-500 uppercase">Mood (1-5)</label>
+                              <input
+                                type="number"
+                                min={1}
+                                max={5}
+                                value={targetStats.mood || 3}
+                                onChange={async (e) => {
+                                  const val = Math.max(1, Math.min(5, parseInt(e.target.value) || 3));
+                                  if (isEditingSelf) {
+                                    setTodayStats({ ...todayStats!, mood: val });
+                                    const { updateDailyStats } = await import('@/lib/firebase/firestore');
+                                    await updateDailyStats(user!.uid, todayStats!.date, { mood: val });
+                                  } else {
+                                    setDevUserStats({ ...devUserStats!, mood: val });
+                                    const { updateDailyStats } = await import('@/lib/firebase/firestore');
+                                    await updateDailyStats(selectedDevUser!.uid, devUserStats.date, { mood: val });
+                                  }
+                                }}
+                                className="w-full px-2.5 py-1.5 rounded-lg bg-neutral-900 border border-neutral-800 text-white text-xs font-bold focus:outline-none focus:border-violet-500"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center py-4 text-neutral-500 text-xs font-bold bg-neutral-900 border border-neutral-800 rounded-xl flex items-center justify-center gap-2">
+                          <div className="w-3.5 h-3.5 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
+                          Memuat data harian pengguna target...
+                        </div>
+                      )}
+
+                      <div className="border-t border-neutral-800 my-2" />
+
+                      {/* Section: Achievements */}
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center">
+                          <h4 className="text-xs font-black uppercase text-violet-400 tracking-wider flex items-center gap-1.5">
+                            <Trophy className="w-3.5 h-3.5" /> 3. Lemari Piala / Achievements ({(targetUser.unlockedAchievements || []).length} / 12)
+                          </h4>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={async () => {
+                                const now = new Date().toISOString();
+                                const allRecords = ACHIEVEMENTS.map((a) => ({ id: a.id, unlockedAt: now }));
+                                if (isEditingSelf) {
+                                  setUnlockedAchievements(allRecords);
+                                  const { syncUserProfile } = await import('@/lib/firebase/firestore');
+                                  await syncUserProfile(user!.uid, { unlockedAchievements: allRecords });
+                                } else {
+                                  setSelectedDevUser({ ...selectedDevUser!, unlockedAchievements: allRecords });
+                                  const { syncUserProfile } = await import('@/lib/firebase/firestore');
+                                  await syncUserProfile(selectedDevUser!.uid, { unlockedAchievements: allRecords });
+                                }
+                              }}
+                              className="px-2 py-0.5 rounded bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/25 text-[8px] font-extrabold uppercase tracking-wide transition-all"
+                            >
+                              Buka Semua
+                            </button>
+                            <button
+                              onClick={async () => {
+                                if (isEditingSelf) {
+                                  setUnlockedAchievements([]);
+                                  const { syncUserProfile } = await import('@/lib/firebase/firestore');
+                                  await syncUserProfile(user!.uid, { unlockedAchievements: [] });
+                                } else {
+                                  setSelectedDevUser({ ...selectedDevUser!, unlockedAchievements: [] });
+                                  const { syncUserProfile } = await import('@/lib/firebase/firestore');
+                                  await syncUserProfile(selectedDevUser!.uid, { unlockedAchievements: [] });
+                                }
+                              }}
+                              className="px-2 py-0.5 rounded bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/25 text-[8px] font-extrabold uppercase tracking-wide transition-all"
+                            >
+                              Kunci Semua
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto p-2 rounded-xl bg-neutral-950 border border-neutral-900 custom-scrollbar">
+                          {ACHIEVEMENTS.map((ach) => {
+                            const isUnlocked = (targetUser.unlockedAchievements || []).some(a => a.id === ach.id);
+                            return (
+                              <button
+                                key={ach.id}
+                                onClick={async () => {
+                                  let nextAchievements;
+                                  if (isUnlocked) {
+                                    nextAchievements = (targetUser.unlockedAchievements || []).filter(a => a.id !== ach.id);
+                                  } else {
+                                    nextAchievements = [...(targetUser.unlockedAchievements || []), { id: ach.id, unlockedAt: new Date().toISOString() }];
+                                  }
+                                  
+                                  if (isEditingSelf) {
+                                    setUnlockedAchievements(nextAchievements);
+                                    const { syncUserProfile } = await import('@/lib/firebase/firestore');
+                                    await syncUserProfile(user!.uid, { unlockedAchievements: nextAchievements });
+                                  } else {
+                                    setSelectedDevUser({ ...selectedDevUser!, unlockedAchievements: nextAchievements });
+                                    const { syncUserProfile } = await import('@/lib/firebase/firestore');
+                                    await syncUserProfile(selectedDevUser!.uid, { unlockedAchievements: nextAchievements });
+                                  }
+                                }}
+                                className={`flex items-center gap-2 p-2 rounded-xl text-left border transition-all ${
+                                  isUnlocked
+                                    ? 'bg-violet-950/20 border-violet-500/30 text-white'
+                                    : 'bg-neutral-900 border-neutral-800 text-neutral-500 hover:border-neutral-700'
+                                }`}
+                              >
+                                <span className="text-base shrink-0">
+                                  {isUnlocked ? '🏆' : '🔒'}
+                                </span>
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-[10px] font-bold truncate leading-tight">{ach.title}</p>
+                                  <p className="text-[7px] text-neutral-400 leading-normal truncate">{ach.description}</p>
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <div className="border-t border-neutral-800 my-2" />
+
+                      {/* Section: Event Sandbox & UI Debugger */}
+                      <div className="space-y-3">
+                        <h4 className="text-xs font-black uppercase text-violet-400 tracking-wider flex items-center gap-1.5">
+                          <Sparkles className="w-3.5 h-3.5 text-violet-400 animate-spin" /> 3. Simulator Event & Sandbox Pengujian UI
+                        </h4>
+                        
+                        <div className="p-4 rounded-xl border border-violet-500/10 bg-neutral-950/40 space-y-4">
+                          {/* First Row: Confetti & Level Up */}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <button
+                              onClick={() => {
+                                playMechanicalClick();
+                                const { triggerPremiumSuccessConfetti } = require('@/lib/utils/confetti');
+                                triggerPremiumSuccessConfetti();
+                              }}
+                              className="py-3 px-4 rounded-xl border border-dashed border-violet-500/30 hover:border-violet-400 bg-violet-950/20 hover:bg-violet-900/30 text-white text-xs font-bold transition-all flex items-center justify-center gap-2"
+                            >
+                              🎉 Trigger Confetti Blast
+                            </button>
+                            
+                            <button
+                              onClick={() => {
+                                playMechanicalClick();
+                                const levelToCelebrate = getLevelFromXP(targetUser.totalXP).level + 1;
+                                setLevelUpCelebration(levelToCelebrate);
+                              }}
+                              className="py-3 px-4 rounded-xl border border-dashed border-amber-500/30 hover:border-amber-400 bg-amber-950/20 hover:bg-amber-900/30 text-white text-xs font-bold transition-all flex items-center justify-center gap-2"
+                            >
+                              🌟 Simulate Level Up
+                            </button>
+                          </div>
+
+                          {/* Second Row: Toast Notification Tester */}
+                          <div className="space-y-2 border-t border-violet-500/10 pt-3">
+                            <label className="text-[9px] font-bold text-neutral-400 uppercase tracking-wider block">
+                              🔔 Toast Notification Tester
+                            </label>
+                            
+                            <div className="flex gap-2">
+                              <input
+                                type="text"
+                                value={sandboxToastText}
+                                onChange={(e) => setSandboxToastText(e.target.value)}
+                                placeholder="Tulis isi pesan toast di sini..."
+                                className="flex-1 px-3 py-2 rounded-xl bg-neutral-900 border border-neutral-800 text-white text-xs font-bold focus:outline-none focus:border-violet-500"
+                              />
+                            </div>
+                            
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2">
+                              <button
+                                onClick={() => {
+                                  playMechanicalClick();
+                                  setNewAchievement({
+                                    id: 'sandbox_success',
+                                    title: 'Simulasi Sukses 🎉',
+                                    description: sandboxToastText || 'Fitur ini berjalan luar biasa!',
+                                    xpReward: 100,
+                                    icon: '✅',
+                                    category: 'special'
+                                  });
+                                }}
+                                className="py-2 px-1 rounded-xl bg-emerald-950/30 hover:bg-emerald-900/30 text-emerald-400 border border-emerald-500/20 text-[9px] font-black uppercase tracking-wider transition-all"
+                              >
+                                🟢 Success
+                              </button>
+                              
+                              <button
+                                onClick={() => {
+                                  playMechanicalClick();
+                                  setNewAchievement({
+                                    id: 'sandbox_error',
+                                    title: 'Simulasi Gagal 🛑',
+                                    description: sandboxToastText || 'Sistem mendeteksi anomali!',
+                                    xpReward: 0,
+                                    icon: '❌',
+                                    category: 'special'
+                                  });
+                                }}
+                                className="py-2 px-1 rounded-xl bg-red-950/30 hover:bg-red-900/30 text-red-400 border border-red-500/20 text-[9px] font-black uppercase tracking-wider transition-all"
+                              >
+                                🔴 Error
+                              </button>
+                              
+                              <button
+                                onClick={() => {
+                                  playMechanicalClick();
+                                  setNewAchievement({
+                                    id: 'sandbox_info',
+                                    title: 'Pesan Informasi ℹ️',
+                                    description: sandboxToastText || 'Perlu diketahui sistem optimal.',
+                                    xpReward: 50,
+                                    icon: 'ℹ️',
+                                    category: 'special'
+                                  });
+                                }}
+                                className="py-2 px-1 rounded-xl bg-indigo-950/30 hover:bg-indigo-900/30 text-indigo-400 border border-indigo-500/20 text-[9px] font-black uppercase tracking-wider transition-all"
+                              >
+                                🔵 Info
+                              </button>
+                              
+                              <button
+                                onClick={() => {
+                                  playMechanicalClick();
+                                  setNewAchievement({
+                                    id: 'sandbox_warning',
+                                    title: 'Simulasi Peringatan ⚠️',
+                                    description: sandboxToastText || 'Kapasitas energi hampir penuh!',
+                                    xpReward: 75,
+                                    icon: '⚠️',
+                                    category: 'special'
+                                  });
+                                }}
+                                className="py-2 px-1 rounded-xl bg-amber-950/30 hover:bg-amber-900/30 text-amber-400 border border-amber-500/20 text-[9px] font-black uppercase tracking-wider transition-all"
+                              >
+                                🟡 Warning
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="border-t border-neutral-800 my-2" />
+
+                      {/* Section: Action / Moderations */}
+                      <div className="space-y-3">
+                        <h4 className="text-xs font-black uppercase text-violet-400 tracking-wider flex items-center gap-1.5">
+                          <Rocket className="w-3.5 h-3.5" /> 4. Tindakan Cepat & Moderasi
+                        </h4>
+                        <div className="grid grid-cols-2 gap-3">
+                          <button
+                            onClick={async () => {
+                              const nextXP = targetUser.totalXP + targetXpToNext;
+                              if (isEditingSelf) {
+                                setTotalXP(nextXP);
+                                const { syncUserProfile } = await import('@/lib/firebase/firestore');
+                                await syncUserProfile(user!.uid, { totalXP: nextXP });
+                              } else {
+                                setSelectedDevUser({ ...selectedDevUser!, totalXP: nextXP });
+                                const { syncUserProfile } = await import('@/lib/firebase/firestore');
+                                await syncUserProfile(selectedDevUser!.uid, { totalXP: nextXP });
+                              }
+                            }}
+                            className="p-3 rounded-xl border border-dashed border-amber-500/40 text-amber-500 hover:bg-amber-500/10 hover:border-amber-500 text-[10px] font-black uppercase tracking-wider text-center transition-all"
+                          >
+                            ⚡ Level Up Instan
+                          </button>
+                          
+                          {!isEditingSelf ? (
+                            <button
+                              onClick={async () => {
+                                if (confirm(`Apakah Anda yakin ingin MENGHAPUS akun ${targetUser.displayName}? Tindakan ini permanen!`)) {
+                                  const { deleteUserProfile } = await import('@/lib/firebase/firestore');
+                                  await deleteUserProfile(targetUser.uid);
+                                  alert(`Akun ${targetUser.displayName} berhasil dihapus.`);
+                                  const { getAllUserProfiles } = await import('@/lib/firebase/firestore');
+                                  const data = await getAllUserProfiles();
+                                  setUsersList(data);
+                                  setSelectedDevUser(null);
+                                  setDevUserStats(null);
+                                  setIsEditingSelf(true);
+                                }
+                              }}
+                              className="p-3 rounded-xl border border-dashed border-red-500/40 text-red-500 hover:bg-red-500/10 hover:border-red-500 text-[10px] font-black uppercase tracking-wider text-center transition-all"
+                            >
+                              🛑 Hapus Akun User
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => {
+                                localStorage.clear();
+                                window.location.reload();
+                              }}
+                              className="p-3 rounded-xl border border-dashed border-red-500/40 text-red-500 hover:bg-red-500/10 hover:border-red-500 text-[10px] font-black uppercase tracking-wider text-center transition-all"
+                            >
+                              ⚠️ Reset Cache & Reload
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                    </div>
+                  );
+                })()}
+              </div>
+
+            </div>
+
+            {/* Footer inside card */}
+            <div className="mt-6 pt-4 border-t border-violet-500/10 flex flex-col sm:flex-row justify-between items-center text-[9px] font-bold text-violet-400/50 gap-2">
+              <span>Created by Google Deepmind pair coding with Antigravity</span>
+              <span className="px-2 py-0.5 rounded bg-violet-600/10 text-violet-300">ADMIN MODE ACTIVE</span>
+            </div>
+          </div>
+        </motion.div>
       ) : (
         /* Explore Tab */
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
@@ -838,6 +1911,7 @@ service cloud.firestore {
                       <div>
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <p className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{u.displayName}</p>
+                          {renderCustomTitleBadge(u.customTitle, isDark)}
                           {isDevCard && (
                             <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-violet-600/35 text-violet-300 border border-violet-500/30 animate-pulse select-none">
                               <Terminal className="w-2.5 h-2.5 flex-shrink-0" /> Dev Creator
@@ -891,25 +1965,26 @@ service cloud.firestore {
             const activeLeague = selectedUser.league || 'bronze';
             const streak = selectedUser.disciplineStreak || 0;
             const pialaTerbuka = selectedUser.unlockedAchievements?.length || 0;
+            const isDark = theme === 'dark';
 
             return (
-              <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
+              <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95, y: 20 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                  className="relative w-full max-w-md rounded-3xl p-6 shadow-2xl overflow-hidden bg-[#0e0e11] border border-neutral-800/40 text-white"
+                  className={`relative w-full max-w-md rounded-3xl p-6 shadow-2xl overflow-hidden border ${isDark ? 'bg-[#0e0e11] border-neutral-800/40 text-white' : 'bg-white border-neutral-200 text-neutral-900 shadow-neutral-300/30'}`}
                 >
                   {/* Subtle glowing color aura in the background */}
                   <div 
-                    className="absolute -top-32 -left-32 w-64 h-64 rounded-full blur-3xl pointer-events-none opacity-20 transition-all duration-500"
+                    className={`absolute -top-32 -left-32 w-64 h-64 rounded-full blur-3xl pointer-events-none transition-all duration-500 ${isDark ? 'opacity-20' : 'opacity-10'}`}
                     style={{ background: profileCardViewMode === 'cabinet' ? '#d97706' : level.color }}
                   />
 
                   {/* Close button - sleek circle with X icon */}
                   <button
                     onClick={() => setSelectedUser(null)}
-                    className="absolute top-5 right-5 p-2 rounded-full border border-neutral-855 bg-neutral-900/50 hover:bg-neutral-850 hover:text-white transition-all text-neutral-400 z-10"
+                    className={`absolute top-5 right-5 p-2 rounded-full border transition-all z-10 ${isDark ? 'border-neutral-800 bg-neutral-900/50 hover:bg-neutral-800 hover:text-white text-neutral-400' : 'border-neutral-200 bg-neutral-50 hover:bg-neutral-100 hover:text-neutral-950 text-neutral-500'}`}
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
@@ -944,16 +2019,17 @@ service cloud.firestore {
                         </div>
 
                         <div className="space-y-1">
-                          <h3 className="text-base font-black tracking-tight text-white flex items-center justify-center gap-1.5">
+                          <h3 className={`text-base font-black tracking-tight flex items-center justify-center gap-1.5 flex-wrap ${isDark ? 'text-white' : 'text-neutral-900'}`}>
                             <span>{selectedUser.displayName}</span>
+                            {renderCustomTitleBadge(selectedUser.customTitle, isDark)}
                             {isSelf && (
                               <span className="text-[8px] font-black uppercase bg-indigo-500/10 text-indigo-400 px-1.5 py-0.5 rounded border border-indigo-500/10 select-none">
                                 Anda
                               </span>
                             )}
                           </h3>
-                          {selectedUser.email && (
-                            <p className="text-[9px] text-neutral-500 font-bold uppercase tracking-wider">
+                          {selectedUser.email && (isSelf || user?.email === 'mwildanfiqri88@gmail.com') && (
+                            <p className={`text-[9px] font-bold uppercase tracking-wider ${isDark ? 'text-neutral-500' : 'text-neutral-455'}`}>
                               {selectedUser.email}
                             </p>
                           )}
@@ -973,34 +2049,34 @@ service cloud.firestore {
                       {/* Row containing 3 Statistics Box (XP, Streak, Piala) */}
                       <div className="grid grid-cols-3 gap-3">
                         {/* XP Stats Box */}
-                        <div className="p-3 rounded-2xl border border-white/5 bg-[#16161a]/40 transition-all text-center flex flex-col justify-center min-h-[70px]">
+                        <div className={`p-3 rounded-2xl border transition-all text-center flex flex-col justify-center min-h-[70px] ${isDark ? 'border-white/5 bg-[#16161a]/40' : 'border-neutral-200 bg-neutral-50'}`}>
                           <span className="text-[8px] font-black uppercase tracking-wider text-neutral-500">
                             Total XP
                           </span>
-                          <span className="text-[11px] font-extrabold text-indigo-400 mt-1 select-none flex items-center justify-center gap-0.5">
-                            <Gem className="w-3 h-3 animate-pulse text-indigo-400" />
+                          <span className={`text-[11px] font-extrabold mt-1 select-none flex items-center justify-center gap-0.5 ${isDark ? 'text-indigo-400' : 'text-indigo-650'}`}>
+                            <Gem className={`w-3 h-3 animate-pulse ${isDark ? 'text-indigo-400' : 'text-indigo-500'}`} />
                             {selectedUser.totalXP} XP
                           </span>
                         </div>
 
                         {/* Streak Stats Box */}
-                        <div className="p-3 rounded-2xl border border-white/5 bg-[#16161a]/40 transition-all text-center flex flex-col justify-center min-h-[70px]">
+                        <div className={`p-3 rounded-2xl border transition-all text-center flex flex-col justify-center min-h-[70px] ${isDark ? 'border-white/5 bg-[#16161a]/40' : 'border-neutral-200 bg-neutral-50'}`}>
                           <span className="text-[8px] font-black uppercase tracking-wider text-neutral-500">
                             Streak
                           </span>
-                          <span className="text-[11px] font-extrabold text-orange-500 mt-1 select-none flex items-center justify-center gap-1.5">
-                            <Flame className="w-3.5 h-3.5 text-orange-500" />
+                          <span className={`text-[11px] font-extrabold mt-1 select-none flex items-center justify-center gap-1.5 ${isDark ? 'text-orange-500' : 'text-orange-655'}`}>
+                            <Flame className={`w-3.5 h-3.5 ${isDark ? 'text-orange-500' : 'text-orange-600'}`} />
                             {streak} Hari
                           </span>
                         </div>
 
-                        {/* Piala Stats Box (Clickable to change view to Trophy Cabinet) */}
+                        {/* Piala Stats Box */}
                         <div 
                           onClick={() => {
                             playMechanicalClick();
                             setProfileCardViewMode('cabinet');
                           }}
-                          className="p-3 rounded-2xl border border-white/5 bg-[#16161a]/40 hover:bg-amber-500/5 hover:border-amber-500/40 hover:scale-[1.04] hover:shadow-[0_0_15px_rgba(245,158,11,0.15)] active:scale-[0.98] transition-all text-center flex flex-col justify-center min-h-[70px] cursor-pointer group relative overflow-hidden"
+                          className={`p-3 rounded-2xl border transition-all text-center flex flex-col justify-center min-h-[70px] cursor-pointer group relative overflow-hidden ${isDark ? 'border-white/5 bg-[#16161a]/40 hover:bg-amber-500/5 hover:border-amber-500/40 hover:scale-[1.04]' : 'border-neutral-200 bg-neutral-50 hover:bg-amber-500/5 hover:border-amber-500/30 hover:scale-[1.04] hover:shadow-[0_0_15px_rgba(245,158,11,0.08)]'}`}
                           title="Klik untuk membuka Lemari Piala"
                         >
                           {/* Sleek pulsing amber notification indicator */}
@@ -1009,42 +2085,47 @@ service cloud.firestore {
                             <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-amber-500"></span>
                           </span>
 
-                          <span className="text-[8px] font-black uppercase tracking-wider text-neutral-500 group-hover:text-amber-400 transition-colors">
+                          <span className={`text-[8px] font-black uppercase tracking-wider transition-colors ${isDark ? 'text-neutral-500 group-hover:text-amber-400' : 'text-neutral-500 group-hover:text-amber-600'}`}>
                             Piala
                           </span>
-                          <span className="text-[11px] font-extrabold text-amber-500 mt-1 select-none flex items-center justify-center gap-1.5 group-hover:scale-105 transition-transform">
-                            <Trophy className="w-3.5 h-3.5 text-amber-500" />
+                          <span className={`text-[11px] font-extrabold mt-1 select-none flex items-center justify-center gap-1.5 group-hover:scale-105 transition-transform ${isDark ? 'text-amber-500' : 'text-amber-650'}`}>
+                            <Trophy className={`w-3.5 h-3.5 ${isDark ? 'text-amber-500' : 'text-amber-600'}`} />
                             {pialaTerbuka}
                           </span>
-                          <span className="text-[6.5px] font-black uppercase tracking-widest text-amber-500/80 animate-pulse mt-1 select-none flex items-center justify-center gap-0.5">
-                            <Eye className="w-2.5 h-2.5 text-amber-500/85" />
+                          <span className={`text-[6.5px] font-black uppercase tracking-widest animate-pulse mt-1 select-none flex items-center justify-center gap-0.5 ${isDark ? 'text-amber-500/80' : 'text-amber-650/80'}`}>
+                            <Eye className={`w-2.5 h-2.5 ${isDark ? 'text-amber-500/85' : 'text-amber-600/85'}`} />
                             LIHAT PIALA
                           </span>
                         </div>
                       </div>
 
                       {/* Liga Kejuaraan Block */}
-                      <div className="p-4 rounded-2xl border border-white/5 bg-[#16161a]/40 flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-amber-500/10 border-2 border-amber-500 flex items-center justify-center flex-shrink-0 shadow-lg shadow-amber-500/10">
-                          <Trophy className="w-5 h-5 text-amber-500" />
-                        </div>
-                        <div className="flex-1 text-left">
-                          <span className="text-[8px] font-black uppercase tracking-widest text-neutral-500 block">
-                            Liga Kejuaraan
-                          </span>
-                          <span className="text-xs font-black uppercase tracking-wider text-indigo-400 mt-0.5 block">
-                            Liga {activeLeague}
-                          </span>
-                        </div>
-                      </div>
+                      {(() => {
+                        const LeagueIcon = activeLeague === 'diamond' ? Gem : activeLeague === 'gold' ? Trophy : activeLeague === 'silver' ? Award : Medal;
+                        return (
+                          <div className={`p-4 rounded-2xl border flex items-center gap-3 ${isDark ? 'border-white/5 bg-[#16161a]/40' : 'border-neutral-200 bg-neutral-50'}`}>
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg ${isDark ? 'bg-amber-500/10 border-2 border-amber-500 shadow-amber-500/10' : 'bg-amber-50 border border-amber-300 shadow-amber-500/5'}`}>
+                              <LeagueIcon className={`w-5 h-5 ${isDark ? 'text-amber-500' : 'text-amber-600 animate-pulse'}`} />
+                            </div>
+                            <div className="flex-1 text-left">
+                              <span className="text-[8px] font-black uppercase tracking-widest text-neutral-500 block">
+                                Liga Kejuaraan
+                              </span>
+                              <span className={`text-xs font-black uppercase tracking-wider mt-0.5 block ${isDark ? 'text-indigo-400' : 'text-indigo-650'}`}>
+                                Liga {activeLeague ? activeLeague.charAt(0).toUpperCase() + activeLeague.slice(1) : 'Bronze'}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })()}
 
                       {/* Target Kustom Pengguna (Active Goals) */}
                       <div className="space-y-2">
                         <div className="text-[10px] font-black uppercase tracking-widest text-neutral-500 text-left flex items-center gap-1.5">
-                          <Target className="w-3.5 h-3.5 text-indigo-400" />
+                          <Target className={`w-3.5 h-3.5 ${isDark ? 'text-indigo-400' : 'text-indigo-650'}`} />
                           Target Kustom Pengguna ({selectedUser.customGoals.length})
                         </div>
-                        <div className="max-h-[140px] overflow-y-auto pr-1 space-y-2 border border-white/5 bg-[#16161a]/20 p-2.5 rounded-2xl">
+                        <div className={`max-h-[140px] overflow-y-auto pr-1 space-y-2 border p-2.5 rounded-2xl ${isDark ? 'border-white/5 bg-[#16161a]/20' : 'border-neutral-200 bg-neutral-50/50'}`}>
                           {selectedUser.customGoals.length === 0 ? (
                             <div className="text-center py-4 text-neutral-500 text-[10px] font-bold uppercase tracking-wider">
                               Belum ada target kustom aktif
@@ -1055,12 +2136,12 @@ service cloud.firestore {
                               return (
                                 <div 
                                   key={g.id} 
-                                  className="flex items-center gap-2.5 p-2 bg-[#16161a]/40 border border-white/5 rounded-xl"
+                                  className={`flex items-center gap-2.5 p-2 border rounded-xl ${isDark ? 'bg-[#16161a]/40 border-white/5' : 'bg-white border-neutral-150'}`}
                                 >
-                                  <div className={`w-6 h-6 rounded-lg flex items-center justify-center ${g.done ? 'bg-emerald-500/10' : 'bg-indigo-500/10'}`}>
-                                    <IconComponent className={`w-3.5 h-3.5 ${g.done ? 'text-emerald-400' : 'text-indigo-400'}`} />
+                                  <div className={`w-6 h-6 rounded-lg flex items-center justify-center ${g.done ? 'bg-emerald-500/10' : (isDark ? 'bg-indigo-500/10' : 'bg-indigo-50')}`}>
+                                    <IconComponent className={`w-3.5 h-3.5 ${g.done ? 'text-emerald-400' : (isDark ? 'text-indigo-400' : 'text-indigo-650')}`} />
                                   </div>
-                                  <span className={`text-[11px] font-extrabold flex-1 text-left leading-tight ${g.done ? 'text-neutral-500 line-through' : 'text-neutral-200'}`}>
+                                  <span className={`text-[11px] font-extrabold flex-1 text-left leading-tight ${g.done ? 'text-neutral-450 line-through' : (isDark ? 'text-neutral-200' : 'text-neutral-700')}`}>
                                     {g.label}
                                   </span>
                                   {g.done && (
@@ -1114,7 +2195,7 @@ service cloud.firestore {
                           <Trophy className="w-6 h-6 text-amber-500" />
                         </div>
                         <div>
-                          <h3 className="text-base font-extrabold tracking-tight text-white">
+                          <h3 className={`text-base font-extrabold tracking-tight ${isDark ? 'text-white' : 'text-neutral-900'}`}>
                             🏆 Lemari Piala {selectedUser.displayName}
                           </h3>
                           <p className="text-[10px] text-neutral-500 font-bold uppercase tracking-wider">
@@ -1140,10 +2221,10 @@ service cloud.firestore {
                                 isUnlocked
                                   ? isSelected
                                     ? 'bg-amber-500/15 border-amber-500 shadow-md shadow-amber-500/10 scale-105'
-                                    : 'bg-amber-500/5 border-amber-500/20 hover:bg-amber-500/10 hover:border-amber-500/40'
+                                    : (isDark ? 'bg-amber-500/5 border-amber-500/20 hover:bg-amber-500/10 hover:border-amber-500/40' : 'bg-amber-50 border-amber-200/50 hover:bg-amber-100/50 hover:border-amber-400')
                                   : isSelected
-                                    ? 'bg-neutral-800/40 border-neutral-600 scale-105'
-                                    : 'bg-neutral-900/40 border-neutral-950 hover:border-neutral-700'
+                                    ? (isDark ? 'bg-neutral-800/40 border-neutral-600 scale-105' : 'bg-neutral-100 border-neutral-350 scale-105')
+                                    : (isDark ? 'bg-neutral-900/40 border-neutral-950 hover:border-neutral-700' : 'bg-neutral-50/50 border-neutral-200 hover:border-neutral-300')
                               }`}
                               title={ach.title}
                             >
@@ -1169,26 +2250,26 @@ service cloud.firestore {
                       </div>
 
                       {/* Info Box for selected trophy */}
-                      <div className="p-3.5 rounded-2xl border border-neutral-900/60 bg-[#16161a]/60 min-h-[92px] flex flex-col justify-center text-left">
+                      <div className={`p-3.5 rounded-2xl border min-h-[92px] flex flex-col justify-center text-left ${isDark ? 'border-neutral-900/60 bg-[#16161a]/60' : 'border-neutral-200 bg-neutral-50'}`}>
                         {profileCardSelectedAchievement ? (
                           <div className="space-y-1">
                             <div className="flex items-center justify-between">
-                              <h4 className="text-xs font-black text-white flex items-center gap-1.5">
+                              <h4 className={`text-xs font-black flex items-center gap-1.5 ${isDark ? 'text-white' : 'text-neutral-900'}`}>
                                 <span>{getAchievementIcon(profileCardSelectedAchievement.id, undefined, "w-4 h-4")}</span>
                                 <span>{profileCardSelectedAchievement.title}</span>
                               </h4>
                               <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md border ${
                                 (selectedUser.unlockedAchievements || []).some(ua => ua.id === profileCardSelectedAchievement.id)
                                   ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                                  : 'bg-neutral-800/60 text-neutral-500 border-neutral-755'
+                                  : (isDark ? 'bg-neutral-800/60 text-neutral-500 border-neutral-755' : 'bg-neutral-100 text-neutral-500 border-neutral-250')
                               }`}>
                                 {(selectedUser.unlockedAchievements || []).some(ua => ua.id === profileCardSelectedAchievement.id) ? 'Terbuka' : 'Terkunci'}
                               </span>
                             </div>
-                            <p className="text-[10px] text-neutral-400 font-medium leading-relaxed">
+                            <p className={`text-[10px] font-medium leading-relaxed ${isDark ? 'text-neutral-400' : 'text-neutral-600'}`}>
                               {profileCardSelectedAchievement.description}
                             </p>
-                            <div className="text-[9px] font-black text-indigo-400 uppercase tracking-widest">
+                            <div className={`text-[9px] font-black uppercase tracking-widest ${isDark ? 'text-indigo-400' : 'text-indigo-650'}`}>
                               🎁 Reward: +{profileCardSelectedAchievement.xpReward} XP
                             </div>
                           </div>
@@ -1209,7 +2290,7 @@ service cloud.firestore {
                             setProfileCardViewMode('profile');
                             setProfileCardSelectedAchievement(null);
                           }}
-                          className="w-full py-3 px-6 rounded-full bg-neutral-900 border border-neutral-800 hover:bg-neutral-850 hover:text-white text-neutral-350 font-extrabold text-xs tracking-wider uppercase transition-all flex items-center justify-center gap-2"
+                          className={`w-full py-3 px-6 rounded-full border font-extrabold text-xs tracking-wider uppercase transition-all flex items-center justify-center gap-2 ${isDark ? 'bg-neutral-900 border-neutral-800 hover:bg-neutral-850 hover:text-white text-neutral-350' : 'bg-neutral-100 border-neutral-200 hover:bg-neutral-200 hover:text-neutral-950 text-neutral-700'}`}
                         >
                           Kembali ke Profil <User className="w-3.5 h-3.5" />
                         </button>
@@ -1232,7 +2313,7 @@ service cloud.firestore {
 
       {/* Custom Delete Confirmation Modal */}
       {deleteTarget && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -1304,7 +2385,7 @@ service cloud.firestore {
         const isDark = theme === 'dark';
 
         return (
-          <div className="fixed inset-0 bg-black/75 backdrop-blur-md z-[50] flex items-center justify-center p-3 md:p-4">
+          <div className="fixed inset-0 bg-black/75 backdrop-blur-md z-[100] flex items-center justify-center p-3 md:p-4">
             <motion.div 
               initial={{ opacity: 0, scale: 0.96 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -1508,7 +2589,7 @@ service cloud.firestore {
       {selectedAchievement && (() => {
         const isDark = theme === 'dark';
         return (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[70] flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[120] flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -1611,6 +2692,8 @@ service cloud.firestore {
           </div>
         );
       })()}
+
+      {/* Developer Control Hub Integrated in Navigation */}
     </div>
   );
 }

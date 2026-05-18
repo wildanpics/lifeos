@@ -24,19 +24,39 @@ export function AppShell({ children, topBarTitle }: AppShellProps) {
   } = useAppStore();
   const { alert } = usePrayer();
   
-  const [lastTriggeredPrayer, setLastTriggeredPrayer] = useState<string | null>(null);
-
-  // Observer 1: Prayer Alert Trigger (Dynamic before adzan)
+  // Observer 1: Prayer Alert Trigger (Dynamic before adzan) - Solved navigation & reload spam via localStorage persistence
   useEffect(() => {
-    if (prayerAlertsEnabled && alert && alert.minutesUntil <= prayerAlertBeforeMins && alert.prayer !== lastTriggeredPrayer) {
-      addNotification(
-        '🕌 Waktu Sholat Mendekat',
-        `Waktu sholat ${alert.prayer} akan tiba dalam ${alert.minutesUntil} menit. Mari bersiap!`,
-        'prayer'
-      );
-      setLastTriggeredPrayer(alert.prayer);
+    if (prayerAlertsEnabled && alert && alert.minutesUntil <= prayerAlertBeforeMins) {
+      if (typeof window !== 'undefined') {
+        const todayDate = new Date().toDateString(); // e.g. "Mon May 18 2026"
+        const storageKey = `prayer_alert_${alert.prayer}_${todayDate}`;
+        const alreadyTriggered = localStorage.getItem(storageKey);
+
+        if (!alreadyTriggered) {
+          addNotification(
+            '🕌 Waktu Sholat Mendekat',
+            `Waktu sholat ${alert.prayer} akan tiba dalam ${alert.minutesUntil} menit. Mari bersiap!`,
+            'prayer'
+          );
+          localStorage.setItem(storageKey, 'true');
+          
+          // Proactively clean up old keys from localStorage to prevent storage build-up
+          try {
+            const keysToRemove: string[] = [];
+            for (let i = 0; i < localStorage.length; i++) {
+              const key = localStorage.key(i);
+              if (key && key.startsWith('prayer_alert_') && !key.endsWith(todayDate)) {
+                keysToRemove.push(key);
+              }
+            }
+            keysToRemove.forEach(k => localStorage.removeItem(k));
+          } catch (e) {
+            console.error('Failed to clean up prayer alerts cache', e);
+          }
+        }
+      }
     }
-  }, [alert, lastTriggeredPrayer, addNotification, prayerAlertsEnabled, prayerAlertBeforeMins]);
+  }, [alert, addNotification, prayerAlertsEnabled, prayerAlertBeforeMins]);
 
   return (
     // Outer container: full viewport, no flex (sidebar is fixed so no flex needed)

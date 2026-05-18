@@ -41,7 +41,7 @@ const MOTIVATIONAL_PHRASES = [
 ];
 
 export function HeroCard() {
-  const { user, totalXP, todayStats, customHabits } = useAppStore();
+  const { user, totalXP, todayStats, customHabits, disciplineStreak, setDisciplineStreak } = useAppStore();
   const level = getLevelFromXP(totalXP);
   
   // Example dummy calculation for progress
@@ -119,6 +119,9 @@ export function HeroCard() {
           }
         }
         setStreak(currentStreak);
+        if (currentStreak !== disciplineStreak) {
+          setDisciplineStreak(currentStreak);
+        }
       }).catch(err => {
         console.error("Failed to load streak count", err);
       });

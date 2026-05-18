@@ -109,6 +109,7 @@ interface AppState {
   // Auth (not persisted — Firebase User is not serializable)
   user: User | null;
   totalXP: number;
+  customTitle: string;
 
   // Daily Data
   todayStats: DailyStats | null;
@@ -165,6 +166,7 @@ interface AppState {
   setDisciplineStreak: (streak: number) => void;
   setLeague: (league: 'bronze' | 'silver' | 'gold' | 'diamond') => void;
   setTotalXP: (xp: number) => void;
+  setCustomTitle: (title: string) => void;
   setTodayStats: (stats: DailyStats | null) => void;
   setTheme: (theme: 'dark' | 'light') => void;
   toggleTheme: () => void;
@@ -224,6 +226,7 @@ export const useAppStore = create<AppState>()(
     (set, get) => ({
       user: null,
       totalXP: 0,
+      customTitle: '',
       todayStats: null,
       todayDate: '',
       isLoading: true,
@@ -279,6 +282,15 @@ export const useAppStore = create<AppState>()(
       setTahajjudAlertEnabled: (enabled) => set({ tahajjudAlertEnabled: enabled }),
       setDhuhaAlertEnabled: (enabled) => set({ dhuhaAlertEnabled: enabled }),
       setTotalXP: (xp) => set({ totalXP: xp }),
+      setCustomTitle: (title) => {
+        set({ customTitle: title });
+        const { user } = get();
+        if (user) {
+          import('@/lib/firebase/firestore').then(({ syncUserProfile }) => {
+            syncUserProfile(user.uid, { customTitle: title });
+          });
+        }
+      },
       setTodayStats: (stats) => {
         if (!stats) {
           set({ todayStats: null });

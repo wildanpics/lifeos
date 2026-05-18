@@ -138,6 +138,7 @@ const UserProfileCardModal = ({
   isDark 
 }: UserProfileCardModalProps) => {
   const router = useRouter();
+  const { user } = useAppStore();
   const [viewMode, setViewMode] = useState<'profile' | 'cabinet'>('profile');
   const [selectedCabinetAchievement, setSelectedCabinetAchievement] = useState<any | null>(null);
   
@@ -157,23 +158,23 @@ const UserProfileCardModal = ({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="relative w-full max-w-md rounded-3xl p-6 shadow-2xl overflow-hidden bg-[#0e0e11] border border-neutral-800/40 text-white"
+          className={`relative w-full max-w-md rounded-3xl p-6 shadow-2xl overflow-hidden border ${isDark ? 'bg-[#0e0e11] border-neutral-800/40 text-white' : 'bg-white border-neutral-200 text-neutral-900 shadow-neutral-300/30'}`}
         >
           {/* Subtle glowing color aura in the background */}
           <div 
-            className="absolute -top-32 -left-32 w-64 h-64 rounded-full blur-3xl pointer-events-none opacity-20 transition-all duration-500"
+            className={`absolute -top-32 -left-32 w-64 h-64 rounded-full blur-3xl pointer-events-none transition-all duration-500 ${isDark ? 'opacity-20' : 'opacity-10'}`}
             style={{ background: viewMode === 'cabinet' ? '#d97706' : level.color }}
           />
 
           {/* Close button - sleek circle with X icon */}
           <button
             onClick={onClose}
-            className="absolute top-5 right-5 p-2 rounded-full border border-neutral-850 bg-neutral-900/50 hover:bg-neutral-850 hover:text-white transition-all text-neutral-400 z-10"
+            className={`absolute top-5 right-5 p-2 rounded-full border transition-all z-10 ${isDark ? 'border-neutral-800 bg-neutral-900/50 hover:bg-neutral-800 hover:text-white text-neutral-400' : 'border-neutral-200 bg-neutral-50 hover:bg-neutral-100 hover:text-neutral-950 text-neutral-500'}`}
           >
             <X className="w-3.5 h-3.5" />
           </button>
@@ -199,17 +200,20 @@ const UserProfileCardModal = ({
                   </div>
                 </div>
                 <div>
-                  <h3 className="text-lg font-black text-white tracking-tight flex items-center justify-center gap-1.5 leading-snug">
+                  <h3 className={`text-lg font-black tracking-tight flex items-center justify-center gap-1.5 leading-snug flex-wrap ${isDark ? 'text-white' : 'text-neutral-900'}`}>
                     {profileUser.displayName}
+                    {renderCustomTitleBadge(profileUser.customTitle, isDark)}
                     {isSelf && (
                       <span className="text-[9px] font-black uppercase tracking-wider bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 px-1.5 py-0.5 rounded-md">
                         Anda
                       </span>
                     )}
                   </h3>
-                  <p className="text-xs text-neutral-500 font-semibold tracking-wide">
-                    {profileUser.email || 'pejuang.disiplin@lifeos.com'}
-                  </p>
+                  {(isSelf || user?.email === 'mwildanfiqri88@gmail.com') && (
+                    <p className={`text-xs font-semibold tracking-wide ${isDark ? 'text-neutral-500' : 'text-neutral-455'}`}>
+                      {profileUser.email || 'pejuang.disiplin@lifeos.com'}
+                    </p>
+                  )}
                 </div>
 
                 {/* Level Badge - Pill Capsule Retro */}
@@ -220,21 +224,23 @@ const UserProfileCardModal = ({
                   <level.icon className="w-3.5 h-3.5 flex-shrink-0" />
                   LV.{level.level} — {level.titleId.toUpperCase()}
                 </span>
-              </div>              {/* Gamifikasi Stats Grid (TOTAL XP, STREAK, PIALA) */}
+              </div>
+
+              {/* Gamifikasi Stats Grid (TOTAL XP, STREAK, PIALA) */}
               <div className="grid grid-cols-3 gap-3">
                 {/* TOTAL XP Box */}
-                <div className="p-3.5 rounded-2xl border border-white/5 bg-[#16161a] text-center flex flex-col items-center justify-center">
+                <div className={`p-3.5 rounded-2xl border transition-all text-center flex flex-col items-center justify-center ${isDark ? 'border-white/5 bg-[#16161a] text-white' : 'border-neutral-200 bg-neutral-50 text-neutral-900'}`}>
                   <span className="text-[8px] font-black tracking-widest uppercase text-neutral-500">Total XP</span>
-                  <span className="text-xs font-black text-indigo-400 mt-1 block tracking-tight">
+                  <span className={`text-xs font-black mt-1 block tracking-tight ${isDark ? 'text-indigo-400' : 'text-indigo-650'}`}>
                     {profileUser.totalXP.toLocaleString()} XP
                   </span>
                 </div>
 
                 {/* STREAK Box */}
-                <div className="p-3.5 rounded-2xl border border-white/5 bg-[#16161a] text-center flex flex-col items-center justify-center">
+                <div className={`p-3.5 rounded-2xl border transition-all text-center flex flex-col items-center justify-center ${isDark ? 'border-white/5 bg-[#16161a] text-white' : 'border-neutral-200 bg-neutral-50 text-neutral-900'}`}>
                   <span className="text-[8px] font-black tracking-widest uppercase text-neutral-500">Streak</span>
-                  <span className="text-xs font-black text-orange-500 mt-1 flex items-center justify-center gap-1.5 tracking-tight">
-                    <Flame className="w-3.5 h-3.5 text-orange-500" />
+                  <span className={`text-xs font-black mt-1 flex items-center justify-center gap-1.5 tracking-tight ${isDark ? 'text-orange-500' : 'text-orange-655'}`}>
+                    <Flame className={`w-3.5 h-3.5 ${isDark ? 'text-orange-500' : 'text-orange-600'}`} />
                     {streak} Hari
                   </span>
                 </div>
@@ -245,7 +251,7 @@ const UserProfileCardModal = ({
                     playMechanicalClick();
                     setViewMode('cabinet');
                   }}
-                  className="p-3.5 rounded-2xl border border-white/5 bg-[#16161a] hover:bg-amber-500/5 hover:border-amber-500/40 hover:scale-[1.04] hover:shadow-[0_0_15px_rgba(245,158,11,0.15)] active:scale-[0.98] transition-all text-center flex flex-col items-center justify-center cursor-pointer group relative overflow-hidden"
+                  className={`p-3.5 rounded-2xl border hover:bg-amber-500/5 active:scale-[0.98] transition-all text-center flex flex-col items-center justify-center cursor-pointer group relative overflow-hidden ${isDark ? 'border-white/5 bg-[#16161a] hover:border-amber-500/40 hover:scale-[1.04]' : 'border-neutral-200 bg-neutral-50 hover:bg-amber-500/5 hover:border-amber-500/30 hover:scale-[1.04] hover:shadow-[0_0_15px_rgba(245,158,11,0.08)]'}`}
                   title="Klik untuk membuka Lemari Piala"
                 >
                   {/* Sleek pulsing amber notification indicator */}
@@ -254,29 +260,32 @@ const UserProfileCardModal = ({
                     <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-amber-500"></span>
                   </span>
 
-                  <span className="text-[8px] font-black tracking-widest uppercase text-neutral-500 group-hover:text-amber-400 transition-colors">Piala</span>
-                  <span className="text-xs font-black text-amber-500 mt-1 flex items-center justify-center gap-1.5 group-hover:scale-105 transition-transform tracking-tight">
-                    <Trophy className="w-3.5 h-3.5 text-amber-500" />
+                  <span className={`text-[8px] font-black tracking-widest uppercase transition-colors ${isDark ? 'text-neutral-500 group-hover:text-amber-400' : 'text-neutral-500 group-hover:text-amber-600'}`}>Piala</span>
+                  <span className={`text-xs font-black mt-1 flex items-center justify-center gap-1.5 group-hover:scale-105 transition-transform tracking-tight ${isDark ? 'text-amber-500' : 'text-amber-655'}`}>
+                    <Trophy className={`w-3.5 h-3.5 ${isDark ? 'text-amber-500' : 'text-amber-600'}`} />
                     {pialaTerbuka}
                   </span>
-                  <span className="text-[6.5px] font-black uppercase tracking-widest text-amber-500/80 animate-pulse mt-1 select-none flex items-center justify-center gap-0.5">
-                    <Eye className="w-2.5 h-2.5 text-amber-500/85" />
+                  <span className={`text-[6.5px] font-black uppercase tracking-widest animate-pulse mt-1 select-none flex items-center justify-center gap-0.5 ${isDark ? 'text-amber-500/80' : 'text-amber-655/80'}`}>
+                    <Eye className={`w-2.5 h-2.5 ${isDark ? 'text-amber-500/85' : 'text-amber-600/85'}`} />
                     LIHAT PIALA
                   </span>
                 </div>
               </div>
 
               {/* Active League Section */}
-              <div className="p-4 rounded-2xl border border-white/5 bg-[#121215] flex items-center justify-between">
+              <div className={`p-4 rounded-2xl border flex items-center justify-between ${isDark ? 'border-white/5 bg-[#121215]' : 'border-neutral-200 bg-neutral-50'}`}>
                 <div className="flex items-center gap-3">
                   {/* Rounded icon block orange border */}
-                  <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-500">
-                    {activeLeague === 'diamond' ? <Gem className="w-5.5 h-5.5" /> : activeLeague === 'gold' ? <Trophy className="w-5.5 h-5.5" /> : activeLeague === 'silver' ? <Award className="w-5.5 h-5.5" /> : <Medal className="w-5.5 h-5.5 animate-pulse" />}
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isDark ? 'bg-amber-500/10 border border-amber-500/30 text-amber-500' : 'bg-amber-50 border border-amber-300 text-amber-600 shadow-amber-500/5'}`}>
+                    {(() => {
+                      const LeagueIcon = activeLeague === 'diamond' ? Gem : activeLeague === 'gold' ? Trophy : activeLeague === 'silver' ? Award : Medal;
+                      return <LeagueIcon className={`w-5.5 h-5.5 ${isDark ? '' : 'animate-pulse'}`} />;
+                    })()}
                   </div>
                   <div className="text-left">
                     <h4 className="text-[9px] font-black uppercase tracking-wider text-neutral-500">Liga Kejuaraan</h4>
-                    <p className="text-xs font-black uppercase tracking-wider text-indigo-400 mt-0.5">
-                      Liga {activeLeague}
+                    <p className={`text-xs font-black uppercase tracking-wider mt-0.5 ${isDark ? 'text-indigo-400' : 'text-indigo-650'}`}>
+                      Liga {activeLeague ? activeLeague.charAt(0).toUpperCase() + activeLeague.slice(1) : 'Bronze'}
                     </p>
                   </div>
                 </div>
@@ -285,7 +294,7 @@ const UserProfileCardModal = ({
               {/* Target Kustom / Goals Section */}
               <div className="space-y-2">
                 <h4 className="text-[9px] font-black uppercase tracking-widest text-left text-neutral-500">Target Kustom Pengguna</h4>
-                <div className="rounded-2xl border border-white/5 bg-[#121215] p-3 text-center min-h-[58px] flex items-center justify-center">
+                <div className={`rounded-2xl border p-3 text-center min-h-[58px] flex items-center justify-center ${isDark ? 'border-white/5 bg-[#121215]' : 'border-neutral-200 bg-neutral-50/50'}`}>
                   {!profileUser.customGoals || profileUser.customGoals.length === 0 ? (
                     <p className="text-xs text-neutral-500 py-1 font-semibold">
                       Belum menetapkan target kustom aktif.
@@ -297,12 +306,12 @@ const UserProfileCardModal = ({
                           key={goal.id} 
                           className={`flex items-center justify-between p-2 rounded-xl text-[10px] font-bold ${
                             goal.done
-                              ? 'bg-emerald-500/5 text-emerald-400 border border-emerald-500/10'
-                              : 'bg-neutral-900/60 text-neutral-400 border border-white/5'
+                              ? (isDark ? 'bg-emerald-500/5 text-emerald-400 border border-emerald-500/10' : 'bg-emerald-50 text-emerald-700 border border-emerald-250')
+                              : (isDark ? 'bg-neutral-900/60 text-neutral-400 border border-white/5' : 'bg-white text-neutral-600 border border-neutral-150')
                           }`}
                         >
-                          <span className="flex items-center gap-1.5 leading-none">
-                            <Target className={`w-3.5 h-3.5 ${goal.done ? 'text-emerald-400' : 'text-indigo-400'}`} />
+                          <span className={`flex items-center gap-1.5 leading-none ${goal.done ? 'text-neutral-450 line-through' : (isDark ? 'text-neutral-200' : 'text-neutral-700')}`}>
+                            <Target className={`w-3.5 h-3.5 ${goal.done ? 'text-emerald-400' : (isDark ? 'text-indigo-400' : 'text-indigo-650')}`} />
                             {goal.label}
                           </span>
                           <span className="flex items-center gap-1">
@@ -360,7 +369,7 @@ const UserProfileCardModal = ({
                   <Trophy className="w-6 h-6 text-amber-500" />
                 </div>
                 <div>
-                  <h3 className="text-base font-extrabold tracking-tight text-white">
+                  <h3 className={`text-base font-extrabold tracking-tight ${isDark ? 'text-white' : 'text-neutral-900'}`}>
                     🏆 Lemari Piala {profileUser.displayName}
                   </h3>
                   <p className="text-[10px] text-neutral-500 font-bold uppercase tracking-wider">
@@ -386,10 +395,10 @@ const UserProfileCardModal = ({
                         isUnlocked
                           ? isSelected
                             ? 'bg-amber-500/15 border-amber-500 shadow-md shadow-amber-500/10 scale-105'
-                            : 'bg-amber-500/5 border-amber-500/20 hover:bg-amber-500/10 hover:border-amber-500/40'
+                            : (isDark ? 'bg-amber-500/5 border-amber-500/20 hover:bg-amber-500/10 hover:border-amber-500/40' : 'bg-amber-50 border-amber-200/50 hover:bg-amber-100/50 hover:border-amber-400')
                           : isSelected
-                            ? 'bg-neutral-800/40 border-neutral-600 scale-105'
-                            : 'bg-neutral-900/40 border-neutral-850 hover:border-neutral-700'
+                            ? (isDark ? 'bg-neutral-800/40 border-neutral-600 scale-105' : 'bg-neutral-100 border-neutral-350 scale-105')
+                            : (isDark ? 'bg-neutral-900/40 border-neutral-850 hover:border-neutral-700' : 'bg-neutral-50/50 border-neutral-200 hover:border-neutral-300')
                       }`}
                       title={ach.title}
                     >
@@ -415,26 +424,26 @@ const UserProfileCardModal = ({
               </div>
 
               {/* Info Box for selected trophy */}
-              <div className="p-3.5 rounded-2xl border border-neutral-850 bg-[#121215] min-h-[92px] flex flex-col justify-center text-left">
+              <div className={`p-3.5 rounded-2xl border min-h-[92px] flex flex-col justify-center text-left ${isDark ? 'border-neutral-850 bg-[#121215]' : 'border-neutral-200 bg-neutral-50'}`}>
                 {selectedCabinetAchievement ? (
                   <div className="space-y-1">
                     <div className="flex items-center justify-between">
-                      <h4 className="text-xs font-black text-white flex items-center gap-1.5">
+                      <h4 className={`text-xs font-black flex items-center gap-1.5 ${isDark ? 'text-white' : 'text-neutral-900'}`}>
                         <span>{getAchievementIcon(selectedCabinetAchievement.id, undefined, "w-4 h-4")}</span>
                         <span>{selectedCabinetAchievement.title}</span>
                       </h4>
                       <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md border ${
                         (profileUser.unlockedAchievements || []).some(ua => ua.id === selectedCabinetAchievement.id)
                           ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                          : 'bg-neutral-800/60 text-neutral-500 border-neutral-750'
+                          : (isDark ? 'bg-neutral-800/60 text-neutral-500 border-neutral-750' : 'bg-neutral-100 text-neutral-500 border-neutral-250')
                       }`}>
                         {(profileUser.unlockedAchievements || []).some(ua => ua.id === selectedCabinetAchievement.id) ? 'Terbuka' : 'Terkunci'}
                       </span>
                     </div>
-                    <p className="text-[10px] text-neutral-400 font-medium leading-relaxed">
+                    <p className={`text-[10px] font-medium leading-relaxed ${isDark ? 'text-neutral-400' : 'text-neutral-600'}`}>
                       {selectedCabinetAchievement.description}
                     </p>
-                    <div className="text-[9px] font-black text-indigo-400 uppercase tracking-widest">
+                    <div className={`text-[9px] font-black uppercase tracking-widest ${isDark ? 'text-indigo-400' : 'text-indigo-650'}`}>
                       🎁 Reward: +{selectedCabinetAchievement.xpReward} XP
                     </div>
                   </div>
@@ -455,7 +464,7 @@ const UserProfileCardModal = ({
                     setViewMode('profile');
                     setSelectedCabinetAchievement(null);
                   }}
-                  className="w-full py-3 px-6 rounded-full bg-neutral-900 border border-neutral-800 hover:bg-neutral-850 hover:text-white text-neutral-350 font-extrabold text-xs tracking-wider uppercase transition-all flex items-center justify-center gap-2"
+                  className={`w-full py-3 px-6 rounded-full border font-extrabold text-xs tracking-wider uppercase transition-all flex items-center justify-center gap-2 ${isDark ? 'bg-neutral-900 border-neutral-800 hover:bg-neutral-850 hover:text-white text-neutral-350' : 'bg-neutral-100 border-neutral-200 hover:bg-neutral-200 hover:text-neutral-950 text-neutral-700'}`}
                 >
                   Kembali ke Profil <User className="w-3.5 h-3.5" />
                 </button>
@@ -465,6 +474,91 @@ const UserProfileCardModal = ({
         </motion.div>
       </div>
     </AnimatePresence>
+  );
+};
+
+const renderCustomTitleBadge = (title: string | undefined | null, isDark: boolean) => {
+  if (!title) return null;
+  const upper = title.toUpperCase();
+  
+  // Clean emojis and trim extra spacing
+  const cleanTitle = title
+    .replace(/👑|🔥|⭐|🎯|🛡️/g, '')
+    .replace(/[\u{1F300}-\u{1F9FF}]|[\u{2700}-\u{27BF}]|[\u{1F600}-\u{1F64F}]|[\u{1F680}-\u{1F6FF}]|[\u{2600}-\u{26FF}]/gu, '')
+    .trim();
+
+  if (upper.includes('DEVELOPER') || upper.includes('DEV')) {
+    return (
+      <motion.span 
+        animate={{ 
+          boxShadow: isDark 
+            ? ["0 0 4px rgba(239,68,68,0.2)", "0 0 12px rgba(239,68,68,0.5)", "0 0 4px rgba(239,68,68,0.2)"]
+            : ["0 0 2px rgba(239,68,68,0.1)", "0 0 8px rgba(239,68,68,0.25)", "0 0 2px rgba(239,68,68,0.1)"]
+        }}
+        transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+        className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 text-[8.5px] font-black tracking-widest uppercase rounded-md border select-none relative overflow-hidden ${
+          isDark 
+            ? 'bg-red-500/10 border-red-500/40 text-red-400' 
+            : 'bg-red-50 border-red-200 text-red-650 shadow-red-200/20'
+        }`}
+      >
+        <Terminal className="w-2.5 h-2.5 text-red-500 animate-pulse" />
+        <span>{cleanTitle}</span>
+      </motion.span>
+    );
+  }
+
+  if (upper.includes('SUHU') || upper.includes('🔥') || upper.includes('FIRE')) {
+    return (
+      <motion.span 
+        animate={{ 
+          boxShadow: isDark 
+            ? ["0 0 4px rgba(245,158,11,0.2)", "0 0 12px rgba(245,158,11,0.5)", "0 0 4px rgba(245,158,11,0.2)"]
+            : ["0 0 2px rgba(245,158,11,0.1)", "0 0 8px rgba(245,158,11,0.25)", "0 0 2px rgba(245,158,11,0.1)"]
+        }}
+        transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+        className={`inline-flex items-center gap-1 px-2 py-0.5 text-[8.5px] font-black tracking-wider uppercase rounded-md border select-none relative overflow-hidden ${
+          isDark 
+            ? 'bg-amber-500/10 border-amber-500/40 text-amber-400' 
+            : 'bg-amber-50 border-amber-200 text-amber-650 shadow-amber-200/20'
+        }`}
+      >
+        <Flame className="w-2.5 h-2.5 text-amber-500 animate-bounce" />
+        <span>{cleanTitle}</span>
+      </motion.span>
+    );
+  }
+
+  if (upper.includes('VIP') || upper.includes('👑') || upper.includes('⭐') || upper.includes('CROWN')) {
+    return (
+      <motion.span 
+        animate={{ 
+          boxShadow: isDark 
+            ? ["0 0 4px rgba(139,92,246,0.2)", "0 0 12px rgba(139,92,246,0.5)", "0 0 4px rgba(139,92,246,0.2)"]
+            : ["0 0 2px rgba(139,92,246,0.1)", "0 0 8px rgba(139,92,246,0.25)", "0 0 2px rgba(139,92,246,0.1)"]
+        }}
+        transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+        className={`inline-flex items-center gap-1 px-2 py-0.5 text-[8.5px] font-black tracking-wider uppercase rounded-md border select-none relative overflow-hidden ${
+          isDark 
+            ? 'bg-violet-500/10 border-violet-500/40 text-violet-300' 
+            : 'bg-violet-50 border-violet-200 text-violet-650 shadow-violet-200/20'
+        }`}
+      >
+        <Crown className="w-2.5 h-2.5 text-violet-400" />
+        <span>{cleanTitle}</span>
+      </motion.span>
+    );
+  }
+
+  return (
+    <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-[8.5px] font-black tracking-wider uppercase rounded-md border select-none ${
+      isDark 
+        ? 'bg-violet-650/45 border-violet-500/35 text-violet-300 shadow-sm' 
+        : 'bg-violet-50 border-violet-200 text-violet-650 shadow-sm'
+    }`}>
+      <Sparkles className="w-2.5 h-2.5 text-violet-400" />
+      <span>{cleanTitle}</span>
+    </span>
   );
 };
 
@@ -768,6 +862,7 @@ export default function LeaderboardPage() {
                 </div>
                 <CommunityAvatar photoURL={top2.photoURL} displayName={top2.displayName} className="w-14 h-14 border-2 border-slate-400 mb-3" onClick={() => handleAvatarClick(top2)} />
                 <h3 className={`text-xs font-black line-clamp-1 ${isDark ? 'text-white' : 'text-neutral-900'}`}>{top2.displayName}</h3>
+                {renderCustomTitleBadge(top2.customTitle, isDark)}
                 {top2.email === 'mwildanfiqri88@gmail.com' && (
                   <span className="text-[8px] uppercase tracking-wider font-extrabold text-violet-500 flex items-center gap-0.5 mt-0.5 select-none">
                     <Terminal className="w-2.5 h-2.5" /> Dev Creator
@@ -824,6 +919,7 @@ export default function LeaderboardPage() {
                 </div>
                 <CommunityAvatar photoURL={top1.photoURL} displayName={top1.displayName} className="w-16 h-16 border-2 border-yellow-500 mb-3 shadow-lg shadow-yellow-500/20" onClick={() => handleAvatarClick(top1)} />
                 <h3 className={`text-sm font-black line-clamp-1 ${isDark ? 'text-white' : 'text-neutral-900'}`}>{top1.displayName}</h3>
+                {renderCustomTitleBadge(top1.customTitle, isDark)}
                 {top1.email === 'mwildanfiqri88@gmail.com' && (
                   <span className="text-[8px] uppercase tracking-wider font-extrabold text-violet-500 flex items-center gap-0.5 mt-0.5 select-none animate-pulse">
                     <Terminal className="w-2.5 h-2.5" /> Dev Creator
@@ -881,6 +977,7 @@ export default function LeaderboardPage() {
                 </div>
                 <CommunityAvatar photoURL={top3.photoURL} displayName={top3.displayName} className="w-14 h-14 border-2 border-amber-600 mb-3" onClick={() => handleAvatarClick(top3)} />
                 <h3 className={`text-xs font-black line-clamp-1 ${isDark ? 'text-white' : 'text-neutral-900'}`}>{top3.displayName}</h3>
+                {renderCustomTitleBadge(top3.customTitle, isDark)}
                 {top3.email === 'mwildanfiqri88@gmail.com' && (
                   <span className="text-[8px] uppercase tracking-wider font-extrabold text-violet-500 flex items-center gap-0.5 mt-0.5 select-none">
                     <Terminal className="w-2.5 h-2.5" /> Dev Creator
@@ -949,11 +1046,17 @@ export default function LeaderboardPage() {
                 <div className={`grid grid-cols-12 gap-2 px-4 py-2.5 text-[10px] font-black uppercase tracking-wider text-neutral-500 border-b ${
                   isDark ? 'border-neutral-800/40' : 'border-neutral-200'
                 }`}>
-                  <div className="col-span-2 text-center">Peringkat</div>
-                  <div className="col-span-4">Pengguna</div>
-                  <div className="col-span-2 text-center">Level</div>
-                  <div className="col-span-2 text-right">Total XP</div>
-                  <div className="col-span-2 text-center">Duel</div>
+                  <div className="col-span-2 sm:col-span-2 text-center">
+                    <span className="hidden sm:inline">Peringkat</span>
+                    <span className="sm:hidden">#</span>
+                  </div>
+                  <div className="col-span-6 sm:col-span-4">Pengguna</div>
+                  <div className="hidden sm:block sm:col-span-2 text-center">Level</div>
+                  <div className="col-span-2 sm:col-span-2 text-right">
+                    <span className="hidden sm:inline">Total XP</span>
+                    <span className="sm:hidden">XP</span>
+                  </div>
+                  <div className="col-span-2 sm:col-span-2 text-center">Duel</div>
                 </div>
 
                 {/* Rest of the list */}
@@ -972,7 +1075,7 @@ export default function LeaderboardPage() {
                       }`}
                     >
                       {/* Rank Indicator with promotion/demotion labels */}
-                      <div className="col-span-2 flex flex-col items-center justify-center">
+                      <div className="col-span-2 sm:col-span-2 flex flex-col items-center justify-center">
                         <span className="font-black text-xs text-neutral-400">#{rank}</span>
                         {rank <= 3 ? (
                           <span className="text-[7px] font-black uppercase tracking-widest text-emerald-500 flex items-center gap-0.5 mt-0.5">
@@ -990,16 +1093,20 @@ export default function LeaderboardPage() {
                       </div>
 
                       {/* User Info */}
-                      <div className="col-span-4 flex items-center gap-3">
-                        <CommunityAvatar photoURL={u.photoURL} displayName={u.displayName} className="w-8 h-8" onClick={() => handleAvatarClick(u)} />
-                        <div>
+                      <div className="col-span-6 sm:col-span-4 flex items-center gap-3 min-w-0">
+                        <CommunityAvatar photoURL={u.photoURL} displayName={u.displayName} className="w-8 h-8 flex-shrink-0" onClick={() => handleAvatarClick(u)} />
+                        <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-1.5 flex-wrap">
-                            <p className={`text-xs font-bold ${isDark ? 'text-white' : 'text-neutral-900'}`}>{u.displayName}</p>
+                            <p className={`text-xs font-bold truncate ${isDark ? 'text-white' : 'text-neutral-900'}`}>{u.displayName}</p>
+                            {renderCustomTitleBadge(u.customTitle, isDark)}
                             {u.email === 'mwildanfiqri88@gmail.com' && (
                               <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-violet-600/20 text-violet-300 border border-violet-500/20 text-[8px] font-black uppercase select-none">
                                 Dev
                               </span>
                             )}
+                            <span className="inline-block sm:hidden px-1.5 py-0.5 rounded-full text-[8px] font-bold" style={getLevelBadgeStyle(levelInfo.level, levelInfo.color)}>
+                              Lv.{levelInfo.level}
+                            </span>
                           </div>
                           <span className="text-[9px] font-semibold text-neutral-500">
                             🏆 {(u.unlockedAchievements || []).length} Piala
@@ -1008,19 +1115,19 @@ export default function LeaderboardPage() {
                       </div>
 
                       {/* Level */}
-                      <div className="col-span-2 text-center">
+                      <div className="hidden sm:block sm:col-span-2 text-center">
                         <span className="px-2 py-0.5 rounded-full text-[9px] font-bold" style={getLevelBadgeStyle(levelInfo.level, levelInfo.color)}>
                           Lv.{levelInfo.level}
                         </span>
                       </div>
 
                       {/* Total XP */}
-                      <div className={`col-span-2 text-right text-xs font-extrabold ${isDark ? 'text-neutral-300' : 'text-neutral-700'}`}>
+                      <div className={`col-span-2 sm:col-span-2 text-right text-xs font-extrabold ${isDark ? 'text-neutral-300' : 'text-neutral-700'}`}>
                         {u.totalXP.toLocaleString()} XP
                       </div>
 
                       {/* Duel Action Button */}
-                      <div className="col-span-2 flex justify-center">
+                      <div className="col-span-2 sm:col-span-2 flex justify-center">
                         {!isSelf ? (
                           <button 
                             onClick={() => handleStartDuel(u)}
