@@ -134,73 +134,76 @@ export const OnboardingTutorial = () => {
     }
   ];
 
-  // Dynamic state machine triggers based on user behavior:
+  // Track the bounding rectangle of current target element and evaluate state transitions continuously
   useEffect(() => {
     if (!user || hasCompletedTutorial) return;
 
-    // Step 2 -> Step 3 trigger: User successfully navigates to '/habits'
-    if (currentSlide === 1 && pathname === '/habits') {
-      setCurrentSlide(2);
-    }
+    const runStateMachineAndPosition = () => {
+      let nextSlide = currentSlide;
 
-    // Step 3 -> Step 4 trigger: Detect if template modal is open (checks if tour-apply-prayer exists in DOM)
-    if (currentSlide === 2) {
-      const modalOpen = document.getElementById('tour-apply-prayer');
-      if (modalOpen) {
-        setCurrentSlide(3);
+      // Step 2 -> Step 3 trigger: User successfully navigates to '/habits'
+      if (nextSlide === 1 && pathname === '/habits') {
+        nextSlide = 2;
       }
-    }
 
-    // Safeguard: If the user closed the modal during template setup (Step 4 or Step 5) without having installed the respective category,
-    // revert back to Step 3 so they can click the "+" button again.
-    if (currentSlide === 3 || currentSlide === 4) {
-      const modalOpen = document.getElementById('tour-apply-prayer') || document.getElementById('tour-apply-health');
-      const prayerExists = customCategories.some(c => c.id === 'prayer');
-      const healthExists = customCategories.some(c => c.id === 'health');
-      
-      if (!modalOpen) {
-        if (currentSlide === 3 && !prayerExists) {
-          setCurrentSlide(2);
-        } else if (currentSlide === 4 && !healthExists) {
-          setCurrentSlide(2);
+      // Step 3 -> Step 4 trigger: Detect if template modal is open (checks if tour-apply-prayer exists in DOM)
+      if (nextSlide === 2) {
+        const modalOpen = document.getElementById('tour-apply-prayer') || document.getElementById('tour-apply-health');
+        if (modalOpen) {
+          nextSlide = 3;
         }
       }
-    }
 
-    // Step 4 -> Step 5 trigger: Detect if 'prayer' category was successfully installed
-    if (currentSlide === 3) {
-      const prayerExists = customCategories.some(c => c.id === 'prayer');
-      if (prayerExists) {
-        // If the user already has both, skip straight to leaderboard step!
+      // Safeguard: If the user closed the modal during template setup (Step 4 or Step 5) without having installed the respective category,
+      // revert back to Step 3 so they can click the "+" button again.
+      if (nextSlide === 3 || nextSlide === 4) {
+        const modalOpen = document.getElementById('tour-apply-prayer') || document.getElementById('tour-apply-health');
+        const prayerExists = customCategories.some(c => c.id === 'prayer');
+        const healthExists = customCategories.some(c => c.id === 'health');
+        
+        if (!modalOpen) {
+          if (nextSlide === 3 && !prayerExists) {
+            nextSlide = 2;
+          } else if (nextSlide === 4 && !healthExists) {
+            nextSlide = 2;
+          }
+        }
+      }
+
+      // Step 4 -> Step 5 trigger: Detect if 'prayer' category was successfully installed
+      if (nextSlide === 3) {
+        const prayerExists = customCategories.some(c => c.id === 'prayer');
+        if (prayerExists) {
+          // If the user already has both, skip straight to leaderboard step!
+          const healthExists = customCategories.some(c => c.id === 'health');
+          if (healthExists) {
+            nextSlide = 5;
+          } else {
+            nextSlide = 4;
+          }
+        }
+      }
+
+      // Step 5 -> Step 6 trigger: Detect if 'health' category was successfully installed
+      if (nextSlide === 4) {
         const healthExists = customCategories.some(c => c.id === 'health');
         if (healthExists) {
-          setCurrentSlide(5);
-        } else {
-          setCurrentSlide(4);
+          nextSlide = 5;
         }
       }
-    }
 
-    // Step 5 -> Step 6 trigger: Detect if 'health' category was successfully installed
-    if (currentSlide === 4) {
-      const healthExists = customCategories.some(c => c.id === 'health');
-      if (healthExists) {
-        setCurrentSlide(5);
+      // Step 6 -> Step 7 trigger: User successfully navigates to '/achievements' (Leaderboard)
+      if (nextSlide === 5 && pathname === '/achievements') {
+        nextSlide = 6;
       }
-    }
 
-    // Step 6 -> Step 7 trigger: User successfully navigates to '/achievements' (Leaderboard)
-    if (currentSlide === 5 && pathname === '/achievements') {
-      setCurrentSlide(6);
-    }
+      // If slide state changed, apply update and let the next loop run compute target coordinates
+      if (nextSlide !== currentSlide) {
+        setCurrentSlide(nextSlide);
+        return;
+      }
 
-  }, [pathname, currentSlide, customCategories, user, hasCompletedTutorial]);
-
-  // Track the bounding rectangle of current target element
-  useEffect(() => {
-    if (!user || hasCompletedTutorial) return;
-
-    const updateTargetPosition = () => {
+      // 2. POSITION UPDATE
       const activeSlide = slides[currentSlide];
       if (activeSlide && activeSlide.targetId) {
         let el = document.getElementById(activeSlide.targetId);
@@ -218,13 +221,13 @@ export const OnboardingTutorial = () => {
       setTargetRect(null);
     };
 
-    updateTargetPosition();
-    tourIntervalRef.current = setInterval(updateTargetPosition, 400);
+    runStateMachineAndPosition();
+    tourIntervalRef.current = setInterval(runStateMachineAndPosition, 300);
 
     return () => {
       if (tourIntervalRef.current) clearInterval(tourIntervalRef.current);
     };
-  }, [currentSlide, hasCompletedTutorial, user, windowSize]);
+  }, [pathname, currentSlide, customCategories, user, hasCompletedTutorial, windowSize]);
 
   if (!user || hasCompletedTutorial) return null;
 
