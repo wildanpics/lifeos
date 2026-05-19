@@ -298,7 +298,7 @@ export const OnboardingTutorial = () => {
         position: 'fixed',
         left: '12px',
         right: '12px',
-        bottom: '16px',
+        top: '25%', // Position in the middle-upper screen to completely clear the bottom navigation bar
         zIndex: 9999,
       };
     }
