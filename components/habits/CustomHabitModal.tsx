@@ -165,9 +165,6 @@ const CATEGORY_SUGGESTIONS: Record<string, Suggestion[]> = {
 const SUBMENU_TEMPLATES = [
   { id: 'prayer', label: 'Sholat & Ibadah', emoji: '🕌', desc: 'Jadwal & habit sholat harian' },
   { id: 'health', label: 'Kesehatan & Diet', emoji: '💪', desc: 'Minum air & makan sehat' },
-  { id: 'morning', label: 'Ritual Pagi', emoji: '🌅', desc: 'Ritual & bangun tidur' },
-  { id: 'focus', label: 'Fokus & Kerja', emoji: '🎯', desc: 'Belajar & produktivitas' },
-  { id: 'night', label: 'Ritual Malam', emoji: '🌙', desc: 'Detoks digital & tidur' }
 ];
 
 export function CustomHabitModal({ onClose, activeCategoryId, activeCategoryLabel }: CustomHabitModalProps) {
