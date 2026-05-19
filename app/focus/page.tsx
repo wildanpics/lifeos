@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { FocusTimer } from '@/components/focus/FocusTimer';
+import { FocusSoundscape } from '@/components/focus/FocusSoundscape';
 import { useAppStore } from '@/store/useAppStore';
 import { formatDuration } from '@/lib/utils/time';
 import { useFocusStore } from '@/store/useFocusStore';
@@ -17,6 +18,7 @@ export default function FocusPage() {
 
   return (
     <div className="space-y-6">
+      {/* Title */}
       <div>
         <h1 className="text-xl font-bold flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
           <Target className="w-5 h-5 text-indigo-500" />
@@ -27,62 +29,89 @@ export default function FocusPage() {
         </p>
       </div>
 
-      {/* Today stats */}
-      <div className="grid grid-cols-3 gap-3">
-        {[
-          { icon: Timer, label: 'Fokus Hari Ini', value: formatDuration(focusMinutes), color: '#6366F1' },
-          { icon: Target, label: 'Target', value: '60 menit', color: '#10B981' },
-          { icon: Zap, label: 'Progress', value: `${progress}%`, color: '#F59E0B' },
-        ].map((stat, i) => (
-          <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.1 }} className="card text-center py-4">
-            <stat.icon className="w-5 h-5 mx-auto mb-2" style={{ color: stat.color }} />
-            <p className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>{stat.value}</p>
-            <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{stat.label}</p>
-          </motion.div>
-        ))}
-      </div>
-
-      {/* Progress bar */}
-      <div>
-        <div className="flex justify-between text-xs mb-1" style={{ color: 'var(--text-muted)' }}>
-          <span>Progress Fokus Harian</span><span>{progress}%</span>
-        </div>
-        <div className="progress-track h-2">
-          <motion.div className="progress-fill h-full" initial={{ width: 0 }} animate={{ width: `${progress}%` }}
-            transition={{ duration: 0.8 }} />
-        </div>
-      </div>
-
-      {/* Timer */}
-      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
-        className="card py-8">
-        <FocusTimer />
-      </motion.div>
-
-      {/* Tips */}
-      {status === 'idle' && (
-        <div className="card p-4 space-y-3" style={{ background: 'rgba(99,102,241,0.05)', border: '1px solid rgba(99,102,241,0.2)' }}>
-          <div className="flex items-center gap-1.5 text-xs font-bold text-indigo-400">
-            <Lightbulb className="w-4 h-4 text-amber-400" />
-            <span>Tips Fokus:</span>
+      {/* Main Grid Layout - 2 Columns on Desktop */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        {/* LEFT COLUMN: Stats, Progress & Timer (Spans 2 columns on large screens) */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Today stats */}
+          <div className="grid grid-cols-3 gap-3">
+            {[
+              { icon: Timer, label: 'Fokus Hari Ini', value: formatDuration(focusMinutes), color: '#6366F1' },
+              { icon: Target, label: 'Target', value: '60 menit', color: '#10B981' },
+              { icon: Zap, label: 'Progress', value: `${progress}%`, color: '#F59E0B' },
+            ].map((stat, i) => (
+              <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.1 }} className="card text-center py-4">
+                <stat.icon className="w-5 h-5 mx-auto mb-2" style={{ color: stat.color }} />
+                <p className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>{stat.value}</p>
+                <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{stat.label}</p>
+              </motion.div>
+            ))}
           </div>
-          <ul className="space-y-2 text-xs" style={{ color: 'var(--text-muted)' }}>
-            <li className="flex items-center gap-2">
-              <BellOff className="w-4 h-4 text-rose-500 flex-shrink-0" />
-              <span>Matikan notifikasi HP</span>
-            </li>
-            <li className="flex items-center gap-2">
-              <Headphones className="w-4 h-4 text-sky-400 flex-shrink-0" />
-              <span>Pakai musik lo-fi atau white noise</span>
-            </li>
-            <li className="flex items-center gap-2">
-              <Droplet className="w-4 h-4 text-blue-400 flex-shrink-0" />
-              <span>Siapkan air minum di meja</span>
-            </li>
-          </ul>
+
+          {/* Progress bar */}
+          <div>
+            <div className="flex justify-between text-xs mb-1" style={{ color: 'var(--text-muted)' }}>
+              <span>Progress Fokus Harian</span><span>{progress}%</span>
+            </div>
+            <div className="progress-track h-2">
+              <motion.div className="progress-fill h-full" initial={{ width: 0 }} animate={{ width: `${progress}%` }}
+                transition={{ duration: 0.8 }} />
+            </div>
+          </div>
+
+          {/* Timer Card */}
+          <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }}
+            className="card py-8">
+            <FocusTimer />
+          </motion.div>
         </div>
-      )}
+
+        {/* RIGHT COLUMN: Focus Soundscape & Tips */}
+        <div className="space-y-6">
+          {/* Soundscape Card */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }} 
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="card p-5"
+          >
+            <FocusSoundscape />
+          </motion.div>
+
+          {/* Tips Card */}
+          {status === 'idle' && (
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }} 
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="card p-5 space-y-3" 
+              style={{ background: 'rgba(99,102,241,0.03)', border: '1px solid rgba(99,102,241,0.15)' }}
+            >
+              <div className="flex items-center gap-1.5 text-xs font-bold text-indigo-400">
+                <Lightbulb className="w-4 h-4 text-amber-400" />
+                <span>Tips Fokus & Produktivitas:</span>
+              </div>
+              <ul className="space-y-2.5 text-xs" style={{ color: 'var(--text-muted)' }}>
+                <li className="flex items-center gap-2.5">
+                  <BellOff className="w-4 h-4 text-rose-500 flex-shrink-0" />
+                  <span>Matikan notifikasi & jauhkan handphone</span>
+                </li>
+                <li className="flex items-center gap-2.5">
+                  <Headphones className="w-4 h-4 text-sky-400 flex-shrink-0" />
+                  <span>Nyalakan <b>Focus Soundscape</b> di atas</span>
+                </li>
+                <li className="flex items-center gap-2.5">
+                  <Droplet className="w-4 h-4 text-blue-400 flex-shrink-0" />
+                  <span>Siapkan segelas air mineral di dekat Anda</span>
+                </li>
+              </ul>
+            </motion.div>
+          )}
+        </div>
+
+      </div>
     </div>
   );
 }
