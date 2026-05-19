@@ -334,9 +334,8 @@ export const OnboardingTutorial = () => {
     if (!targetRect) {
       return {
         position: 'fixed',
-        left: '50%',
-        top: '50%',
-        transform: 'translate(-50%, -50%)',
+        left: 'calc(50% - 210px)', // Centers 420px card horizontally
+        top: 'calc(50% - 250px)',  // Centers card vertically to prevent vertical clipping
         zIndex: 9999,
         maxWidth: '420px',
         width: 'calc(100% - 32px)',
@@ -370,14 +369,12 @@ export const OnboardingTutorial = () => {
       style.left = `${Math.max(16, Math.min(window.innerWidth - bubbleWidth - 16, leftVal))}px`;
       style.top = `${Math.max(16, Math.min(window.innerHeight - 520, targetRect.bottom + gap))}px`;
     } else if (activeSlide.position === 'right' && spaceRight < bubbleWidth) {
-      // Not enough room right — fall back to center
-      style.left = '50%';
-      style.top = '50%';
-      style.transform = 'translate(-50%, -50%)';
+      // Not enough room right — fall back to center using calc to avoid Framer Motion transform overwrite
+      style.left = `calc(50% - ${bubbleWidth / 2}px)`;
+      style.top = 'calc(50% - 250px)';
     } else {
-      style.left = '50%';
-      style.top = '50%';
-      style.transform = 'translate(-50%, -50%)';
+      style.left = `calc(50% - ${bubbleWidth / 2}px)`;
+      style.top = 'calc(50% - 250px)';
     }
 
     return style;
