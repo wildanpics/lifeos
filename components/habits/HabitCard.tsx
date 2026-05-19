@@ -389,8 +389,8 @@ export function HabitCard() {
           </motion.div>
         )}
 
-        {/* Health Custom Widgets rendering */}
-        {activeCategory === 'health' && (
+        {/* Health Custom Widgets rendering (only when categories exist and health is active) */}
+        {activeCategory === 'health' && mergedCategories.length > 0 && (
           <div className="mb-4 space-y-3 pb-3 border-b" style={{ borderColor: 'var(--border)' }}>
             {/* Water Tracker */}
             <div className="p-4 rounded-xl transition-all" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)' }}>
