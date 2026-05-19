@@ -2,502 +2,363 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Volume2, VolumeX, Play, Pause, Headphones, Music, Sparkles } from 'lucide-react';
+import { Volume2, VolumeX, Play, Pause, Headphones, Music, CloudRain, Coffee, Sparkles, TreePine, Waves } from 'lucide-react';
 
 interface SoundscapeTrack {
   id: string;
   name: string;
   desc: string;
-  url: string;
-  icon: string;
   accent: string;
+  Icon: React.ElementType;
 }
 
 const SOUNDSCAPE_TRACKS: SoundscapeTrack[] = [
-  {
-    id: 'rain',
-    name: 'Hujan & Petir',
-    desc: 'Fokus dalam hangatnya gemericik air',
-    url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3', // High-quality ambient track for testing
-    icon: '🌧️',
-    accent: '#3B82F6',
-  },
-  {
-    id: 'cafe',
-    name: 'Kafe Klasik',
-    desc: 'Produktivitas santai ala kedai kopi',
-    url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
-    icon: '☕',
-    accent: '#F59E0B',
-  },
-  {
-    id: 'space',
-    name: 'Lofi Luar Angkasa',
-    desc: 'Gelombang sintesis dalam heningnya galaksi',
-    url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
-    icon: '🌌',
-    accent: '#8B5CF6',
-  },
-  {
-    id: 'forest',
-    name: 'Angin Hutan',
-    desc: 'Relaksasi desau daun & kicau burung malam',
-    url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3',
-    icon: '🌲',
-    accent: '#10B981',
-  },
-  {
-    id: 'ocean',
-    name: 'Deburan Ombak',
-    desc: 'Ritme tenang pasang surut air laut',
-    url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3',
-    icon: '🌊',
-    accent: '#06B6D4',
-  },
+  { id: 'rain',   name: 'Hujan & Petir',     desc: 'Gemericik hujan menenangkan',       accent: '#3B82F6', Icon: CloudRain  },
+  { id: 'cafe',   name: 'Kafe Klasik',        desc: 'Suasana produktif kedai kopi',      accent: '#F59E0B', Icon: Coffee     },
+  { id: 'space',  name: 'Lofi Angkasa',       desc: 'Hening galaksi yang dalam',         accent: '#8B5CF6', Icon: Sparkles   },
+  { id: 'forest', name: 'Angin Hutan',        desc: 'Desau daun & kicau burung malam',   accent: '#10B981', Icon: TreePine   },
+  { id: 'ocean',  name: 'Deburan Ombak',      desc: 'Ritme tenang pasang surut laut',    accent: '#06B6D4', Icon: Waves      },
 ];
 
+// ── Web Audio Synthesis helpers ──────────────────────────────────────────────
+
+function createWhiteNoise(ctx: AudioContext, bufferSec = 2) {
+  const buf = ctx.createBuffer(1, ctx.sampleRate * bufferSec, ctx.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+  const src = ctx.createBufferSource();
+  src.buffer = buf;
+  src.loop = true;
+  return src;
+}
+
+function createBrownNoise(ctx: AudioContext) {
+  const buf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
+  const data = buf.getChannelData(0);
+  let last = 0;
+  for (let i = 0; i < data.length; i++) {
+    const w = Math.random() * 2 - 1;
+    data[i] = (last + 0.02 * w) / 1.02;
+    last = data[i];
+    data[i] *= 3.5;
+  }
+  const src = ctx.createBufferSource();
+  src.buffer = buf;
+  src.loop = true;
+  return src;
+}
+
+/** Returns a GainNode that is the final output for the given track id */
+function buildTrackGraph(id: string, ctx: AudioContext): AudioNode {
+  const master = ctx.createGain();
+  master.gain.value = 1;
+
+  if (id === 'rain') {
+    // White noise → lowpass (rain body) + highpass (drizzle sparkle)
+    const noise = createWhiteNoise(ctx);
+    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass';  lp.frequency.value = 1200; lp.Q.value = 0.5;
+    const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 5000; hp.Q.value = 0.3;
+    const gLow = ctx.createGain(); gLow.gain.value = 0.6;
+    const gHigh = ctx.createGain(); gHigh.gain.value = 0.12;
+    noise.connect(lp); lp.connect(gLow); gLow.connect(master);
+    noise.connect(hp); hp.connect(gHigh); gHigh.connect(master);
+    noise.start();
+  } else if (id === 'cafe') {
+    // Brown noise (low room hum) + random subtle clicks via oscillator bursts
+    const brown = createBrownNoise(ctx);
+    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 600;
+    const g = ctx.createGain(); g.gain.value = 0.5;
+    brown.connect(lp); lp.connect(g); g.connect(master);
+    // Subtle high-pitched murmur layer
+    const white = createWhiteNoise(ctx);
+    const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 2500; bp.Q.value = 1.5;
+    const gw = ctx.createGain(); gw.gain.value = 0.04;
+    white.connect(bp); bp.connect(gw); gw.connect(master);
+    brown.start(); white.start();
+  } else if (id === 'space') {
+    // Deep drone: two detuned oscillators + slow LFO modulation
+    const osc1 = ctx.createOscillator(); osc1.type = 'sine'; osc1.frequency.value = 55;
+    const osc2 = ctx.createOscillator(); osc2.type = 'sine'; osc2.frequency.value = 58;
+    const lfo = ctx.createOscillator(); lfo.type = 'sine'; lfo.frequency.value = 0.1;
+    const lfoGain = ctx.createGain(); lfoGain.gain.value = 8;
+    const g1 = ctx.createGain(); g1.gain.value = 0.25;
+    const g2 = ctx.createGain(); g2.gain.value = 0.2;
+    lfo.connect(lfoGain); lfoGain.connect(osc1.frequency);
+    osc1.connect(g1); g1.connect(master);
+    osc2.connect(g2); g2.connect(master);
+    // White noise shimmer
+    const wn = createWhiteNoise(ctx);
+    const wnLp = ctx.createBiquadFilter(); wnLp.type = 'lowpass'; wnLp.frequency.value = 300;
+    const wnG = ctx.createGain(); wnG.gain.value = 0.03;
+    wn.connect(wnLp); wnLp.connect(wnG); wnG.connect(master);
+    osc1.start(); osc2.start(); lfo.start(); wn.start();
+  } else if (id === 'forest') {
+    // Band-passed noise (wind) + very slow LFO amplitude swells
+    const noise = createWhiteNoise(ctx);
+    const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 400; bp.Q.value = 0.4;
+    const envGain = ctx.createGain(); envGain.gain.value = 0.4;
+    // LFO for wind swell
+    const lfo = ctx.createOscillator(); lfo.type = 'sine'; lfo.frequency.value = 0.08;
+    const lfoG = ctx.createGain(); lfoG.gain.value = 0.25;
+    lfo.connect(lfoG); lfoG.connect(envGain.gain);
+    noise.connect(bp); bp.connect(envGain); envGain.connect(master);
+    // High shimmer (leaves)
+    const wh = createWhiteNoise(ctx);
+    const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 4000;
+    const ghp = ctx.createGain(); ghp.gain.value = 0.07;
+    wh.connect(hp); hp.connect(ghp); ghp.connect(master);
+    noise.start(); lfo.start(); wh.start();
+  } else {
+    // ocean: low-freq modulated brown noise
+    const brown = createBrownNoise(ctx);
+    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 450;
+    const waveGain = ctx.createGain(); waveGain.gain.value = 0.55;
+    const lfo = ctx.createOscillator(); lfo.type = 'sine'; lfo.frequency.value = 0.12;
+    const lfoG = ctx.createGain(); lfoG.gain.value = 0.3;
+    lfo.connect(lfoG); lfoG.connect(waveGain.gain);
+    brown.connect(lp); lp.connect(waveGain); waveGain.connect(master);
+    const mid = createWhiteNoise(ctx);
+    const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 800; bp.Q.value = 1;
+    const gm = ctx.createGain(); gm.gain.value = 0.08;
+    mid.connect(bp); bp.connect(gm); gm.connect(master);
+    brown.start(); lfo.start(); mid.start();
+  }
+
+  return master;
+}
+
+// ── Component ────────────────────────────────────────────────────────────────
+
 export function FocusSoundscape() {
-  const [activeTrack, setActiveTrack] = useState<SoundscapeTrack | null>(null);
+  const [activeId, setActiveId]   = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [volume, setVolume] = useState(0.5);
-  const [muted, setMuted] = useState(false);
+  const [volume, setVolume]       = useState(0.55);
+  const [muted, setMuted]         = useState(false);
 
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const animationRef = useRef<number | null>(null);
+  const canvasRef    = useRef<HTMLCanvasElement | null>(null);
+  const animRef      = useRef<number | null>(null);
+  const ctxRef       = useRef<AudioContext | null>(null);
+  const masterRef    = useRef<GainNode | null>(null);
+  const trackNodeRef = useRef<AudioNode | null>(null);
+  const analyserRef  = useRef<AnalyserNode | null>(null);
 
-  // Web Audio API refs
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const analyserRef = useRef<AnalyserNode | null>(null);
-  const sourceRef = useRef<MediaElementAudioSourceNode | null>(null);
+  const activeTrack = SOUNDSCAPE_TRACKS.find(t => t.id === activeId) ?? null;
 
-  // Toggle track selection
-  const handleSelectTrack = (track: SoundscapeTrack) => {
-    if (activeTrack?.id === track.id) {
-      // Toggle play/pause if clicking the same track
-      togglePlay();
-      return;
+  // Volume sync
+  useEffect(() => {
+    if (masterRef.current) masterRef.current.gain.value = muted ? 0 : volume;
+  }, [volume, muted]);
+
+  const stopCurrent = () => {
+    if (trackNodeRef.current) {
+      try { (trackNodeRef.current as any).disconnect?.(); } catch (_) {}
+      trackNodeRef.current = null;
+    }
+  };
+
+  const startTrack = (id: string) => {
+    // Init AudioContext lazily
+    if (!ctxRef.current) {
+      ctxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+    }
+    const ctx = ctxRef.current;
+    if (ctx.state === 'suspended') ctx.resume();
+
+    // Analyser
+    if (!analyserRef.current) {
+      analyserRef.current = ctx.createAnalyser();
+      analyserRef.current.fftSize = 128;
     }
 
-    setActiveTrack(track);
-    setIsPlaying(true);
+    // Master gain
+    if (!masterRef.current) {
+      masterRef.current = ctx.createGain();
+      masterRef.current.connect(analyserRef.current);
+      analyserRef.current.connect(ctx.destination);
+    }
+    masterRef.current.gain.value = muted ? 0 : volume;
 
-    if (audioRef.current) {
-      audioRef.current.src = track.url;
-      audioRef.current.load();
-      
-      // Auto play on source change
-      const playPromise = audioRef.current.play();
-      if (playPromise !== undefined) {
-        playPromise
-          .then(() => {
-            initAudioAnalyzer();
-          })
-          .catch((e) => {
-            console.warn('Audio auto-play prevented:', e);
-            setIsPlaying(false);
-          });
+    stopCurrent();
+    const node = buildTrackGraph(id, ctx);
+    (node as any).connect(masterRef.current);
+    trackNodeRef.current = node;
+    setIsPlaying(true);
+  };
+
+  const handleSelect = (id: string) => {
+    if (activeId === id) {
+      // Toggle
+      if (isPlaying) {
+        ctxRef.current?.suspend();
+        setIsPlaying(false);
+      } else {
+        ctxRef.current?.resume();
+        setIsPlaying(true);
       }
+    } else {
+      setActiveId(id);
+      startTrack(id);
     }
   };
 
   const togglePlay = () => {
-    if (!activeTrack) {
-      handleSelectTrack(SOUNDSCAPE_TRACKS[0]);
-      return;
-    }
-
-    if (audioRef.current) {
-      if (isPlaying) {
-        audioRef.current.pause();
-        setIsPlaying(false);
-      } else {
-        audioRef.current.play()
-          .then(() => {
-            setIsPlaying(true);
-            initAudioAnalyzer();
-          })
-          .catch((e) => console.error(e));
-      }
-    }
+    if (!activeId) { handleSelect(SOUNDSCAPE_TRACKS[0].id); return; }
+    if (isPlaying) { ctxRef.current?.suspend(); setIsPlaying(false); }
+    else           { ctxRef.current?.resume();  setIsPlaying(true);  }
   };
 
-  // Setup Web Audio API analyzer
-  const initAudioAnalyzer = () => {
-    if (!audioRef.current) return;
-
-    try {
-      if (!audioContextRef.current) {
-        const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-        audioContextRef.current = new AudioContextClass();
-      }
-
-      const context = audioContextRef.current;
-      if (context.state === 'suspended') {
-        context.resume();
-      }
-
-      if (!analyserRef.current) {
-        analyserRef.current = context.createAnalyser();
-        analyserRef.current.fftSize = 128;
-      }
-
-      // Reconnect source if needed
-      if (!sourceRef.current) {
-        sourceRef.current = context.createMediaElementSource(audioRef.current);
-        sourceRef.current.connect(analyserRef.current);
-        analyserRef.current.connect(context.destination);
-      }
-    } catch (err) {
-      console.warn('Web Audio API is restricted or not supported by browser security policy:', err);
-    }
-  };
-
-  // Handle volume changes
-  useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = muted ? 0 : volume;
-    }
-  }, [volume, muted]);
-
-  // Visualizer loop
+  // Canvas visualizer
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+    const ctx2d = canvas.getContext('2d');
+    if (!ctx2d) return;
 
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    const resize = () => { canvas.width = canvas.offsetWidth * window.devicePixelRatio; canvas.height = 64 * window.devicePixelRatio; };
+    resize();
+    window.addEventListener('resize', resize);
 
-    const resizeCanvas = () => {
-      canvas.width = canvas.parentElement?.clientWidth || 300;
-      canvas.height = 80;
-    };
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
+    const color = activeTrack?.accent ?? '#6366F1';
+    const buf   = new Uint8Array(64);
 
-    const render = () => {
-      animationRef.current = requestAnimationFrame(render);
+    const draw = () => {
+      animRef.current = requestAnimationFrame(draw);
+      const W = canvas.width, H = canvas.height;
+      ctx2d.clearRect(0, 0, W, H);
 
-      const width = canvas.width;
-      const height = canvas.height;
-      
-      // Clear background with translucent dark fill
-      ctx.clearRect(0, 0, width, height);
-
-      let bufferLength = 64;
-      let dataArray = new Uint8Array(bufferLength);
-
-      if (isPlaying && analyserRef.current) {
-        analyserRef.current.getByteFrequencyData(dataArray);
+      if (analyserRef.current && isPlaying) {
+        analyserRef.current.getByteFrequencyData(buf);
       } else {
-        // Mock data for cool wave when idle/paused
-        const time = Date.now() * 0.003;
-        for (let i = 0; i < bufferLength; i++) {
-          dataArray[i] = isPlaying
-            ? Math.sin(i * 0.2 + time) * 30 + 30
-            : (Math.sin(i * 0.15 + time) * 8 + 8) * (Math.cos(i * 0.05) * 0.8 + 0.2);
-        }
+        const t = Date.now() * 0.002;
+        for (let i = 0; i < 64; i++) buf[i] = Math.max(0, Math.sin(i * 0.3 + t) * 18 + 18);
       }
 
-      // Draw neon wave/bars
-      const barWidth = (width / bufferLength) * 1.6;
-      let barHeight;
-      let x = 0;
-
-      const activeColor = activeTrack?.accent || '#6366F1';
-
-      ctx.beginPath();
-      ctx.moveTo(0, height);
-
-      for (let i = 0; i < bufferLength; i++) {
-        // Calculate height based on frequency data
-        const percent = dataArray[i] / 255;
-        barHeight = percent * height * 0.85;
-
-        // Apply fallback min height so we always see a beautiful pulsing line
-        if (barHeight < 4) barHeight = 4 + Math.sin(i * 0.5 + Date.now() * 0.005) * 2;
-
-        const y = height - barHeight;
-
-        // Draw soft glowing connecting line
-        if (i === 0) {
-          ctx.moveTo(x, y);
-        } else {
-          // Smooth curves instead of rigid bars
-          const xc = x + barWidth / 2;
-          const yc = (height - barHeight + (height - (dataArray[i - 1] / 255 * height * 0.85 || 4))) / 2;
-          ctx.quadraticCurveTo(x, height - barHeight, xc, yc);
-        }
-
-        x += barWidth;
+      ctx2d.beginPath();
+      const step = W / 64;
+      for (let i = 0; i < 64; i++) {
+        const x = i * step;
+        const y = H - (buf[i] / 255) * H * 0.85 - 4;
+        i === 0 ? ctx2d.moveTo(x, y) : ctx2d.lineTo(x, y);
       }
+      ctx2d.strokeStyle = color;
+      ctx2d.lineWidth = 2.5 * window.devicePixelRatio;
+      ctx2d.shadowBlur = 12;
+      ctx2d.shadowColor = color;
+      ctx2d.stroke();
 
-      // Style wave
-      ctx.strokeStyle = activeColor;
-      ctx.lineWidth = 3;
-      ctx.shadowBlur = 15;
-      ctx.shadowColor = activeColor;
-      ctx.stroke();
-
-      // Draw mirrored bottom glowing reflection
-      ctx.shadowBlur = 0; // reset shadow for gradient
-      const grad = ctx.createLinearGradient(0, height, 0, 0);
-      grad.addColorStop(0, `${activeColor}00`);
-      grad.addColorStop(0.5, `${activeColor}15`);
-      grad.addColorStop(1, `${activeColor}30`);
-      
-      ctx.lineTo(width, height);
-      ctx.lineTo(0, height);
-      ctx.fillStyle = grad;
-      ctx.fill();
+      // Fill gradient under wave
+      ctx2d.shadowBlur = 0;
+      ctx2d.lineTo(W, H); ctx2d.lineTo(0, H);
+      const g = ctx2d.createLinearGradient(0, 0, 0, H);
+      g.addColorStop(0, `${color}25`); g.addColorStop(1, `${color}00`);
+      ctx2d.fillStyle = g;
+      ctx2d.fill();
     };
+    draw();
+    return () => { window.removeEventListener('resize', resize); if (animRef.current) cancelAnimationFrame(animRef.current); };
+  }, [isPlaying, activeId, activeTrack]);
 
-    render();
-
-    return () => {
-      window.removeEventListener('resize', resizeCanvas);
-      if (animationRef.current) cancelAnimationFrame(animationRef.current);
-    };
-  }, [isPlaying, activeTrack]);
-
-  // Clean up audio on unmount
-  useEffect(() => {
-    return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-      }
-      if (audioContextRef.current) {
-        audioContextRef.current.close();
-      }
-    };
-  }, []);
+  // Cleanup
+  useEffect(() => () => { stopCurrent(); ctxRef.current?.close(); }, []);
 
   return (
-    <div className="flex flex-col gap-4">
-      {/* Hidden native audio element */}
-      <audio
-        ref={audioRef}
-        loop
-        crossOrigin="anonymous"
-        onPlay={() => setIsPlaying(true)}
-        onPause={() => setIsPlaying(false)}
-      />
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
-      {/* Header section with Equalizer Canvas */}
-      <div 
-        style={{ 
-          background: 'rgba(17, 24, 39, 0.6)', 
-          border: '1px solid rgba(255, 255, 255, 0.08)',
-          borderRadius: 20,
-          padding: '20px 24px',
-          backdropFilter: 'blur(12px)',
-          position: 'relative',
-          overflow: 'hidden'
-        }}
-      >
-        {/* Glow ambient background based on active track */}
+      {/* ── Player Header ── */}
+      <div style={{ position: 'relative', background: 'rgba(15,18,30,0.7)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 18, padding: '16px 18px', backdropFilter: 'blur(14px)', overflow: 'hidden' }}>
         <AnimatePresence>
           {activeTrack && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 0.15 }}
-              exit={{ opacity: 0 }}
-              style={{
-                position: 'absolute',
-                inset: 0,
-                background: `radial-gradient(circle at 80% 20%, ${activeTrack.accent}, transparent 60%)`,
-                pointerEvents: 'none',
-                filter: 'blur(20px)',
-              }}
-            />
+            <motion.div key={activeId} initial={{ opacity: 0 }} animate={{ opacity: 0.18 }} exit={{ opacity: 0 }}
+              style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle at 70% 30%, ${activeTrack.accent}, transparent 65%)`, pointerEvents: 'none', filter: 'blur(18px)' }} />
           )}
         </AnimatePresence>
 
-        <div className="flex items-center justify-between mb-2 relative z-10">
-          <div className="flex items-center gap-2.5">
-            <div 
-              style={{ 
-                width: 38, 
-                height: 38, 
-                borderRadius: 12, 
-                background: activeTrack ? `${activeTrack.accent}15` : 'rgba(255,255,255,0.05)',
-                border: `1px solid ${activeTrack ? `${activeTrack.accent}30` : 'rgba(255,255,255,0.1)'}`,
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center',
-                transition: 'all 0.3s ease'
-              }}
-            >
-              {isPlaying ? (
-                <motion.div
-                  animate={{ scale: [1, 1.2, 1] }}
-                  transition={{ duration: 1.5, repeat: Infinity }}
-                >
-                  <Headphones size={18} style={{ color: activeTrack?.accent || 'var(--text-primary)' }} />
-                </motion.div>
-              ) : (
-                <Music size={18} style={{ color: 'var(--text-secondary)' }} />
-              )}
+        {/* Top row */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative', zIndex: 1, marginBottom: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: activeTrack ? `${activeTrack.accent}18` : 'rgba(255,255,255,0.05)', border: `1px solid ${activeTrack ? `${activeTrack.accent}30` : 'rgba(255,255,255,0.1)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.3s' }}>
+              {isPlaying
+                ? <motion.div animate={{ scale: [1, 1.15, 1] }} transition={{ duration: 1.5, repeat: Infinity }}><Headphones size={17} color={activeTrack?.accent ?? '#6366F1'} /></motion.div>
+                : <Music size={17} color="#6B7280" />
+              }
             </div>
             <div>
-              <h3 className="text-sm font-bold flex items-center gap-1.5" style={{ color: 'white' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, fontWeight: 700, color: 'white' }}>
                 Focus Soundscape
                 {isPlaying && (
-                  <span className="flex h-2 w-2 relative">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: activeTrack?.accent }}></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2" style={{ backgroundColor: activeTrack?.accent }}></span>
+                  <span style={{ position: 'relative', display: 'inline-flex', width: 8, height: 8 }}>
+                    <span className="animate-ping" style={{ position: 'absolute', inset: 0, borderRadius: '50%', backgroundColor: activeTrack?.accent, opacity: 0.6 }} />
+                    <span style={{ position: 'relative', borderRadius: '50%', width: 8, height: 8, backgroundColor: activeTrack?.accent, display: 'inline-block' }} />
                   </span>
                 )}
-              </h3>
-              <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
+              </div>
+              <p style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 1 }}>
                 {activeTrack ? activeTrack.desc : 'Pilih suasana fokusmu hari ini'}
               </p>
             </div>
           </div>
 
-          {/* Core play/pause controller */}
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={togglePlay}
-            style={{
-              width: 38,
-              height: 38,
-              borderRadius: '50%',
-              background: activeTrack ? activeTrack.accent : 'linear-gradient(135deg, #6366F1, #8B5CF6)',
-              border: 'none',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              color: 'white',
-              boxShadow: activeTrack ? `0 4px 15px ${activeTrack.accent}40` : '0 4px 15px rgba(99,102,241,0.3)',
-              transition: 'background 0.3s ease, box-shadow 0.3s ease'
-            }}
-          >
-            {isPlaying ? <Pause size={16} fill="white" /> : <Play size={16} fill="white" style={{ marginLeft: 2 }} />}
+          {/* Play / Pause button */}
+          <motion.button whileHover={{ scale: 1.07 }} whileTap={{ scale: 0.93 }} onClick={togglePlay}
+            style={{ width: 36, height: 36, borderRadius: '50%', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', background: activeTrack ? activeTrack.accent : 'linear-gradient(135deg,#6366F1,#8B5CF6)', boxShadow: `0 4px 14px ${activeTrack?.accent ?? '#6366F1'}45`, transition: 'all 0.3s' }}>
+            {isPlaying ? <Pause size={15} fill="white" /> : <Play size={15} fill="white" style={{ marginLeft: 2 }} />}
           </motion.button>
         </div>
 
-        {/* Real-time Canvas Equalizer */}
-        <div className="relative mt-3 h-16 w-full flex items-center justify-center overflow-hidden rounded-lg">
+        {/* Canvas equalizer */}
+        <div style={{ borderRadius: 10, overflow: 'hidden', height: 56, background: 'rgba(0,0,0,0.25)' }}>
           <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block' }} />
         </div>
 
-        {/* Volume controller */}
-        <div className="flex items-center gap-3 mt-4 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-          <button 
-            onClick={() => setMuted(!muted)} 
-            className="opacity-70 hover:opacity-100 transition-opacity"
-            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-          >
-            {muted || volume === 0 ? <VolumeX size={15} color="#9CA3AF" /> : <Volume2 size={15} color="#9CA3AF" />}
+        {/* Volume row */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 12, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+          <button onClick={() => setMuted(!muted)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, opacity: 0.65, lineHeight: 0 }}>
+            {muted || volume === 0 ? <VolumeX size={14} color="#9CA3AF" /> : <Volume2 size={14} color="#9CA3AF" />}
           </button>
-          <input
-            type="range"
-            min="0"
-            max="1"
-            step="0.05"
-            value={volume}
-            onChange={(e) => {
-              setVolume(parseFloat(e.target.value));
-              if (muted) setMuted(false);
-            }}
-            className="flex-1 accent-indigo-500 h-1 rounded-lg bg-gray-800 cursor-pointer"
-            style={{
-              outline: 'none',
-              WebkitAppearance: 'none',
-              background: `linear-gradient(to right, ${activeTrack?.accent || '#6366F1'} 0%, ${activeTrack?.accent || '#6366F1'} ${volume * 100}%, #1f2937 ${volume * 100}%, #1f2937 100%)`
-            }}
-          />
-          <span className="text-[10px] tabular-nums font-semibold" style={{ color: 'var(--text-muted)' }}>
+          <input type="range" min="0" max="1" step="0.02" value={muted ? 0 : volume}
+            onChange={e => { setVolume(+e.target.value); if (muted) setMuted(false); }}
+            style={{ flex: 1, height: 3, borderRadius: 4, outline: 'none', cursor: 'pointer', WebkitAppearance: 'none', background: `linear-gradient(to right, ${activeTrack?.accent ?? '#6366F1'} ${(muted ? 0 : volume) * 100}%, #374151 ${(muted ? 0 : volume) * 100}%)` }} />
+          <span style={{ fontSize: 10, color: 'var(--text-muted)', fontVariantNumeric: 'tabular-nums', minWidth: 26, textAlign: 'right' }}>
             {muted ? '0%' : `${Math.round(volume * 100)}%`}
           </span>
         </div>
       </div>
 
-      {/* Sound selector grid */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-2.5">
-        {SOUNDSCAPE_TRACKS.map((track) => {
-          const isActive = activeTrack?.id === track.id;
+      {/* ── Track Selector ── */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {SOUNDSCAPE_TRACKS.map(track => {
+          const active = activeId === track.id;
           return (
-            <motion.div
-              key={track.id}
-              whileHover={{ y: -2 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => handleSelectTrack(track)}
-              className="flex flex-row md:flex-col items-center gap-3"
-              style={{
-                background: isActive ? 'rgba(255,255,255,0.04)' : 'var(--bg-secondary)',
-                border: isActive ? `1.5px solid ${track.accent}` : '1px solid var(--border)',
-                borderRadius: 16,
-                padding: '12px 14px',
-                cursor: 'pointer',
-                transition: 'all 0.25s ease',
-                boxShadow: isActive ? `0 4px 20px ${track.accent}15` : 'none',
-              }}
-            >
-              {/* Icon badge */}
-              <div 
-                style={{ 
-                  width: 36, 
-                  height: 36, 
-                  borderRadius: 10, 
-                  background: isActive ? `${track.accent}15` : 'rgba(255,255,255,0.03)',
-                  border: `1px solid ${isActive ? `${track.accent}30` : 'transparent'}`,
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center',
-                  fontSize: 16,
-                  transition: 'all 0.3s'
-                }}
-              >
-                {track.icon}
+            <motion.button key={track.id} onClick={() => handleSelect(track.id)}
+              whileHover={{ x: 3 }} whileTap={{ scale: 0.98 }}
+              style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 14, cursor: 'pointer', border: active ? `1.5px solid ${track.accent}` : '1px solid var(--border)', background: active ? `${track.accent}0D` : 'var(--bg-secondary)', boxShadow: active ? `0 0 18px ${track.accent}15` : 'none', transition: 'all 0.2s ease', textAlign: 'left', width: '100%' }}>
+              <div style={{ width: 32, height: 32, borderRadius: 9, background: active ? `${track.accent}18` : 'rgba(255,255,255,0.04)', border: `1px solid ${active ? `${track.accent}35` : 'transparent'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.3s' }}>
+                <track.Icon size={16} color={active ? track.accent : '#6B7280'} />
               </div>
-
-              {/* Text */}
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs font-bold truncate" style={{ color: isActive ? 'white' : 'var(--text-primary)' }}>
-                    {track.name}
-                  </span>
-                  {isActive && isPlaying && (
-                    <span 
-                      className="inline-block w-1.5 h-1.5 rounded-full" 
-                      style={{ 
-                        backgroundColor: track.accent,
-                        boxShadow: `0 0 8px ${track.accent}`
-                      }}
-                    />
-                  )}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: active ? 'white' : 'var(--text-primary)' }}>{track.name}</span>
+                  {active && isPlaying && <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: track.accent, boxShadow: `0 0 8px ${track.accent}`, display: 'inline-block' }} />}
                 </div>
-                <p className="text-[9px] truncate" style={{ color: 'var(--text-muted)' }}>
-                  {track.id === 'rain' ? 'Loop Rain & Thunder' : 
-                   track.id === 'cafe' ? 'Chill Coffee House' : 
-                   track.id === 'space' ? 'Galactic Deep Lofi' : 
-                   track.id === 'forest' ? 'Night Woods Ambience' : 'Calm Coast Waves'}
-                </p>
+                <p style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 1 }}>{track.desc}</p>
               </div>
-            </motion.div>
+              {active && isPlaying && (
+                <div style={{ display: 'flex', gap: 2, alignItems: 'flex-end', height: 16, flexShrink: 0 }}>
+                  {[0, 1, 2].map(i => (
+                    <motion.span key={i} style={{ width: 3, borderRadius: 2, backgroundColor: track.accent }}
+                      animate={{ height: ['4px', '14px', '4px'] }}
+                      transition={{ duration: 0.7 + i * 0.15, repeat: Infinity, delay: i * 0.15 }} />
+                  ))}
+                </div>
+              )}
+            </motion.button>
           );
         })}
       </div>
 
-      {/* Styled inline sliders fallback */}
       <style>{`
-        input[type="range"]::-webkit-slider-thumb {
-          -webkit-appearance: none;
-          appearance: none;
-          width: 10px;
-          height: 10px;
-          border-radius: 50%;
-          background: white;
-          box-shadow: 0 0 10px rgba(255,255,255,0.5);
-          transition: transform 0.1s ease;
-        }
-        input[type="range"]::-webkit-slider-thumb:hover {
-          transform: scale(1.3);
-        }
+        input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:white;box-shadow:0 0 8px rgba(255,255,255,0.5);cursor:pointer;}
+        input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;background:white;border:none;cursor:pointer;}
       `}</style>
     </div>
   );
