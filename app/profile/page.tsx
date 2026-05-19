@@ -1919,6 +1919,70 @@ export default function ProfilePage() {
                             </button>
                           )}
                         </div>
+
+                        {/* 5. Simulasi Bimbingan & Tutorial Tester */}
+                        <div className="mt-4 pt-4 border-t border-violet-500/10 space-y-2.5">
+                          <label className="text-[9px] font-black uppercase text-violet-400 tracking-wider block">
+                            🎮 Simulator Bimbingan & Onboarding Pengguna
+                          </label>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <button
+                              onClick={async () => {
+                                playMechanicalClick();
+                                try {
+                                  useAppStore.getState().setHasCompletedTutorial(false);
+                                  const { syncUserProfile } = await import('@/lib/firebase/firestore');
+                                  await syncUserProfile(user!.uid, { hasCompletedTutorial: false });
+                                  
+                                  useAppStore.getState().addNotification(
+                                    '🚀 Bimbingan Aktif',
+                                    'Panduan tutorial interaktif diaktifkan kembali. Anda dialihkan ke Dashboard!',
+                                    'system'
+                                  );
+                                  
+                                  router.push('/dashboard');
+                                } catch (err) {
+                                   console.error('Failed to trigger tutorial simulation:', err);
+                                }
+                              }}
+                              className="p-3 rounded-xl border border-dashed border-indigo-500/40 text-indigo-400 hover:bg-indigo-50/5 hover:text-indigo-300 text-[10px] font-black uppercase tracking-wider text-center transition-all flex items-center justify-center gap-1.5"
+                            >
+                              🚀 Uji Bimbingan Interaktif
+                            </button>
+
+                            <button
+                              onClick={async () => {
+                                playMechanicalClick();
+                                if (confirm('Apakah Anda ingin me-reset semua kategori tab menu & tutorial agar bersih seperti akun baru?')) {
+                                  try {
+                                    useAppStore.getState().setHasCompletedTutorial(false);
+                                    useAppStore.getState().setCustomCategories([]);
+                                    useAppStore.getState().setCustomHabits([]);
+                                    
+                                    const { syncUserProfile, saveCustomCategories, saveCustomHabits } = await import('@/lib/firebase/firestore');
+                                    await syncUserProfile(user!.uid, { hasCompletedTutorial: false });
+                                    await saveCustomCategories(user!.uid, []);
+                                    await saveCustomHabits(user!.uid, []);
+                                    
+                                    useAppStore.getState().addNotification(
+                                      '🧹 Reset Akun Bersih',
+                                      'Menghapus semua tab menu Anda dan me-reset tutorial agar bersih seperti pengguna baru!',
+                                      'system'
+                                    );
+                                    
+                                    router.push('/dashboard');
+                                    setTimeout(() => window.location.reload(), 600);
+                                  } catch (err) {
+                                     console.error('Failed to reset categories and tutorial:', err);
+                                  }
+                                }
+                              }}
+                              className="p-3 rounded-xl border border-dashed border-amber-500/40 text-amber-500 hover:bg-amber-50/5 hover:text-amber-300 text-[10px] font-black uppercase tracking-wider text-center transition-all flex items-center justify-center gap-1.5"
+                            >
+                              🧹 Simulasi Akun Baru Bersih
+                            </button>
+                          </div>
+                        </div>
                       </div>
 
                     </div>
