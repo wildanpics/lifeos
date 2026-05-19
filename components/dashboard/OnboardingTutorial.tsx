@@ -372,7 +372,8 @@ export const OnboardingTutorial = () => {
       <div className="fixed inset-0 z-[9990] pointer-events-none select-none">
         {/* 4-Rectangle Spotlight Overlay to allow pointer clicks to pass through the hollow area */}
         {!cutout ? (
-          <div className="fixed inset-0 bg-black/80 pointer-events-auto transition-all duration-300" />
+          /* No target found — use a soft non-blocking dim so users can still click nav items */
+          <div className="fixed inset-0 bg-black/50 pointer-events-none transition-all duration-300" />
         ) : (
           <>
             {/* Top Overlay */}
@@ -380,12 +381,14 @@ export const OnboardingTutorial = () => {
               className="fixed left-0 top-0 w-screen bg-black/80 pointer-events-auto transition-all duration-300"
               style={{ height: `${Math.max(0, cutout.top)}px` }}
             />
-            {/* Bottom Overlay */}
+            {/* Bottom Overlay — on mobile, stop above bottom nav (80px) so tabs remain tappable */}
             <div 
               className="fixed left-0 w-screen bg-black/80 pointer-events-auto transition-all duration-300"
               style={{ 
                 top: `${cutout.bottom}px`,
-                height: `calc(100vh - ${cutout.bottom}px)`
+                height: typeof window !== 'undefined' && window.innerWidth < 640
+                  ? `calc(100vh - ${cutout.bottom}px - 80px)`
+                  : `calc(100vh - ${cutout.bottom}px)`
               }}
             />
             {/* Left Overlay */}
