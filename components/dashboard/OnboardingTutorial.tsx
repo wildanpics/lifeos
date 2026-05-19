@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '@/store/useAppStore';
 import { 
@@ -10,6 +11,7 @@ import {
 import React from 'react';
 
 interface Slide {
+  step: number;
   title: string;
   subtitle: string;
   description: string;
@@ -19,10 +21,12 @@ interface Slide {
   bgGradient: string;
   targetId?: string; // ID of target DOM element to highlight
   position?: 'top' | 'bottom' | 'left' | 'right' | 'center';
+  requiresUserAction: boolean; // If true, hide "Next" button and wait for actual user interaction
 }
 
 export const OnboardingTutorial = () => {
-  const { hasCompletedTutorial, setHasCompletedTutorial, user } = useAppStore();
+  const pathname = usePathname();
+  const { hasCompletedTutorial, setHasCompletedTutorial, user, customCategories = [] } = useAppStore();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
   const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
@@ -40,71 +44,141 @@ export const OnboardingTutorial = () => {
 
   const slides: Slide[] = [
     {
+      step: 1,
       title: "Selamat Datang Pejuang! 🚀",
-      subtitle: "Sistem Operasi Kedisiplinan Life OS",
-      description: "Life OS dirancang khusus untuk membantumu mengalahkan prokrastinasi, membangun kebiasaan, dan memperkuat disiplin harian secara menyenangkan layaknya bermain game RPG!",
+      subtitle: "Bimbingan Interaktif Life OS",
+      description: "Mari luangkan waktu 1 menit untuk mempelajari cara menggunakan Life OS. Kami akan menuntunmu secara langsung untuk memasang tab menu pertama dan melihat liga pejuang harian harianmu!",
       icon: Compass,
       colorClass: "text-indigo-400",
       glowClass: "shadow-[0_0_30px_rgba(99,102,241,0.3)]",
       bgGradient: "from-indigo-500/10 via-transparent to-transparent",
-      position: 'center'
+      position: 'center',
+      requiresUserAction: false // User clicks button to proceed
     },
     {
-      title: "Pusat Kebiasaanmu 📅",
-      subtitle: "Kelola Rutinitas & Jaga Streak",
-      description: "Ini adalah menu 'Kebiasaan'. Klik menu ini untuk merencanakan rutinitas harianmu. Setiap habit yang sukses diselesaikan akan memberikan XP melimpah untuk menaikkan peringkatmu!",
+      step: 2,
+      title: "1. Buka Halaman Kebiasaan 📅",
+      subtitle: "Silakan Klik Menu 'Kebiasaan'",
+      description: "Disiplin dimulai dari kebiasaan harian. Klik menu 'Kebiasaan' di sidebar sebelah kiri sekarang untuk beralih ke halaman pengelolaan habit harianmu!",
       icon: Flame,
       colorClass: "text-orange-400",
       glowClass: "shadow-[0_0_30px_rgba(249,115,22,0.3)]",
       bgGradient: "from-orange-500/10 via-transparent to-transparent",
       targetId: "tour-nav-habits",
-      position: 'right'
+      position: 'right',
+      requiresUserAction: true // Wait for user to navigate to /habits
     },
     {
-      title: "Pasang Template Kebiasaan ➕",
-      subtitle: "Mulai Cepat dengan Satu Klik",
-      description: "Gunakan tombol '+' di sini untuk langsung memasang template siap pakai seperti 'Sholat & Ibadah', 'Kesehatan', atau membuat kategori khusus rancanganmu sendiri!",
+      step: 3,
+      title: "2. Buka Pembuat Kategori ➕",
+      subtitle: "Silakan Klik Tombol '+'",
+      description: "Tab menu kebiasaanmu masih kosong. Sekarang, silakan klik tombol '+' (atau tombol 'Pasang Tab Menu Sekarang' di tengah banner) untuk membuka pilihan template sub-menu!",
       icon: Zap,
       colorClass: "text-amber-400",
       glowClass: "shadow-[0_0_30px_rgba(245,158,11,0.3)]",
       bgGradient: "from-amber-500/10 via-transparent to-transparent",
       targetId: "tour-add-category",
-      position: 'bottom'
+      position: 'bottom',
+      requiresUserAction: true // Wait for modal to open (detecting targetId in next step)
     },
     {
-      title: "Panjat Klasemen Liga 🏆",
-      subtitle: "Bersainglah dengan Pejuang Lain",
-      description: "Kumpulkan XP harian dan masuki 'Leaderboard' liga mingguan. Tunjukkan konsistensimu, bersainglah sehat dengan pejuang lain, dan penuhi profilmu dengan lencana liga!",
+      step: 4,
+      title: "3. Pasang Menu Sholat & Ibadah 🕌",
+      subtitle: "Silakan Klik '+ Pasang'",
+      description: "Bagus sekali! Sekarang klik tombol '+ Pasang' pada template 'Sholat & Ibadah' di dalam modal untuk mengaktifkan pelacak ibadah fardhu & sunnahmu!",
+      icon: Target,
+      colorClass: "text-indigo-400",
+      glowClass: "shadow-[0_0_30px_rgba(99,102,241,0.3)]",
+      bgGradient: "from-indigo-500/10 via-transparent to-transparent",
+      targetId: "tour-apply-prayer",
+      position: 'right',
+      requiresUserAction: true // Wait for 'prayer' category to exist
+    },
+    {
+      step: 5,
+      title: "4. Pasang Menu Kesehatan 🍎",
+      subtitle: "Silakan Klik '+ Pasang'",
+      description: "Luar biasa! Terakhir, silakan klik '+ Pasang' pada template 'Kesehatan & Diet' untuk mengaktifkan pelacak minum air 8 gelas & porsi makan bernutrisi!",
+      icon: Star,
+      colorClass: "text-emerald-400",
+      glowClass: "shadow-[0_0_30px_rgba(16,185,129,0.3)]",
+      bgGradient: "from-emerald-500/10 via-transparent to-transparent",
+      targetId: "tour-apply-health",
+      position: 'right',
+      requiresUserAction: true // Wait for 'health' category to exist
+    },
+    {
+      step: 6,
+      title: "5. Intip Liga Pejuang 🏆",
+      subtitle: "Silakan Klik Menu 'Leaderboard'",
+      description: "Tab menu kebiasaan & pelacak kesehatanmu sudah aktif dan siap digunakan! Sekarang silakan klik menu 'Leaderboard' di sidebar kiri untuk melihat peringkat persainganmu!",
       icon: Trophy,
       colorClass: "text-yellow-400",
       glowClass: "shadow-[0_0_30px_rgba(234,179,8,0.3)]",
       bgGradient: "from-yellow-500/10 via-transparent to-transparent",
       targetId: "tour-nav-leaderboard",
-      position: 'right'
+      position: 'right',
+      requiresUserAction: true // Wait for user to navigate to /achievements
     },
     {
-      title: "Kartu Karakter Pejuangmu 🛡️",
-      subtitle: "Pantau Level & Gelar Kehormatan",
-      description: "Ini adalah indikator level dan gelar kedisiplinanmu. Kumpulkan XP untuk melaju di peta petualangan (Roadmap) dan klaim gelar barumu mulai dari 'Pemula' hingga 'Gigh'!",
+      step: 7,
+      title: "Petualangan Disiplin Dimulai! 🔥",
+      subtitle: "Selamat, Kamu Siap Bertarung!",
+      description: "Hebat! Kamu telah menguasai dasar-dasar navigasi LIFE OS. Sekarang, selesaikan kebiasaan harianmu, kumpulkan XP, naikkan level karakter, dan kalahkan prokrastinasi untuk memanjat peringkat Liga Diamond! Sampai jumpa di puncak klasemen!",
       icon: Shield,
       colorClass: "text-emerald-400",
       glowClass: "shadow-[0_0_30px_rgba(16,185,129,0.3)]",
       bgGradient: "from-emerald-500/10 via-transparent to-transparent",
-      targetId: "tour-sidebar-level",
-      position: 'right'
-    },
-    {
-      title: "Halaman Profil & Target 🌟",
-      subtitle: "Kustomisasi Karakter & Goal",
-      description: "Menu 'Profil' menampung pengaturan avatar, biodata, target pribadi (Goals), serta panel 'Developer Tools' untuk intip akun simulasi lain secara rahasia!",
-      icon: Star,
-      colorClass: "text-cyan-400",
-      glowClass: "shadow-[0_0_30px_rgba(34,211,238,0.3)]",
-      bgGradient: "from-cyan-500/10 via-transparent to-transparent",
-      targetId: "tour-nav-profile",
-      position: 'right'
+      position: 'center',
+      requiresUserAction: false // User clicks finish button
     }
   ];
+
+  // Dynamic state machine triggers based on user behavior:
+  useEffect(() => {
+    if (!user || hasCompletedTutorial) return;
+
+    // Step 2 -> Step 3 trigger: User successfully navigates to '/habits'
+    if (currentSlide === 1 && pathname === '/habits') {
+      setCurrentSlide(2);
+    }
+
+    // Step 3 -> Step 4 trigger: Detect if template modal is open (checks if tour-apply-prayer exists in DOM)
+    if (currentSlide === 2) {
+      const modalOpen = document.getElementById('tour-apply-prayer');
+      if (modalOpen) {
+        setCurrentSlide(3);
+      }
+    }
+
+    // Step 4 -> Step 5 trigger: Detect if 'prayer' category was successfully installed
+    if (currentSlide === 3) {
+      const prayerExists = customCategories.some(c => c.id === 'prayer');
+      if (prayerExists) {
+        // If the user already has both, skip straight to leaderboard step!
+        const healthExists = customCategories.some(c => c.id === 'health');
+        if (healthExists) {
+          setCurrentSlide(5);
+        } else {
+          setCurrentSlide(4);
+        }
+      }
+    }
+
+    // Step 5 -> Step 6 trigger: Detect if 'health' category was successfully installed
+    if (currentSlide === 4) {
+      const healthExists = customCategories.some(c => c.id === 'health');
+      if (healthExists) {
+        setCurrentSlide(5);
+      }
+    }
+
+    // Step 6 -> Step 7 trigger: User successfully navigates to '/achievements' (Leaderboard)
+    if (currentSlide === 5 && pathname === '/achievements') {
+      setCurrentSlide(6);
+    }
+
+  }, [pathname, currentSlide, customCategories, user, hasCompletedTutorial]);
 
   // Track the bounding rectangle of current target element
   useEffect(() => {
@@ -113,10 +187,13 @@ export const OnboardingTutorial = () => {
     const updateTargetPosition = () => {
       const activeSlide = slides[currentSlide];
       if (activeSlide && activeSlide.targetId) {
-        const el = document.getElementById(activeSlide.targetId);
+        let el = document.getElementById(activeSlide.targetId);
+        // Dynamic target selection for step 3: prefer empty categories banner if present
+        if (activeSlide.targetId === 'tour-add-category') {
+          const bannerEl = document.getElementById('tour-add-category-banner');
+          if (bannerEl) el = bannerEl;
+        }
         if (el) {
-          // Scroll slightly to target if needed to make it visible
-          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
           const rect = el.getBoundingClientRect();
           setTargetRect(rect);
           return;
@@ -125,18 +202,14 @@ export const OnboardingTutorial = () => {
       setTargetRect(null);
     };
 
-    // Update position instantly
     updateTargetPosition();
-
-    // Set interval to sync positioning (to handle lazy loads/scrolls/animations)
-    tourIntervalRef.current = setInterval(updateTargetPosition, 500);
+    tourIntervalRef.current = setInterval(updateTargetPosition, 400);
 
     return () => {
       if (tourIntervalRef.current) clearInterval(tourIntervalRef.current);
     };
   }, [currentSlide, hasCompletedTutorial, user, windowSize]);
 
-  // Only show tutorial if user is logged in AND has not completed tutorial
   if (!user || hasCompletedTutorial) return null;
 
   const handleNext = () => {
@@ -157,7 +230,6 @@ export const OnboardingTutorial = () => {
   // Compute bubble coordinates based on active target rect
   const getBubbleStyle = () => {
     if (!targetRect) {
-      // Fallback to center screen popup
       return {
         position: 'fixed' as const,
         left: '50%',
@@ -178,11 +250,9 @@ export const OnboardingTutorial = () => {
       boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
     };
 
-    // Place bubble based on desired position
     if (activeSlide.position === 'right') {
       style.left = `${targetRect.right + gap}px`;
       style.top = `${targetRect.top + (targetRect.height / 2) - 150}px`;
-      // Boundary check to keep bubble on screen
       if (typeof window !== 'undefined') {
         const topVal = targetRect.top + (targetRect.height / 2) - 150;
         style.top = `${Math.max(16, Math.min(window.innerHeight - 340, topVal))}px`;
@@ -190,13 +260,11 @@ export const OnboardingTutorial = () => {
     } else if (activeSlide.position === 'bottom') {
       style.left = `${targetRect.left + (targetRect.width / 2) - 190}px`;
       style.top = `${targetRect.bottom + gap}px`;
-      // Boundary check to keep bubble on screen
       if (typeof window !== 'undefined') {
         const leftVal = targetRect.left + (targetRect.width / 2) - 190;
         style.left = `${Math.max(16, Math.min(window.innerWidth - 400, leftVal))}px`;
       }
     } else {
-      // Default to center if positioning gets weird
       style.left = '50%';
       style.top = '50%';
       style.transform = 'translate(-50%, -50%)';
@@ -229,7 +297,7 @@ export const OnboardingTutorial = () => {
             width="100%" 
             height="100%" 
             fill="black" 
-            opacity="0.75" 
+            opacity="0.8" 
             mask="url(#spotlight-mask)" 
             className="transition-all duration-300"
           />
@@ -248,13 +316,13 @@ export const OnboardingTutorial = () => {
               height: targetRect.height + 16
             }}
             transition={{ type: 'spring', stiffness: 200, damping: 25 }}
-            className="absolute border-2 border-indigo-500 rounded-2xl pointer-events-none z-[9991]"
+            className="absolute border-2 border-amber-500 rounded-2xl pointer-events-none z-[9991]"
             style={{
-              boxShadow: '0 0 20px rgba(99, 102, 241, 0.4), inset 0 0 10px rgba(99, 102, 241, 0.2)'
+              boxShadow: '0 0 25px rgba(245, 158, 11, 0.5), inset 0 0 10px rgba(245, 158, 11, 0.3)'
             }}
           >
             {/* Soft breathing halo glow */}
-            <span className="absolute -inset-2 rounded-2xl border border-indigo-500/30 animate-pulse" />
+            <span className="absolute -inset-2 rounded-2xl border border-amber-500/30 animate-pulse" />
           </motion.div>
         )}
 
@@ -266,22 +334,24 @@ export const OnboardingTutorial = () => {
           exit={{ opacity: 0, scale: 0.9, y: 15 }}
           transition={{ duration: 0.3, ease: 'easeOut' }}
           style={getBubbleStyle()}
-          className="bg-[#0f0f13] border border-white/10 rounded-3xl p-6 overflow-hidden flex flex-col items-center text-center pointer-events-auto shadow-2xl"
+          className="bg-[#0b0b0e] border border-amber-500/20 rounded-3xl p-6 overflow-hidden flex flex-col items-center text-center pointer-events-auto shadow-2xl"
         >
           {/* Radial Ambient Glow */}
           <div className={`absolute top-0 inset-x-0 h-32 bg-gradient-to-b ${activeSlide.bgGradient} pointer-events-none transition-all duration-500`} />
 
-          {/* Close Button / Skip */}
-          <button 
-            onClick={handleSkip}
-            className="absolute top-4 right-4 w-7 h-7 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-neutral-400 hover:text-white transition-all z-10"
-            title="Lewati Tutorial"
-          >
-            <X className="w-3.5 h-3.5" />
-          </button>
+          {/* Skip Button (only visible on step 1 or end step) */}
+          {!activeSlide.requiresUserAction && (
+            <button 
+              onClick={handleSkip}
+              className="absolute top-4 right-4 w-7 h-7 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-neutral-400 hover:text-white transition-all z-10"
+              title="Lewati Tutorial"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
 
           {/* Header Step Counter */}
-          <span className="text-[9px] font-black tracking-widest text-indigo-400 bg-indigo-500/10 px-2.5 py-0.5 rounded-full border border-indigo-500/20 uppercase mb-4 z-10">
+          <span className="text-[9px] font-black tracking-widest text-amber-500 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20 uppercase mb-4 z-10">
             Langkah {currentSlide + 1} dari {slides.length}
           </span>
 
@@ -293,7 +363,7 @@ export const OnboardingTutorial = () => {
                 animate={{ opacity: 1, scale: 1 }}
                 className={activeSlide.colorClass}
               >
-                <ActiveIcon className="w-7 h-7" />
+                <ActiveIcon className="w-7 h-7 animate-pulse" />
               </motion.div>
             </div>
           </div>
@@ -306,51 +376,55 @@ export const OnboardingTutorial = () => {
             <h3 className={`text-[10px] font-black uppercase tracking-wider mb-2 ${activeSlide.colorClass}`}>
               {activeSlide.subtitle}
             </h3>
-            <p className="text-[11px] leading-relaxed text-neutral-400 font-medium px-1 text-center">
+            <p className="text-[11.5px] leading-relaxed text-neutral-350 font-medium px-1 text-center">
               {activeSlide.description}
             </p>
-          </div>
-
-          {/* Indicator Dots */}
-          <div className="flex gap-1.5 my-3 z-10">
-            {slides.map((_, idx) => (
-              <button
-                key={idx}
-                onClick={() => setCurrentSlide(idx)}
-                className={`h-1.5 rounded-full transition-all duration-300 ${
-                  idx === currentSlide 
-                    ? 'w-4 bg-indigo-500' 
-                    : 'w-1.5 bg-neutral-800 hover:bg-neutral-700'
-                }`}
-              />
-            ))}
+            {activeSlide.requiresUserAction && (
+              <span className="mt-3.5 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-black tracking-wider text-amber-400 bg-amber-500/10 border border-amber-500/20 uppercase animate-bounce">
+                👉 Lakukan Aksi Ini Sekarang!
+              </span>
+            )}
           </div>
 
           {/* Action Buttons */}
           <div className="flex items-center justify-between w-full gap-3 mt-2 z-10">
-            <button
-              onClick={handleSkip}
-              className="px-4 py-2 rounded-xl text-neutral-500 hover:text-neutral-300 font-bold text-[10px] tracking-wider uppercase border border-transparent hover:bg-white/5 transition-all"
-            >
-              Lewati
-            </button>
+            {activeSlide.requiresUserAction ? (
+              <>
+                <button
+                  onClick={handleSkip}
+                  className="px-4 py-2 rounded-xl text-neutral-500 hover:text-neutral-300 font-bold text-[10px] tracking-wider uppercase transition-all"
+                >
+                  Lewati Panduan
+                </button>
+                <span className="text-[10px] font-black text-amber-500/70 italic uppercase tracking-wide">Menunggu Aksimu...</span>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={handleSkip}
+                  className="px-4 py-2 rounded-xl text-neutral-500 hover:text-neutral-300 font-bold text-[10px] tracking-wider uppercase border border-transparent hover:bg-white/5 transition-all"
+                >
+                  Lewati
+                </button>
 
-            <button
-              onClick={handleNext}
-              className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl font-bold text-[10px] tracking-wider uppercase bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/20 active:scale-95 transition-all border border-indigo-500/20"
-            >
-              {currentSlide === slides.length - 1 ? (
-                <>
-                  Mulai Pejuang!
-                  <Play className="w-3 h-3 fill-current" />
-                </>
-              ) : (
-                <>
-                  Lanjut
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </>
-              )}
-            </button>
+                <button
+                  onClick={handleNext}
+                  className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl font-bold text-[10px] tracking-wider uppercase bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-500/20 active:scale-95 transition-all border border-amber-500/20"
+                >
+                  {currentSlide === slides.length - 1 ? (
+                    <>
+                      Mulai Bertarung! 🔥
+                      <Play className="w-3 h-3 fill-current" />
+                    </>
+                  ) : (
+                    <>
+                      Mulai Bimbingan
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </>
+                  )}
+                </button>
+              </>
+            )}
           </div>
         </motion.div>
       </div>

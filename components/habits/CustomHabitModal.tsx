@@ -498,6 +498,7 @@ export function CustomHabitModal({ onClose, activeCategoryId, activeCategoryLabe
                         return (
                           <button
                             key={tmpl.id}
+                            id={`tour-apply-${tmpl.id}`}
                             type="button"
                             onClick={() => handleApplyTemplate(tmpl)}
                             disabled={exists}

@@ -5,6 +5,7 @@ import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
 import { BottomNav } from './BottomNav';
 import { AchievementToast } from '@/components/ui/AchievementToast';
+import { OnboardingTutorial } from '@/components/dashboard/OnboardingTutorial';
 import { usePrayer } from '@/lib/hooks/usePrayer';
 import { useAppStore } from '@/store/useAppStore';
 import { motion } from 'framer-motion';
@@ -202,6 +203,7 @@ export function AppShell({ children, topBarTitle }: AppShellProps) {
       <BottomNav />
 
       <AchievementToast />
+      <OnboardingTutorial />
     </div>
   );
 }
