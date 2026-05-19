@@ -354,6 +354,41 @@ export function HabitCard() {
       </div>
 
       <div className="space-y-2">
+        {/* Empty State Banner when no categories exist */}
+        {mergedCategories.length === 0 && (
+          <motion.div 
+            initial={{ opacity: 0, y: 15 }} 
+            animate={{ opacity: 1, y: 0 }}
+            className="p-6 rounded-2xl text-center border relative overflow-hidden my-4"
+            style={{
+              background: 'rgba(245,158,11,0.03)',
+              borderColor: 'rgba(245,158,11,0.2)',
+              boxShadow: '0 8px 32px 0 rgba(245, 158, 11, 0.05)',
+            }}
+          >
+            <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute bottom-0 left-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+
+            <span className="text-4xl mb-3 block animate-bounce">✨</span>
+            <h3 className="text-base font-extrabold mb-1" style={{ color: 'var(--text-primary)' }}>
+              Mulai Perjalanan Disiplinmu!
+            </h3>
+            <p className="text-xs max-w-sm mx-auto mb-4 leading-relaxed text-center" style={{ color: 'var(--text-secondary)' }}>
+              Tab menu kebiasaan Anda masih kosong bersih. Klik tombol <span className="font-bold text-amber-500">"+"</span> di atas untuk langsung memasang template siap pakai seperti **Sholat & Ibadah**, **Kesehatan**, atau membuat kategori kustom Anda sendiri!
+            </p>
+            <button 
+              onClick={() => setIsModalOpen(true)}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold shadow-md transition-all hover:scale-105"
+              style={{
+                background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+                color: 'white',
+              }}
+            >
+              <Plus className="w-3.5 h-3.5" /> Pasang Tab Menu Sekarang
+            </button>
+          </motion.div>
+        )}
+
         {/* Health Custom Widgets rendering */}
         {activeCategory === 'health' && (
           <div className="mb-4 space-y-3 pb-3 border-b" style={{ borderColor: 'var(--border)' }}>
