@@ -171,7 +171,12 @@ export function Sidebar() {
             {navItems.map((item) => {
               const active = pathname === item.href || pathname.startsWith(item.href + '/');
               return (
-                <Link key={item.href} href={item.href} style={{ textDecoration: 'none' }}>
+                <Link 
+                  key={item.href} 
+                  href={item.href} 
+                  style={{ textDecoration: 'none' }}
+                  id={item.href === '/profile' ? 'tour-nav-profile' : item.href === '/achievements' ? 'tour-nav-leaderboard' : item.href === '/habits' ? 'tour-nav-habits' : undefined}
+                >
                   <motion.div
                     whileHover={{ x: 3 }}
                     whileTap={{ scale: 0.97 }}
@@ -223,7 +228,7 @@ export function Sidebar() {
         </nav>
 
         {/* Level Roadmap Promo */}
-        <div style={{ padding: '0 1rem 1rem' }}>
+        <div id="tour-sidebar-level" style={{ padding: '0 1rem 1rem' }}>
           <div style={getLevelCardStyle(level.level, level.color)}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
               <div style={{

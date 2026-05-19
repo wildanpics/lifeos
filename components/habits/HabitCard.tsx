@@ -345,6 +345,7 @@ export function HabitCard() {
 
         {/* Add Sub-Menu Button */}
         <button 
+          id="tour-add-category"
           onClick={() => setIsModalOpen(true)}
           className="flex items-center justify-center p-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all border border-dashed border-amber-500/40 text-amber-500 hover:bg-amber-500/10 hover:border-amber-500 flex-shrink-0"
           title="Tambah Sub-Menu"
