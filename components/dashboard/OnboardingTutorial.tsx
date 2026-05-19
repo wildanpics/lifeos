@@ -26,8 +26,14 @@ interface Slide {
 
 export const OnboardingTutorial = () => {
   const pathname = usePathname();
-  const { hasCompletedTutorial, setHasCompletedTutorial, user, customCategories = [] } = useAppStore();
-  const [currentSlide, setCurrentSlide] = useState(0);
+  const { 
+    hasCompletedTutorial, setHasCompletedTutorial, 
+    user, customCategories = [],
+    tutorialSlide, setTutorialSlide
+  } = useAppStore();
+  // Use persisted tutorialSlide from store so it survives page navigation remounts
+  const currentSlide = tutorialSlide;
+  const setCurrentSlide = setTutorialSlide;
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
   const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
   const tourIntervalRef = useRef<any>(null);
@@ -47,103 +53,103 @@ export const OnboardingTutorial = () => {
       step: 1,
       title: "Selamat Datang Pejuang! 🚀",
       subtitle: "Bimbingan Interaktif Life OS",
-      description: "Mari luangkan waktu 1 menit untuk mempelajari cara menggunakan Life OS. Kami akan menuntunmu secara langsung untuk memasang tab menu pertama dan melihat liga pejuang harian harianmu!",
+      description: "Halo! Selamat bergabung di Life OS — platform gamifikasi disiplin diri terbaik! 🎖️\n\nKami akan memandu kamu langkah demi langkah selama ±1 menit untuk:\n• Membuat sub-menu kebiasaan pertamamu\n• Memasang pelacak ibadah & kesehatan\n• Melihat posisimu di Liga Pejuang\n\nYuk mulai petualangan disiplinmu!",
       icon: Compass,
       colorClass: "text-indigo-400",
       glowClass: "shadow-[0_0_30px_rgba(99,102,241,0.3)]",
       bgGradient: "from-indigo-500/10 via-transparent to-transparent",
       position: 'center',
-      requiresUserAction: false // User clicks button to proceed
+      requiresUserAction: false
     },
     {
       step: 2,
       title: "1. Buka Halaman Kebiasaan 📅",
-      subtitle: "Silakan Klik Menu 'Kebiasaan'",
-      description: "Disiplin dimulai dari kebiasaan harian. Klik menu 'Kebiasaan' di sidebar sebelah kiri sekarang untuk beralih ke halaman pengelolaan habit harianmu!",
+      subtitle: "👆 Klik menu 'Kebiasaan' di sidebar kiri",
+      description: "Di sinilah kamu akan mencatat & melacak semua kebiasaan harianmu!\n\nHalaman Kebiasaan adalah 'markas besar' disiplinmu. Di sini kamu bisa:\n• Mencentang habit yang sudah selesai\n• Melihat progress sub-menu (Sholat, Kesehatan, dll)\n• Mengumpulkan XP setiap kali menyelesaikan kebiasaan\n\n👆 Sekarang, klik menu 'Kebiasaan' yang disorot di sidebar!",
       icon: Flame,
       colorClass: "text-orange-400",
       glowClass: "shadow-[0_0_30px_rgba(249,115,22,0.3)]",
       bgGradient: "from-orange-500/10 via-transparent to-transparent",
       targetId: "tour-nav-habits",
       position: 'right',
-      requiresUserAction: true // Wait for user to navigate to /habits
+      requiresUserAction: true
     },
     {
       step: 3,
-      title: "2. Buka Pembuat Kategori ➕",
-      subtitle: "Silakan Klik Tombol '+'",
-      description: "Tab menu kebiasaanmu masih kosong. Sekarang, silakan klik tombol '+' (atau tombol 'Pasang Tab Menu Sekarang' di tengah banner) untuk membuka pilihan template sub-menu!",
+      title: "2. Buka Menu Pengelola Kebiasaan ➕",
+      subtitle: "👆 Klik tombol '+' di pojok kanan atas",
+      description: "Halaman Kebiasaan masih kosong karena belum ada sub-menu yang dibuat.\n\nSub-menu adalah kategori pengelompokan kebiasaan, misalnya:\n• 🕌 Sholat & Ibadah — untuk melacak sholat 5 waktu\n• 💪 Kesehatan & Diet — untuk melacak air & makan sehat\n• 🌅 Rutinitas Pagi — untuk kebiasaan pagi harimu\n\n👆 Klik tombol '+' yang disorot (atau tombol 'Pasang Tab Menu Sekarang') untuk membuka menu pengelola!",
       icon: Zap,
       colorClass: "text-amber-400",
       glowClass: "shadow-[0_0_30px_rgba(245,158,11,0.3)]",
       bgGradient: "from-amber-500/10 via-transparent to-transparent",
       targetId: "tour-add-category",
       position: 'bottom',
-      requiresUserAction: true // Wait for modal to open (detecting targetId in next step)
+      requiresUserAction: true
     },
     {
       step: 4,
-      title: "3. Pasang Menu Sholat & Ibadah 🕌",
-      subtitle: "Silakan Klik '+ Pasang'",
-      description: "Bagus sekali! Sekarang klik tombol '+ Pasang' pada template 'Sholat & Ibadah' di dalam modal untuk mengaktifkan pelacak ibadah fardhu & sunnahmu!",
+      title: "3. Pasang Sub-Menu Sholat & Ibadah 🕌",
+      subtitle: "👆 Klik tombol '+ Pasang' di template Sholat",
+      description: "Kamu sudah membuka menu pengelola. Bagus! 🎉\n\nSekarang kamu bisa melihat Template Sub-Menu Rekomendasi. Template ini adalah preset siap pakai yang sudah dilengkapi dengan habit-habit populer di dalamnya.\n\nTemplate 'Sholat & Ibadah' akan otomatis membuat:\n• ✅ Sholat Subuh, Dzuhur, Ashar, Maghrib, Isya\n• ✅ Pelacak sholat sunnah & dzikir\n• ✅ Setiap sholat = +15 XP untuk karaktermu!\n\n👆 Klik tombol '+ Pasang' di baris template Sholat & Ibadah!",
       icon: Target,
       colorClass: "text-indigo-400",
       glowClass: "shadow-[0_0_30px_rgba(99,102,241,0.3)]",
       bgGradient: "from-indigo-500/10 via-transparent to-transparent",
       targetId: "tour-apply-prayer",
       position: 'right',
-      requiresUserAction: true // Wait for 'prayer' category to exist
+      requiresUserAction: true
     },
     {
       step: 5,
-      title: "4. Pasang Menu Kesehatan 🍎",
-      subtitle: "Silakan Klik '+ Pasang'",
-      description: "Luar biasa! Terakhir, silakan klik '+ Pasang' pada template 'Kesehatan & Diet' untuk mengaktifkan pelacak minum air 8 gelas & porsi makan bernutrisi!",
+      title: "4. Pasang Sub-Menu Kesehatan & Diet 🍎",
+      subtitle: "👆 Klik tombol '+ Pasang' di template Kesehatan",
+      description: "Mantap! Sub-menu Sholat berhasil dipasang! 💪\n\nSekarang saatnya memasang template kedua. Template 'Kesehatan & Diet' akan otomatis menambahkan:\n• 💧 Pelacak Minum Air — target 8 gelas/hari (+20 XP)\n• 🍽️ Pelacak Makan Bernutrisi — target 4 porsi/hari (+20 XP)\n• 🏃 Pelacak Olahraga & Langkah Kaki\n\nKedua pelacak ini akan tampil sebagai widget visual interaktif di bagian atas halaman Kebiasaanmu!\n\n👆 Sekarang klik tombol '+ Pasang' di baris Kesehatan & Diet!",
       icon: Star,
       colorClass: "text-emerald-400",
       glowClass: "shadow-[0_0_30px_rgba(16,185,129,0.3)]",
       bgGradient: "from-emerald-500/10 via-transparent to-transparent",
       targetId: "tour-apply-health",
       position: 'right',
-      requiresUserAction: true // Wait for 'health' category to exist
+      requiresUserAction: true
     },
     {
       step: 6,
-      title: "5. Tutup Menu Kelola ✖️",
-      subtitle: "Silakan Klik Tombol Silang (X)",
-      description: "Hebat! Semua sub-menu template rekomendasi sudah aktif di dashboard-mu. Sekarang, silakan klik tombol 'X' di pojok kanan atas modal ini untuk menutup menu kelola!",
+      title: "5. Tutup Menu Pengelola ✅",
+      subtitle: "👆 Klik tombol 'X' di pojok kanan atas modal",
+      description: "Luar biasa! Semua template sudah berhasil dipasang! 🎊\n\nSub-menu Sholat & Ibadah dan Kesehatan & Diet kini sudah aktif di halaman Kebiasaanmu. Kamu juga bisa menambah sub-menu kustom sendiri kapan saja melalui tombol '+' yang sama.\n\nSelanjutnya kita akan melihat posisi peringkatmu di Liga Pejuang bersama semua pengguna lain!\n\n👆 Klik tombol 'X' (silang) di pojok kanan atas modal ini untuk menutup menu pengelola!",
       icon: X,
       colorClass: "text-red-400",
       glowClass: "shadow-[0_0_30px_rgba(239,68,68,0.3)]",
       bgGradient: "from-red-500/10 via-transparent to-transparent",
       targetId: "tour-close-modal",
       position: 'left',
-      requiresUserAction: true // Wait for modal to be closed
+      requiresUserAction: true
     },
     {
       step: 7,
       title: "6. Intip Liga Pejuang 🏆",
-      subtitle: "Silakan Klik Menu 'Leaderboard'",
-      description: "Tab menu kebiasaan & pelacak kesehatanmu sudah aktif dan siap digunakan! Sekarang silakan klik menu 'Leaderboard' di sidebar kiri untuk melihat peringkat persainganmu!",
+      subtitle: "👆 Klik menu 'Leaderboard' di sidebar kiri",
+      description: "Selamat! Halaman Kebiasaanmu sudah lengkap dan siap digunakan! 🥳\n\nSekarang waktunya melihat Liga Pejuang — papan peringkat global semua pengguna Life OS! Di sana kamu bisa:\n• 🥇 Melihat posisi peringkatmu saat ini\n• 👥 Melihat siapa yang ada di atas dan bawahmu\n• ⚔️ Menantang pengguna lain untuk duel fokus\n• 🏆 Naik liga dari Bronze → Silver → Gold → Diamond\n\nSemakin banyak kebiasaan yang kamu selesaikan, semakin tinggi peringkatmu!\n\n👆 Klik menu 'Leaderboard' yang disorot di sidebar kiri!",
       icon: Trophy,
       colorClass: "text-yellow-400",
       glowClass: "shadow-[0_0_30px_rgba(234,179,8,0.3)]",
       bgGradient: "from-yellow-500/10 via-transparent to-transparent",
       targetId: "tour-nav-leaderboard",
       position: 'right',
-      requiresUserAction: true // Wait for user to navigate to /achievements
+      requiresUserAction: true
     },
     {
       step: 8,
       title: "Petualangan Disiplin Dimulai! 🔥",
-      subtitle: "Selamat, Kamu Siap Bertarung!",
-      description: "Hebat! Kamu telah menguasai dasar-dasar navigasi LIFE OS. Sekarang, selesaikan kebiasaan harianmu, kumpulkan XP, naikkan level karakter, dan kalahkan prokrastinasi untuk memanjat peringkat Liga Diamond! Sampai jumpa di puncak klasemen!",
+      subtitle: "Selamat — Kamu Resmi Menjadi Pejuang!",
+      description: "LUAR BIASA! Kamu telah menyelesaikan semua langkah panduan dengan sempurna! 🎖️\n\nSebagai pengingat, berikut cara menggunakan Life OS setiap harinya:\n• 📅 Buka halaman Kebiasaan — centang semua habit harian (+XP)\n• 💧 Update minum air & makan sehat di widget Kesehatan\n• 🏆 Cek Leaderboard untuk memantau posisi liga-mu\n• 🎯 Selesaikan Misi Harian untuk bonus XP ekstra\n\nSelamat berjuang dan sampai jumpa di puncak Liga Diamond! 💎",
       icon: Shield,
       colorClass: "text-emerald-400",
       glowClass: "shadow-[0_0_30px_rgba(16,185,129,0.3)]",
       bgGradient: "from-emerald-500/10 via-transparent to-transparent",
       position: 'center',
-      requiresUserAction: false // User clicks finish button
+      requiresUserAction: false
     }
   ];
 
@@ -222,6 +228,14 @@ export const OnboardingTutorial = () => {
         nextSlide = 7;
       }
 
+      // Auto-complete safeguard: If we reach the final slide (index 7) AND we're past the leaderboard,
+      // mark tutorial complete automatically after a brief display moment to prevent any looping
+      if (nextSlide === 7 && currentSlide === 7) {
+        // Tutorial is already showing final slide — do nothing, wait for user to click Selesai
+        // But if somehow the component re-mounts with slide 7 and tutorial not complete, mark it done
+        return;
+      }
+
       // If slide state changed, apply update and let the next loop run compute target coordinates
       if (nextSlide !== currentSlide) {
         setCurrentSlide(nextSlide);
@@ -258,7 +272,7 @@ export const OnboardingTutorial = () => {
 
   const handleNext = () => {
     if (currentSlide < slides.length - 1) {
-      setCurrentSlide(prev => prev + 1);
+      setCurrentSlide(currentSlide + 1);
     } else {
       setHasCompletedTutorial(true);
     }
@@ -268,7 +282,9 @@ export const OnboardingTutorial = () => {
     setHasCompletedTutorial(true);
   };
 
-  const activeSlide = slides[currentSlide];
+  // Clamp to valid range in case persisted slide index is out of bounds
+  const clampedSlide = Math.max(0, Math.min(currentSlide, slides.length - 1));
+  const activeSlide = slides[clampedSlide];
   const ActiveIcon = activeSlide.icon;
 
   // Compute bubble coordinates based on active target rect
@@ -443,9 +459,12 @@ export const OnboardingTutorial = () => {
             <h3 className={`text-[10px] font-black uppercase tracking-wider mb-2 ${activeSlide.colorClass}`}>
               {activeSlide.subtitle}
             </h3>
-            <p className="text-[11.5px] leading-relaxed text-neutral-350 font-medium px-1 text-center">
-              {activeSlide.description}
-            </p>
+            <div className="text-[11.5px] leading-relaxed text-neutral-350 font-medium px-1 text-left space-y-1 max-h-52 overflow-y-auto">
+              {activeSlide.description.split('\n').map((line, i) => (
+                line.trim() === '' ? <div key={i} className="h-1" /> : 
+                <p key={i} className={line.startsWith('•') ? 'pl-1' : ''}>{line}</p>
+              ))}
+            </div>
             {activeSlide.requiresUserAction && (
               <span className="mt-3.5 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-black tracking-wider text-amber-400 bg-amber-500/10 border border-amber-500/20 uppercase animate-bounce">
                 👉 Lakukan Aksi Ini Sekarang!
