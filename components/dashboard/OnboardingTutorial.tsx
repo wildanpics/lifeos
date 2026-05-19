@@ -292,15 +292,14 @@ export const OnboardingTutorial = () => {
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
 
     // On mobile: always anchor to bottom of screen as a bottom sheet
+    // Use left+right instead of left:50%+transform to avoid Framer Motion transform conflict
     if (isMobile) {
       return {
         position: 'fixed',
-        left: '50%',
+        left: '12px',
+        right: '12px',
         bottom: '16px',
-        transform: 'translateX(-50%)',
         zIndex: 9999,
-        width: 'calc(100% - 24px)',
-        maxWidth: '100%',
       };
     }
 
@@ -369,7 +368,8 @@ export const OnboardingTutorial = () => {
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[9990] overflow-hidden pointer-events-none select-none">
+      {/* Overlay backdrop layer — overflow hidden to clip edges */}
+      <div className="fixed inset-0 z-[9990] pointer-events-none select-none">
         {/* 4-Rectangle Spotlight Overlay to allow pointer clicks to pass through the hollow area */}
         {!cutout ? (
           <div className="fixed inset-0 bg-black/80 pointer-events-auto transition-all duration-300" />
@@ -432,112 +432,113 @@ export const OnboardingTutorial = () => {
             <span className="absolute -inset-2 rounded-2xl border border-amber-500/30 animate-pulse" />
           </motion.div>
         )}
-
-        {/* Floating Tooltip Bubble */}
-        <motion.div
-          key={currentSlide}
-          initial={{ opacity: 0, scale: 0.95, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          transition={{ duration: 0.25, ease: 'easeOut' }}
-          style={getBubbleStyle()}
-          className="bg-[#0b0b0e] border border-amber-500/20 rounded-2xl sm:rounded-3xl px-4 py-4 sm:p-6 overflow-hidden flex flex-col items-center text-center pointer-events-auto shadow-2xl"
-        >
-          {/* Radial Ambient Glow */}
-          <div className={`absolute top-0 inset-x-0 h-32 bg-gradient-to-b ${activeSlide.bgGradient} pointer-events-none transition-all duration-500`} />
-
-          {/* Skip Button (only visible on step 1 or end step) */}
-          {!activeSlide.requiresUserAction && (
-            <button 
-              onClick={handleSkip}
-              className="absolute top-4 right-4 w-7 h-7 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-neutral-400 hover:text-white transition-all z-10"
-              title="Lewati Tutorial"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          )}
-
-          {/* Header Step Counter */}
-          <span className="text-[9px] font-black tracking-widest text-amber-500 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20 uppercase mb-4 z-10">
-            Langkah {currentSlide + 1} dari {slides.length}
-          </span>
-
-          {/* Icon Circle — hidden on mobile to save space */}
-          <div className="relative mb-2 sm:mb-4 z-10 hidden sm:block">
-            <div className={`w-14 h-14 rounded-xl bg-neutral-900 border border-white/10 flex items-center justify-center transition-all duration-500 ${activeSlide.glowClass}`}>
-              <motion.div
-                initial={{ opacity: 0, scale: 0.5 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className={activeSlide.colorClass}
-              >
-                <ActiveIcon className="w-7 h-7 animate-pulse" />
-              </motion.div>
-            </div>
-          </div>
-
-          {/* Texts content with transition */}
-          <div className="flex flex-col items-center z-10 w-full mb-2 sm:mb-3">
-            <h2 className="text-sm sm:text-base font-extrabold text-white tracking-tight leading-snug mb-1">
-              {activeSlide.title}
-            </h2>
-            <h3 className={`text-[9px] sm:text-[10px] font-black uppercase tracking-wider mb-2 ${activeSlide.colorClass}`}>
-              {activeSlide.subtitle}
-            </h3>
-            <div className="text-[11px] sm:text-[11.5px] leading-relaxed text-neutral-400 font-medium px-1 text-left space-y-1 max-h-32 sm:max-h-52 overflow-y-auto w-full">
-              {activeSlide.description.split('\n').map((line, i) => (
-                line.trim() === '' ? <div key={i} className="h-1" /> :
-                <p key={i} className={line.startsWith('•') ? 'pl-1' : ''}>{line}</p>
-              ))}
-            </div>
-            {activeSlide.requiresUserAction && (
-              <span className="mt-2 sm:mt-3.5 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-black tracking-wider text-amber-400 bg-amber-500/10 border border-amber-500/20 uppercase animate-bounce">
-                👉 Lakukan Aksi Ini Sekarang!
-              </span>
-            )}
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex items-center justify-between w-full gap-3 mt-1 sm:mt-2 z-10">
-            {activeSlide.requiresUserAction ? (
-              <>
-                <button
-                  onClick={handleSkip}
-                  className="px-3 py-2 sm:px-4 rounded-xl text-neutral-500 hover:text-neutral-300 font-bold text-[10px] tracking-wider uppercase transition-all"
-                >
-                  Lewati
-                </button>
-                <span className="text-[10px] font-black text-amber-500/70 italic uppercase tracking-wide">Menunggu Aksimu...</span>
-              </>
-            ) : (
-              <>
-                <button
-                  onClick={handleSkip}
-                  className="px-3 py-2 sm:px-4 rounded-xl text-neutral-500 hover:text-neutral-300 font-bold text-[10px] tracking-wider uppercase border border-transparent hover:bg-white/5 transition-all"
-                >
-                  Lewati
-                </button>
-
-                <button
-                  onClick={handleNext}
-                  className="flex items-center gap-1.5 px-4 py-2.5 sm:px-5 rounded-xl font-bold text-[10px] tracking-wider uppercase bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-500/20 active:scale-95 transition-all border border-amber-500/20"
-                >
-                  {currentSlide === slides.length - 1 ? (
-                    <>
-                      Mulai Bertarung! 🔥
-                      <Play className="w-3 h-3 fill-current" />
-                    </>
-                  ) : (
-                    <>
-                      Mulai Bimbingan
-                      <ChevronRight className="w-3.5 h-3.5" />
-                    </>
-                  )}
-                </button>
-              </>
-            )}
-          </div>
-        </motion.div>
       </div>
+
+      {/* Tooltip Bubble — rendered OUTSIDE the overflow container to avoid clipping */}
+      <motion.div
+        key={currentSlide}
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+        transition={{ duration: 0.25, ease: 'easeOut' }}
+        style={getBubbleStyle()}
+        className="bg-[#0b0b0e] border border-amber-500/20 rounded-2xl sm:rounded-3xl px-4 py-4 sm:p-6 overflow-hidden flex flex-col items-center text-center pointer-events-auto shadow-2xl"
+      >
+        {/* Radial Ambient Glow */}
+        <div className={`absolute top-0 inset-x-0 h-32 bg-gradient-to-b ${activeSlide.bgGradient} pointer-events-none transition-all duration-500`} />
+
+        {/* Skip Button (only visible on step 1 or end step) */}
+        {!activeSlide.requiresUserAction && (
+          <button 
+            onClick={handleSkip}
+            className="absolute top-4 right-4 w-7 h-7 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-neutral-400 hover:text-white transition-all z-10"
+            title="Lewati Tutorial"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        )}
+
+        {/* Header Step Counter */}
+        <span className="text-[9px] font-black tracking-widest text-amber-500 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20 uppercase mb-3 sm:mb-4 z-10">
+          Langkah {currentSlide + 1} dari {slides.length}
+        </span>
+
+        {/* Icon Circle — hidden on mobile to save space */}
+        <div className="relative mb-2 sm:mb-4 z-10 hidden sm:block">
+          <div className={`w-14 h-14 rounded-xl bg-neutral-900 border border-white/10 flex items-center justify-center transition-all duration-500 ${activeSlide.glowClass}`}>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.5 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className={activeSlide.colorClass}
+            >
+              <ActiveIcon className="w-7 h-7 animate-pulse" />
+            </motion.div>
+          </div>
+        </div>
+
+        {/* Texts content with transition */}
+        <div className="flex flex-col items-center z-10 w-full mb-2 sm:mb-3">
+          <h2 className="text-sm sm:text-base font-extrabold text-white tracking-tight leading-snug mb-1">
+            {activeSlide.title}
+          </h2>
+          <h3 className={`text-[9px] sm:text-[10px] font-black uppercase tracking-wider mb-2 ${activeSlide.colorClass}`}>
+            {activeSlide.subtitle}
+          </h3>
+          <div className="text-[11px] sm:text-[11.5px] leading-relaxed text-neutral-400 font-medium px-1 text-left space-y-1 max-h-32 sm:max-h-52 overflow-y-auto w-full">
+            {activeSlide.description.split('\n').map((line, i) => (
+              line.trim() === '' ? <div key={i} className="h-1" /> :
+              <p key={i} className={line.startsWith('•') ? 'pl-1' : ''}>{line}</p>
+            ))}
+          </div>
+          {activeSlide.requiresUserAction && (
+            <span className="mt-2 sm:mt-3.5 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-black tracking-wider text-amber-400 bg-amber-500/10 border border-amber-500/20 uppercase animate-bounce">
+              👉 Lakukan Aksi Ini Sekarang!
+            </span>
+          )}
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex items-center justify-between w-full gap-3 mt-1 sm:mt-2 z-10">
+          {activeSlide.requiresUserAction ? (
+            <>
+              <button
+                onClick={handleSkip}
+                className="px-3 py-2 sm:px-4 rounded-xl text-neutral-500 hover:text-neutral-300 font-bold text-[10px] tracking-wider uppercase transition-all"
+              >
+                Lewati
+              </button>
+              <span className="text-[10px] font-black text-amber-500/70 italic uppercase tracking-wide">Menunggu Aksimu...</span>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={handleSkip}
+                className="px-3 py-2 sm:px-4 rounded-xl text-neutral-500 hover:text-neutral-300 font-bold text-[10px] tracking-wider uppercase border border-transparent hover:bg-white/5 transition-all"
+              >
+                Lewati
+              </button>
+
+              <button
+                onClick={handleNext}
+                className="flex items-center gap-1.5 px-4 py-2.5 sm:px-5 rounded-xl font-bold text-[10px] tracking-wider uppercase bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-500/20 active:scale-95 transition-all border border-amber-500/20"
+              >
+                {currentSlide === slides.length - 1 ? (
+                  <>
+                    Mulai Bertarung! 🔥
+                    <Play className="w-3 h-3 fill-current" />
+                  </>
+                ) : (
+                  <>
+                    Mulai Bimbingan
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </>
+                )}
+              </button>
+            </>
+          )}
+        </div>
+      </motion.div>
     </AnimatePresence>
   );
-};
+}
+
