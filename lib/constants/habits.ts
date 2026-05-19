@@ -138,6 +138,26 @@ export const HABIT_DEFINITIONS: HabitDefinition[] = [
     icon: '💼',
     xp: 25,
   },
+  {
+    id: 'prayer_tahajjud',
+    label: 'Tahajjud Prayer',
+    labelId: 'Sholat Tahajjud',
+    description: 'Perform Tahajjud prayer at the last third of the night',
+    category: 'prayer',
+    icon: '🌌',
+    xp: 30,
+    isHidden: true,
+  },
+  {
+    id: 'prayer_dhuha',
+    label: 'Dhuha Prayer',
+    labelId: 'Sholat Dhuha',
+    description: 'Perform Dhuha prayer in the morning',
+    category: 'prayer',
+    icon: '☀️',
+    xp: 20,
+    isHidden: true,
+  },
 ];
 
 // Morning lock habits — must complete before dashboard unlocks

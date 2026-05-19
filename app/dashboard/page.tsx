@@ -14,8 +14,11 @@ import { EmergencyPanel } from '@/components/dashboard/EmergencyPanel';
 import { DailyQuestsWidget } from '@/components/dashboard/DailyQuestsWidget';
 import { OnboardingTutorial } from '@/components/dashboard/OnboardingTutorial';
 import { SleepOverlay } from '@/components/dashboard/SleepOverlay';
+import { useAppStore } from '@/store/useAppStore';
 
 export default function DashboardPage() {
+  const { customCategories } = useAppStore();
+  const showPrayer = (customCategories || []).some((c) => c.id === 'prayer');
   return (
     <div className="flex flex-col gap-6 pb-24 lg:pb-8">
       {/* Immersive Active Sleep Tracker Overlay */}
@@ -57,7 +60,7 @@ export default function DashboardPage() {
         <div className="xl:col-span-4 2xl:col-span-3 flex flex-col gap-6">
           <DailyQuestsWidget />
           <DopamineStatus />
-          <PrayerList />
+          {showPrayer && <PrayerList />}
         </div>
       </div>
 

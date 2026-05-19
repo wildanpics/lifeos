@@ -66,7 +66,7 @@ const BATTLE_LOGS = [
 ];
 
 export default function FocusDuelModal({ isOpen, onClose, opponent }: FocusDuelModalProps) {
-  const { user, addXP, addNotification, theme } = useAppStore();
+  const { user, addXP, addNotification, theme, incrementFocusDuelsWon } = useAppStore();
   const isDark = theme === 'dark';
 
   const [duelActive, setDuelActive] = useState(false);
@@ -141,6 +141,7 @@ export default function FocusDuelModal({ isOpen, onClose, opponent }: FocusDuelM
 
             // Reward
             addXP(100);
+            incrementFocusDuelsWon();
             addNotification(
               '🏆 Kemenangan Duel!',
               `Luar biasa! Anda memenangkan duel fokus melawan ${opponent.displayName}. +100 XP diperoleh!`,

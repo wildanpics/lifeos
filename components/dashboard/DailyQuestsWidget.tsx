@@ -14,8 +14,11 @@ export function DailyQuestsWidget() {
   const progressPercent = (completedCount / quests.length) * 100;
 
   // Quest type to icon converter
-  const getQuestIcon = (type: string) => {
-    switch (type) {
+  const getQuestIcon = (q: any) => {
+    if (q.targetType === 'custom_habit' && q.customIcon) {
+      return q.customIcon;
+    }
+    switch (q.targetType) {
       case 'water':
         return '💧';
       case 'meals':
@@ -33,21 +36,24 @@ export function DailyQuestsWidget() {
     }
   };
 
-  const getMetricProgressLabel = (type: string, targetVal: number) => {
+  const getMetricProgressLabel = (q: any) => {
+    if (q.targetType === 'custom_habit') {
+      return q.completed ? '1/1 Selesai' : '0/1 Selesai';
+    }
     if (!todayStats) return '';
-    switch (type) {
+    switch (q.targetType) {
       case 'water':
-        return `${todayStats.waterGlasses || 0}/${targetVal} Gelas`;
+        return `${todayStats.waterGlasses || 0}/${q.targetValue} Gelas`;
       case 'meals':
-        return `${todayStats.meals || 0}/${targetVal} Kali`;
+        return `${todayStats.meals || 0}/${q.targetValue} Kali`;
       case 'sleep':
-        return `${todayStats.sleepHours || 0}/${targetVal} Jam`;
+        return `${todayStats.sleepHours || 0}/${q.targetValue} Jam`;
       case 'focus':
-        return `${todayStats.focusMinutes || 0}/${targetVal} Menit`;
+        return `${todayStats.focusMinutes || 0}/${q.targetValue} Menit`;
       case 'habit_count':
-        return `${todayStats.completedHabits?.length || 0}/${targetVal} Habit`;
+        return `${todayStats.completedHabits?.length || 0}/${q.targetValue} Habit`;
       case 'screen_time_limit':
-        return `${todayStats.screenTimeMinutes || 0}/${targetVal} Menit Maks`;
+        return `${todayStats.screenTimeMinutes || 0}/${q.targetValue} Menit Maks`;
       default:
         return '';
     }
@@ -125,7 +131,7 @@ export function DailyQuestsWidget() {
             >
               <div className="flex items-center gap-3">
                 <div className="text-xl flex-shrink-0 select-none">
-                  {getQuestIcon(q.targetType)}
+                  {getQuestIcon(q)}
                 </div>
                 <div>
                   <p
@@ -139,7 +145,7 @@ export function DailyQuestsWidget() {
                     {q.label}
                   </p>
                   <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
-                    Progress: {getMetricProgressLabel(q.targetType, q.targetValue)}
+                    Progress: {getMetricProgressLabel(q)}
                   </p>
                 </div>
               </div>

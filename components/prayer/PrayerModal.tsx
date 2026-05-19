@@ -355,28 +355,58 @@ export function PrayerModal({ isOpen, onClose }: PrayerModalProps) {
                     {[
                       { name: 'Imsak', time: imsakTime, desc: 'Batas akhir waktu sahur (10m sebelum Subuh)', icon: Coffee, iconColor: '#60A5FA', color: 'rgba(96, 165, 250, 0.1)' },
                       { name: 'Syuruk', time: terbitTime, desc: 'Waktu terbit matahari, batas akhir Subuh', icon: Sunrise, iconColor: '#FBBF24', color: 'rgba(251, 191, 36, 0.1)' },
-                      { name: 'Dhuha', time: dhuhaTime, desc: 'Mulai waktu dhuha (+20m dari Syuruk)', icon: Sun, iconColor: '#F59E0B', color: 'rgba(245, 158, 11, 0.1)' },
-                      { name: 'Malam Terakhir', time: `${tahajjudTime} - ${subuhTime}`, desc: 'Sepertiga malam akhir (Waktu utama Tahajjud)', icon: Moon, iconColor: '#6366F1', color: 'rgba(99, 102, 241, 0.1)' },
+                      { name: 'Dhuha', time: dhuhaTime, desc: 'Mulai waktu dhuha (+20m dari Syuruk)', icon: Sun, iconColor: '#F59E0B', color: 'rgba(245, 158, 11, 0.1)', id: 'prayer_dhuha', xp: 20 },
+                      { name: 'Tahajjud (Malam Akhir)', time: `${tahajjudTime} - ${subuhTime}`, desc: 'Sepertiga malam akhir (Waktu utama Tahajjud)', icon: Moon, iconColor: '#6366F1', color: 'rgba(99, 102, 241, 0.1)', id: 'prayer_tahajjud', xp: 30 },
                     ].map((item, idx) => {
                       const IconComponent = item.icon;
+                      const done = item.id ? todayStats?.completedHabits?.includes(item.id) : false;
+                      const interactive = !!item.id;
+                      
                       return (
                         <div 
                           key={idx}
-                          className="flex items-center justify-between p-3.5 rounded-2xl border"
-                          style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border)' }}
+                          onClick={() => interactive && !done && handleToggleSholat(item.id as HabitId, item.xp || 0)}
+                          className={cn(
+                            "flex items-center justify-between p-3.5 rounded-2xl border transition-all duration-300",
+                            interactive && !done ? "cursor-pointer hover:border-amber-500/40 hover:bg-amber-500/5 active:scale-[0.98]" : "",
+                            interactive && done ? "border-green-500/30 bg-green-500/5" : ""
+                          )}
+                          style={{ 
+                            background: interactive && done ? 'rgba(16, 185, 129, 0.05)' : 'var(--bg-secondary)', 
+                            borderColor: interactive && done ? 'rgba(16, 185, 129, 0.3)' : 'var(--border)' 
+                          }}
                         >
                           <div className="flex items-center gap-3">
                             <span className="p-2 rounded-xl flex items-center justify-center" style={{ background: item.color }}>
                               <IconComponent className="w-5 h-5" style={{ color: item.iconColor }} />
                             </span>
                             <div>
-                              <p className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>{item.name}</p>
+                              <p className="text-xs font-bold" style={{ color: done ? 'var(--success)' : 'var(--text-primary)' }}>
+                                {item.name}
+                                {item.xp && !done && (
+                                  <span className="ml-2 text-[8px] font-extrabold px-1.5 py-0.5 rounded-full bg-indigo-500/10" style={{ color: 'var(--accent)' }}>
+                                    +{item.xp} XP
+                                  </span>
+                                )}
+                              </p>
                               <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{item.desc}</p>
                             </div>
                           </div>
-                          <span className="text-sm font-black tabular-nums" style={{ color: 'var(--text-primary)' }}>
-                            {item.time}
-                          </span>
+                          
+                          <div className="flex items-center gap-3">
+                            <span className="text-sm font-black tabular-nums" style={{ color: done ? 'var(--success)' : 'var(--text-primary)' }}>
+                              {item.time}
+                            </span>
+                            {interactive && (
+                              <div className="flex items-center justify-center">
+                                {done ? (
+                                  <CheckCircle2 className="w-4 h-4 text-green-500" />
+                                ) : (
+                                  <Circle className="w-4 h-4 text-gray-500 hover:text-amber-500 transition-colors" />
+                                )}
+                              </div>
+                            )}
+                          </div>
                         </div>
                       );
                     })}

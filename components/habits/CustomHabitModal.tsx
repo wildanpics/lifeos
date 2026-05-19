@@ -7,7 +7,6 @@ import { useAppStore } from '@/store/useAppStore';
 import { cn } from '@/lib/utils';
 
 interface CustomHabitModalProps {
-  isOpen: boolean;
   onClose: () => void;
   activeCategoryId: string;
   activeCategoryLabel: string;
@@ -163,12 +162,30 @@ const CATEGORY_SUGGESTIONS: Record<string, Suggestion[]> = {
   ]
 };
 
-export function CustomHabitModal({ isOpen, onClose, activeCategoryId, activeCategoryLabel }: CustomHabitModalProps) {
+const SUBMENU_TEMPLATES = [
+  { id: 'prayer', label: 'Sholat & Ibadah', emoji: '🕌', desc: 'Jadwal & habit sholat harian' },
+  { id: 'health', label: 'Kesehatan & Diet', emoji: '💪', desc: 'Minum air & makan sehat' },
+  { id: 'morning', label: 'Ritual Pagi', emoji: '🌅', desc: 'Ritual & bangun tidur' },
+  { id: 'focus', label: 'Fokus & Kerja', emoji: '🎯', desc: 'Belajar & produktivitas' },
+  { id: 'night', label: 'Ritual Malam', emoji: '🌙', desc: 'Detoks digital & tidur' }
+];
+
+export function CustomHabitModal({ onClose, activeCategoryId, activeCategoryLabel }: CustomHabitModalProps) {
   const { addCustomCategory, addCustomHabit, customCategories } = useAppStore();
   const [activeTab, setActiveTab] = useState<'habit' | 'category'>('habit');
+
+  const handleApplyTemplate = (tmpl: typeof SUBMENU_TEMPLATES[0]) => {
+    addCustomCategory(tmpl.label.split(' & ')[0], tmpl.emoji, tmpl.id);
+    onClose();
+  };
   
   // Habit State
-  const [selectedCategoryId, setSelectedCategoryId] = useState(activeCategoryId);
+  const allowedCategories = (customCategories || []).filter((c) => c.id !== 'prayer' && c.id !== 'health');
+  const initialCategoryId = (activeCategoryId === 'prayer' || activeCategoryId === 'health')
+    ? (allowedCategories[0]?.id || '')
+    : activeCategoryId;
+
+  const [selectedCategoryId, setSelectedCategoryId] = useState(initialCategoryId);
   const [habitName, setHabitName] = useState('');
   const [habitEmoji, setHabitEmoji] = useState('✨');
   const [habitDeadline, setHabitDeadline] = useState('');
@@ -181,20 +198,6 @@ export function CustomHabitModal({ isOpen, onClose, activeCategoryId, activeCate
 
   // Load suggestions dynamically based on active selected category
   const suggestions = CATEGORY_SUGGESTIONS[selectedCategoryId] || CATEGORY_SUGGESTIONS.default;
-
-  // Reset inputs when modal opens
-  useEffect(() => {
-    if (isOpen) {
-      setHabitName('');
-      setHabitEmoji('✨');
-      setHabitDeadline('');
-      setCategoryName('');
-      setCategoryEmoji('📂');
-      setSelectedCategoryId(activeCategoryId);
-      setIsManualEmoji(false);
-      setIsManualCategoryEmoji(false);
-    }
-  }, [isOpen, activeCategoryId]);
 
   // Intelligent Emoji Auto-Suggestion for Habit Name
   useEffect(() => {
@@ -219,6 +222,41 @@ export function CustomHabitModal({ isOpen, onClose, activeCategoryId, activeCate
       }
     }
   }, [categoryName, isManualCategoryEmoji]);
+
+  const handleHabitNameChange = (val: string) => {
+    // Match actual colorful emojis
+    const emojiRegex = /\p{Emoji_Presentation}/gu;
+    const match = val.match(emojiRegex);
+    
+    if (match) {
+      const extractedEmoji = match[0];
+      setHabitEmoji(extractedEmoji);
+      setIsManualEmoji(true);
+      
+      // Clean and strip the emoji from input field
+      const cleanVal = val.replace(emojiRegex, '');
+      setHabitName(cleanVal);
+    } else {
+      setHabitName(val);
+    }
+  };
+
+  const handleCategoryNameChange = (val: string) => {
+    const emojiRegex = /\p{Emoji_Presentation}/gu;
+    const match = val.match(emojiRegex);
+    
+    if (match) {
+      const extractedEmoji = match[0];
+      setCategoryEmoji(extractedEmoji);
+      setIsManualCategoryEmoji(true);
+      
+      // Clean and strip the emoji from input field
+      const cleanVal = val.replace(emojiRegex, '');
+      setCategoryName(cleanVal);
+    } else {
+      setCategoryName(val);
+    }
+  };
 
   const handleCreateHabit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -254,14 +292,19 @@ export function CustomHabitModal({ isOpen, onClose, activeCategoryId, activeCate
   };
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="w-full max-w-md rounded-2xl overflow-hidden shadow-2xl relative"
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2, ease: 'easeOut' }}
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-[2px]"
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 16 }}
+        transition={{ type: 'tween', ease: [0.16, 1, 0.3, 1], duration: 0.35 }}
+        className="w-full max-w-md rounded-2xl overflow-hidden shadow-2xl relative"
             style={{ 
               background: 'var(--bg-card)', 
               border: '1px solid var(--border)',
@@ -342,11 +385,13 @@ export function CustomHabitModal({ isOpen, onClose, activeCategoryId, activeCate
                         className="w-full px-3 py-2.5 rounded-xl border text-sm font-semibold focus:outline-none focus:ring-1 focus:ring-amber-500"
                         style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
                       >
-                        {(customCategories || []).map((cat) => (
-                          <option key={cat.id} value={cat.id}>
-                            {cat.emoji} {cat.label}
-                          </option>
-                        ))}
+                        {(customCategories || [])
+                          .filter((cat) => cat.id !== 'prayer' && cat.id !== 'health')
+                          .map((cat) => (
+                            <option key={cat.id} value={cat.id}>
+                              {cat.emoji} {cat.label}
+                            </option>
+                          ))}
                       </select>
                     </div>
 
@@ -361,7 +406,7 @@ export function CustomHabitModal({ isOpen, onClose, activeCategoryId, activeCate
                           type="text"
                           placeholder="Contoh: Belajar UI/UX Design..."
                           value={habitName}
-                          onChange={(e) => setHabitName(e.target.value)}
+                          onChange={(e) => handleHabitNameChange(e.target.value)}
                           className="flex-1 px-3 rounded-xl border text-sm focus:outline-none focus:ring-1 focus:ring-amber-500"
                           style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
                           required
@@ -444,10 +489,57 @@ export function CustomHabitModal({ isOpen, onClose, activeCategoryId, activeCate
                   </form>
                 )
               ) : (
-                <form onSubmit={handleCreateCategory} className="space-y-4">
-                  {/* Category Name Input */}
+                <div className="space-y-4">
+                  {/* Preset Templates */}
                   <div className="space-y-1">
-                    <label className="text-[11px] font-bold" style={{ color: 'var(--text-secondary)' }}>NAMA SUB-MENU (KATEGORI)</label>
+                    <label className="text-[11px] font-bold flex items-center gap-1" style={{ color: 'var(--text-secondary)' }}>
+                      ✨ TEMPLATE SUB-MENU REKOMENDASI
+                    </label>
+                    <div className="grid grid-cols-1 gap-2 max-h-44 overflow-y-auto pr-1">
+                      {SUBMENU_TEMPLATES.map((tmpl) => {
+                        const exists = (customCategories || []).some(c => c.id === tmpl.id);
+                        return (
+                          <button
+                            key={tmpl.id}
+                            type="button"
+                            onClick={() => handleApplyTemplate(tmpl)}
+                            disabled={exists}
+                            className={cn(
+                              "flex items-center justify-between p-2.5 rounded-xl text-left text-xs transition-all border border-dashed w-full",
+                              exists 
+                                ? "opacity-50 cursor-not-allowed bg-white/5 border-transparent" 
+                                : "hover:bg-white/5 hover:border-amber-500/30"
+                            )}
+                            style={{ 
+                              background: 'var(--bg-secondary)', 
+                              borderColor: 'var(--border)', 
+                              color: 'var(--text-primary)' 
+                            }}
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <span className="text-xl shrink-0">{tmpl.emoji}</span>
+                              <div className="min-w-0">
+                                <p className="font-bold truncate" style={{ color: 'var(--text-primary)' }}>{tmpl.label}</p>
+                                <p className="text-[9px] truncate" style={{ color: 'var(--text-muted)' }}>{tmpl.desc}</p>
+                              </div>
+                            </div>
+                            {exists ? (
+                              <span className="text-[9px] text-emerald-400 font-bold shrink-0 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">Aktif</span>
+                            ) : (
+                              <span className="text-[9px] text-amber-400 font-bold shrink-0 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">+ Pasang</span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="h-[1px] w-full bg-gradient-to-r from-transparent via-[var(--border)] to-transparent my-1" />
+
+                  <form onSubmit={handleCreateCategory} className="space-y-4">
+                    {/* Category Name Input */}
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-bold" style={{ color: 'var(--text-secondary)' }}>ATAU BUAT SUB-MENU KUSTOM</label>
                     <div className="flex gap-2">
                       <span className="text-2xl p-2 rounded-xl flex items-center justify-center border" style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border)' }}>
                         {categoryEmoji}
@@ -456,7 +548,7 @@ export function CustomHabitModal({ isOpen, onClose, activeCategoryId, activeCate
                         type="text"
                         placeholder="Contoh: Belajar, Olahraga, Hobi..."
                         value={categoryName}
-                        onChange={(e) => setCategoryName(e.target.value)}
+                        onChange={(e) => handleCategoryNameChange(e.target.value)}
                         className="flex-1 px-3 rounded-xl border text-sm focus:outline-none focus:ring-1 focus:ring-amber-500"
                         style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
                         required
@@ -495,12 +587,11 @@ export function CustomHabitModal({ isOpen, onClose, activeCategoryId, activeCate
                   >
                     <Plus className="w-4 h-4" /> Buat Sub-Menu
                   </button>
-                </form>
+                  </form>
+                </div>
               )}
             </div>
           </motion.div>
-        </div>
-      )}
-    </AnimatePresence>
+    </motion.div>
   );
 }
