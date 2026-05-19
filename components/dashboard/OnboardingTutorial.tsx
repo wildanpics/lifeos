@@ -273,35 +273,58 @@ export const OnboardingTutorial = () => {
     return style;
   };
 
+  const padding = 6;
+  const cutout = targetRect ? {
+    left: targetRect.left - padding,
+    top: targetRect.top - padding,
+    right: targetRect.right + padding,
+    bottom: targetRect.bottom + padding,
+    width: targetRect.width + (padding * 2),
+    height: targetRect.height + (padding * 2),
+  } : null;
+
   return (
     <AnimatePresence>
       <div className="fixed inset-0 z-[9990] overflow-hidden pointer-events-none select-none">
-        {/* SVG Spotlight Mask to dark out everything EXCEPT the target element */}
-        <svg className="absolute inset-0 w-full h-full pointer-events-auto">
-          <defs>
-            <mask id="spotlight-mask">
-              <rect width="100%" height="100%" fill="white" />
-              {targetRect && (
-                <rect 
-                  x={targetRect.left - 6} 
-                  y={targetRect.top - 6} 
-                  width={targetRect.width + 12} 
-                  height={targetRect.height + 12} 
-                  rx="14" 
-                  fill="black" 
-                />
-              )}
-            </mask>
-          </defs>
-          <rect 
-            width="100%" 
-            height="100%" 
-            fill="black" 
-            opacity="0.8" 
-            mask="url(#spotlight-mask)" 
-            className="transition-all duration-300"
-          />
-        </svg>
+        {/* 4-Rectangle Spotlight Overlay to allow pointer clicks to pass through the hollow area */}
+        {!cutout ? (
+          <div className="fixed inset-0 bg-black/80 pointer-events-auto transition-all duration-300" />
+        ) : (
+          <>
+            {/* Top Overlay */}
+            <div 
+              className="fixed left-0 top-0 w-screen bg-black/80 pointer-events-auto transition-all duration-300"
+              style={{ height: `${Math.max(0, cutout.top)}px` }}
+            />
+            {/* Bottom Overlay */}
+            <div 
+              className="fixed left-0 w-screen bg-black/80 pointer-events-auto transition-all duration-300"
+              style={{ 
+                top: `${cutout.bottom}px`,
+                height: `calc(100vh - ${cutout.bottom}px)`
+              }}
+            />
+            {/* Left Overlay */}
+            <div 
+              className="fixed left-0 bg-black/80 pointer-events-auto transition-all duration-300"
+              style={{ 
+                top: `${cutout.top}px`,
+                width: `${Math.max(0, cutout.left)}px`,
+                height: `${cutout.height}px`
+              }}
+            />
+            {/* Right Overlay */}
+            <div 
+              className="fixed bg-black/80 pointer-events-auto transition-all duration-300"
+              style={{ 
+                left: `${cutout.right}px`,
+                top: `${cutout.top}px`,
+                width: `calc(100vw - ${cutout.right}px)`,
+                height: `${cutout.height}px`
+              }}
+            />
+          </>
+        )}
 
         {/* Dynamic Glowing Border highlight around target element */}
         {targetRect && (
