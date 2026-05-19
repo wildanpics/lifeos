@@ -168,8 +168,10 @@ const SUBMENU_TEMPLATES = [
 ];
 
 export function CustomHabitModal({ onClose, activeCategoryId, activeCategoryLabel }: CustomHabitModalProps) {
-  const { addCustomCategory, addCustomHabit, customCategories } = useAppStore();
-  const [activeTab, setActiveTab] = useState<'habit' | 'category'>('habit');
+  const { addCustomCategory, addCustomHabit, customCategories, hasCompletedTutorial } = useAppStore();
+  const [activeTab, setActiveTab] = useState<'habit' | 'category'>(
+    !hasCompletedTutorial ? 'category' : 'habit'
+  );
 
   const handleApplyTemplate = (tmpl: typeof SUBMENU_TEMPLATES[0]) => {
     addCustomCategory(tmpl.label.split(' & ')[0], tmpl.emoji, tmpl.id);
@@ -316,7 +318,7 @@ export function CustomHabitModal({ onClose, activeCategoryId, activeCategoryLabe
                   Kelola Kebiasaan & Sub-Menu
                 </h3>
               </div>
-              <button onClick={onClose} className="p-1 rounded-lg transition-colors hover:bg-white/10">
+              <button id="tour-close-modal" onClick={onClose} className="p-1 rounded-lg transition-colors hover:bg-white/10">
                 <X className="w-5 h-5" style={{ color: 'var(--text-muted)' }} />
               </button>
             </div>
@@ -498,6 +500,7 @@ export function CustomHabitModal({ onClose, activeCategoryId, activeCategoryLabe
                         return (
                           <button
                             key={tmpl.id}
+                            id={`tour-apply-${tmpl.id}`}
                             type="button"
                             onClick={() => handleApplyTemplate(tmpl)}
                             disabled={exists}

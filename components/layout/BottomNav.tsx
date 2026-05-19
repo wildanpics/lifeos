@@ -23,8 +23,12 @@ export function BottomNav() {
       <div className="flex items-center justify-around px-2 py-2">
         {navItems.map((item) => {
           const active = pathname === item.href || pathname.startsWith(item.href + '/');
+          const tourId = item.href === '/habits' ? 'tour-nav-habits'
+            : item.href === '/achievements' ? 'tour-nav-leaderboard'
+            : item.href === '/profile' ? 'tour-nav-profile'
+            : undefined;
           return (
-            <Link key={item.href} href={item.href} className="flex-1">
+            <Link key={item.href} href={item.href} className="flex-1" id={tourId}>
               <motion.div
                 whileTap={{ scale: 0.9 }}
                 className="flex flex-col items-center gap-1 py-1.5 px-1 rounded-xl transition-all"

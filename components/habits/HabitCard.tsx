@@ -345,6 +345,7 @@ export function HabitCard() {
 
         {/* Add Sub-Menu Button */}
         <button 
+          id="tour-add-category"
           onClick={() => setIsModalOpen(true)}
           className="flex items-center justify-center p-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all border border-dashed border-amber-500/40 text-amber-500 hover:bg-amber-500/10 hover:border-amber-500 flex-shrink-0"
           title="Tambah Sub-Menu"
@@ -377,6 +378,7 @@ export function HabitCard() {
               Tab menu kebiasaan Anda masih kosong bersih. Klik tombol <span className="font-bold text-amber-500">"+"</span> di atas untuk langsung memasang template siap pakai seperti **Sholat & Ibadah**, **Kesehatan**, atau membuat kategori kustom Anda sendiri!
             </p>
             <button 
+              id="tour-add-category-banner"
               onClick={() => setIsModalOpen(true)}
               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold shadow-md transition-all hover:scale-105"
               style={{
@@ -566,6 +568,7 @@ export function HabitCard() {
         <div className="space-y-3 pt-2">
           {activeCategory !== 'prayer' && activeCategory !== 'health' && (
             <button
+              id="tour-add-habit"
               onClick={() => setIsModalOpen(true)}
               className="w-full flex items-center justify-center gap-2 p-3 rounded-xl border border-dashed text-sm font-medium transition-all hover:bg-amber-500/5 hover:border-amber-500 border-amber-500/40 text-amber-500"
             >

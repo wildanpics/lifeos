@@ -275,6 +275,8 @@ interface AppState {
   // Tutorial Walkthrough
   hasCompletedTutorial: boolean;
   setHasCompletedTutorial: (val: boolean) => void;
+  tutorialSlide: number;
+  setTutorialSlide: (slide: number) => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -310,6 +312,7 @@ export const useAppStore = create<AppState>()(
       soundEnabled: true,
       levelUpCelebration: null,
       hasCompletedTutorial: false,
+      tutorialSlide: 0,
       customGoals: [
         { id: 'g1', label: 'Upload Pertama di Marketplace', done: false, iconName: 'Rocket', createdAt: Date.now() },
         { id: 'g2', label: 'Klien Freelance Pertama', done: false, iconName: 'Trophy', createdAt: Date.now() },
@@ -1031,13 +1034,16 @@ export const useAppStore = create<AppState>()(
 
       setHasCompletedTutorial: (val) => {
         set({ hasCompletedTutorial: val });
+        if (val) set({ tutorialSlide: 0 }); // reset slide on completion
         const userId = get().user?.uid;
         if (userId) {
           import('@/lib/firebase/firestore').then(({ syncUserProfile }) => {
             syncUserProfile(userId, { hasCompletedTutorial: val });
           });
         }
-      }
+      },
+
+      setTutorialSlide: (slide) => set({ tutorialSlide: slide }),
     }),
     {
       name: 'life-os-storage',
@@ -1058,6 +1064,7 @@ export const useAppStore = create<AppState>()(
         dhuhaAlertEnabled: state.dhuhaAlertEnabled,
         customGoals: state.customGoals,
         hasCompletedTutorial: state.hasCompletedTutorial,
+        tutorialSlide: state.tutorialSlide,
         focusDuelsWon: state.focusDuelsWon,
       }),
     }
