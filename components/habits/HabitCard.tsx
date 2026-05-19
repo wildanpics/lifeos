@@ -164,8 +164,6 @@ export function HabitCard() {
 
       if (isCategoryCompleted) {
         triggerPremiumSuccessConfetti();
-      } else {
-        triggerConfetti();
       }
 
       // 1. Update state lokal seketika
