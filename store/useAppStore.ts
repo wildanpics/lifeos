@@ -157,6 +157,8 @@ export interface CustomGoal {
 interface AppState {
   // Auth (not persisted — Firebase User is not serializable)
   user: User | null;
+  realUser: User | null;
+  isImpersonating: boolean;
   totalXP: number;
   customTitle: string;
 
@@ -213,6 +215,8 @@ interface AppState {
 
   // Actions
   setUser: (user: User | null) => void;
+  setRealUser: (user: User | null) => void;
+  setIsImpersonating: (val: boolean) => void;
   setDisciplineStreak: (streak: number) => void;
   setLeague: (league: 'bronze' | 'silver' | 'gold' | 'diamond') => void;
   setTotalXP: (xp: number) => void;
@@ -276,6 +280,8 @@ export const useAppStore = create<AppState>()(
   persist(
     (set, get) => ({
       user: null,
+      realUser: null,
+      isImpersonating: false,
       totalXP: 0,
       customTitle: '',
       todayStats: null,
@@ -315,6 +321,8 @@ export const useAppStore = create<AppState>()(
       ],
 
       setUser: (user) => set({ user }),
+      setRealUser: (realUser) => set({ realUser }),
+      setIsImpersonating: (isImpersonating) => set({ isImpersonating }),
       setDisciplineStreak: (streak) => {
         set({ disciplineStreak: streak });
         const { user, league } = get();

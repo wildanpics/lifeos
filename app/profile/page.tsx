@@ -425,6 +425,92 @@ export default function ProfilePage() {
     }
   };
 
+  const handleStartImpersonate = async (targetUser: PublicUserProfile) => {
+    const { setLoading, isImpersonating, user: currentUser, setUser, setRealUser, setIsImpersonating } = useAppStore.getState();
+    setLoading(true);
+    try {
+      if (!isImpersonating) {
+        setRealUser(currentUser);
+      }
+      setIsImpersonating(true);
+
+      // Create mock user
+      const mockUser = {
+        uid: targetUser.uid,
+        displayName: targetUser.displayName || 'Life OS User',
+        photoURL: targetUser.photoURL || null,
+        email: targetUser.email || '',
+        emailVerified: true,
+        providerData: []
+      } as any;
+      setUser(mockUser);
+
+      // Fetch all target user data
+      const uid = targetUser.uid;
+      const { 
+        getUserXP, getTodayStats, initTodayStats, getUserAchievements, 
+        getUserCity, getCustomCategories, getCustomHabits, getUserProfileById 
+      } = await import('@/lib/firebase/firestore');
+      const { getToday } = await import('@/lib/utils/time');
+
+      const xp = await getUserXP(uid);
+      useAppStore.getState().setTotalXP(xp);
+
+      const today = getToday();
+      let stats = await getTodayStats(uid, today);
+      if (!stats) {
+        stats = await initTodayStats(uid, today);
+      }
+      useAppStore.getState().setTodayStats(stats);
+
+      const achievements = await getUserAchievements(uid);
+      useAppStore.getState().setUnlockedAchievements(achievements);
+
+      const cityConfig = await getUserCity(uid);
+      if (cityConfig && cityConfig.prayerCityId && cityConfig.prayerCityName) {
+        useAppStore.getState().setPrayerCity(cityConfig.prayerCityId, cityConfig.prayerCityName);
+      }
+
+      const categories = await getCustomCategories(uid);
+      useAppStore.getState().setCustomCategories(categories);
+
+      const habits = await getCustomHabits(uid);
+      useAppStore.getState().setCustomHabits(habits);
+
+      const userProfile = await getUserProfileById(uid);
+      if (userProfile) {
+        if (userProfile.customGoals !== undefined) {
+          useAppStore.getState().setCustomGoals(userProfile.customGoals);
+        }
+        if (userProfile.disciplineStreak !== undefined) {
+          useAppStore.getState().setDisciplineStreak(userProfile.disciplineStreak);
+        }
+        if (userProfile.league) {
+          useAppStore.getState().setLeague(userProfile.league);
+        }
+        if (userProfile.hasCompletedTutorial !== undefined) {
+          useAppStore.getState().setHasCompletedTutorial(userProfile.hasCompletedTutorial);
+        }
+        if (userProfile.customTitle !== undefined) {
+          useAppStore.getState().setCustomTitle(userProfile.customTitle);
+        }
+      }
+
+      useAppStore.getState().addNotification(
+        '🔑 Mode Intip Aktif',
+        `Anda sedang mengintip dashboard sebagai ${targetUser.displayName}.`,
+        'system'
+      );
+
+      // Redirect to dashboard to see results!
+      router.push('/dashboard');
+    } catch (err) {
+      console.error('Impersonation failed:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Sync profile when XP, streak, league, or goals change
   useEffect(() => {
     if (user) {
@@ -1152,7 +1238,7 @@ export default function ProfilePage() {
                     <div className="space-y-6">
                       
                       {/* Target Info Header */}
-                      <div className="p-3.5 rounded-xl border border-violet-500/25 bg-violet-600/5 grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      <div className={`p-3.5 rounded-xl border border-violet-500/25 bg-violet-600/5 grid grid-cols-1 ${isEditingSelf ? 'sm:grid-cols-3' : 'sm:grid-cols-4'} gap-3 items-center`}>
                         <div className="flex flex-col">
                           <span className="text-[9px] uppercase font-bold text-violet-400">Target Sunting</span>
                           <span className="text-xs font-black text-white truncate">{isEditingSelf ? '👑 Saya (Developer)' : `👥 ${targetUser.displayName}`}</span>
@@ -1165,6 +1251,17 @@ export default function ProfilePage() {
                           <span className="text-[9px] uppercase font-bold text-violet-400">UID Firestore</span>
                           <span className="text-[10px] font-mono text-neutral-400 select-all truncate">{targetUser.uid}</span>
                         </div>
+                        {!isEditingSelf && (
+                          <div className="flex flex-col sm:items-end">
+                            <button
+                              onClick={() => handleStartImpersonate(targetUser as PublicUserProfile)}
+                              className="w-full sm:w-auto px-3.5 py-2 rounded-lg bg-violet-600 hover:bg-violet-700 text-white text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 shadow-md border border-violet-500/20 active:scale-95"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                              Intip Dashboard
+                            </button>
+                          </div>
+                        )}
                       </div>
 
                       {/* Gamifikasi Override */}
