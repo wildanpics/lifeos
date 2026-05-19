@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '@/store/useAppStore';
 import { 
@@ -26,6 +26,7 @@ interface Slide {
 
 export const OnboardingTutorial = () => {
   const pathname = usePathname();
+  const router = useRouter();
   const { 
     hasCompletedTutorial, setHasCompletedTutorial, 
     user, customCategories = [],
@@ -270,6 +271,32 @@ export const OnboardingTutorial = () => {
 
   if (!user || hasCompletedTutorial) return null;
 
+  const handleAutoPerform = () => {
+    if (currentSlide === 1) {
+      // Step 2 -> Navigate to habits page
+      router.push('/habits');
+    } else if (currentSlide === 2) {
+      // Step 3 -> Open custom category template modal
+      const btn = document.getElementById('tour-add-category') || document.getElementById('tour-add-category-banner');
+      if (btn) btn.click();
+    } else if (currentSlide === 3) {
+      // Step 4 -> Pasang Prayer preset
+      const btn = document.getElementById('tour-apply-prayer');
+      if (btn) btn.click();
+    } else if (currentSlide === 4) {
+      // Step 5 -> Pasang Health preset
+      const btn = document.getElementById('tour-apply-health');
+      if (btn) btn.click();
+    } else if (currentSlide === 5) {
+      // Step 6 -> Close modal
+      const btn = document.getElementById('tour-close-modal');
+      if (btn) btn.click();
+    } else if (currentSlide === 6) {
+      // Step 7 -> Navigate to Leaderboard
+      router.push('/achievements');
+    }
+  };
+
   const handleNext = () => {
     if (currentSlide < slides.length - 1) {
       setCurrentSlide(currentSlide + 1);
@@ -506,11 +533,17 @@ export const OnboardingTutorial = () => {
             <>
               <button
                 onClick={handleSkip}
-                className="px-3 py-2 sm:px-4 rounded-xl text-neutral-500 hover:text-neutral-300 font-bold text-[10px] tracking-wider uppercase transition-all"
+                className="px-3 py-2 sm:px-4 rounded-xl text-neutral-500 hover:text-neutral-300 font-bold text-[10px] tracking-wider uppercase border border-transparent hover:bg-white/5 transition-all"
               >
                 Lewati
               </button>
-              <span className="text-[10px] font-black text-amber-500/70 italic uppercase tracking-wide">Menunggu Aksimu...</span>
+
+              <button
+                onClick={handleAutoPerform}
+                className="flex items-center gap-1 px-4 py-2 sm:px-5 rounded-xl font-bold text-[10px] tracking-wider uppercase bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-500/20 active:scale-95 transition-all border border-amber-500/20 animate-pulse"
+              >
+                Bantu Lakukan ⚡
+              </button>
             </>
           ) : (
             <>
