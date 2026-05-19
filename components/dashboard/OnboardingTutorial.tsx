@@ -85,7 +85,7 @@ export const OnboardingTutorial = () => {
       glowClass: "shadow-[0_0_30px_rgba(245,158,11,0.3)]",
       bgGradient: "from-amber-500/10 via-transparent to-transparent",
       targetId: "tour-add-category",
-      position: 'bottom',
+      position: 'right',
       requiresUserAction: true
     },
     {
@@ -359,16 +359,16 @@ export const OnboardingTutorial = () => {
 
     if (activeSlide.position === 'right' && spaceRight >= bubbleWidth) {
       style.left = `${targetRect.right + gap}px`;
-      const topVal = targetRect.top + (targetRect.height / 2) - 180;
-      style.top = `${Math.max(16, Math.min(window.innerHeight - 400, topVal))}px`;
+      const topVal = targetRect.top + (targetRect.height / 2) - 200;
+      style.top = `${Math.max(16, Math.min(window.innerHeight - 520, topVal))}px`;
     } else if (activeSlide.position === 'left' && spaceLeft >= bubbleWidth) {
       style.right = `${window.innerWidth - targetRect.left + gap}px`;
-      const topVal = targetRect.top + (targetRect.height / 2) - 180;
-      style.top = `${Math.max(16, Math.min(window.innerHeight - 400, topVal))}px`;
+      const topVal = targetRect.top + (targetRect.height / 2) - 200;
+      style.top = `${Math.max(16, Math.min(window.innerHeight - 520, topVal))}px`;
     } else if (activeSlide.position === 'bottom') {
       const leftVal = targetRect.left + (targetRect.width / 2) - (bubbleWidth / 2);
       style.left = `${Math.max(16, Math.min(window.innerWidth - bubbleWidth - 16, leftVal))}px`;
-      style.top = `${Math.min(targetRect.bottom + gap, window.innerHeight - 420)}px`;
+      style.top = `${Math.max(16, Math.min(window.innerHeight - 520, targetRect.bottom + gap))}px`;
     } else if (activeSlide.position === 'right' && spaceRight < bubbleWidth) {
       // Not enough room right — fall back to center
       style.left = '50%';
