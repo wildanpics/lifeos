@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { signInWithGoogle, signInWithEmail, signUpWithEmail, handleGoogleRedirectResult } from '@/lib/firebase/auth';
-import { Zap, Mail, Lock, User, Eye, EyeOff, AlertCircle, ArrowRight, CheckCircle, Clock, Trophy, Target, Flame, Scroll, Activity } from 'lucide-react';
+import { Zap, Mail, Lock, User, Eye, EyeOff, AlertCircle, ArrowRight, CheckCircle, Clock, Trophy, Target, Flame, Scroll, Activity, MailCheck, RefreshCw } from 'lucide-react';
 
 type Mode = 'login' | 'signup';
 
@@ -27,6 +27,8 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [featureIndex, setFeatureIndex] = useState(0);
+  const [verificationSent, setVerificationSent] = useState(false);
+  const [sentToEmail, setSentToEmail] = useState('');
 
   useEffect(() => {
     const t = setInterval(() => setFeatureIndex((i) => (i + 1) % FEATURES.length), 2500);
@@ -67,17 +69,25 @@ export default function LoginPage() {
     if (mode === 'signup' && !name) { setError('Nama harus diisi.'); return; }
     setLoading(true); setError('');
     try {
-      if (mode === 'signup') await signUpWithEmail(email, password, name);
-      else await signInWithEmail(email, password);
-      router.replace('/dashboard');
+      if (mode === 'signup') {
+        await signUpWithEmail(email, password, name);
+        // Show verification sent screen
+        setSentToEmail(email);
+        setVerificationSent(true);
+      } else {
+        await signInWithEmail(email, password);
+        router.replace('/dashboard');
+      }
     } catch (e: any) {
       setError(
-        e.code === 'auth/invalid-credential' ? 'Email atau password salah.' :
-        e.code === 'auth/user-not-found' ? 'Akun tidak ditemukan.' :
-        e.code === 'auth/email-already-in-use' ? 'Email sudah terdaftar.' :
-        e.code === 'auth/weak-password' ? 'Password minimal 6 karakter.' :
-        e.code === 'auth/invalid-email' ? 'Format email tidak valid.' :
-        'Terjadi kesalahan. Coba lagi.'
+        e.code === 'auth/email-not-verified'
+          ? 'Email belum diverifikasi. Cek kotak masuk Gmail kamu dan klik link verifikasi.'
+          : e.code === 'auth/invalid-credential' ? 'Email atau password salah.' :
+          e.code === 'auth/user-not-found' ? 'Akun tidak ditemukan.' :
+          e.code === 'auth/email-already-in-use' ? 'Email sudah terdaftar. Silakan masuk.' :
+          e.code === 'auth/weak-password' ? 'Password minimal 6 karakter.' :
+          e.code === 'auth/invalid-email' ? 'Format email tidak valid.' :
+          'Terjadi kesalahan. Coba lagi.'
       );
     } finally { setLoading(false); }
   };
@@ -231,7 +241,132 @@ export default function LoginPage() {
           transition={{ duration: 0.5, ease: 'easeOut' }}
           style={{ width: '100%', maxWidth: 420, position: 'relative', zIndex: 10 }}
         >
-          {/* Mobile only: logo */}
+
+          {/* ── Email Verification Sent Screen ── */}
+          <AnimatePresence mode="wait">
+            {verificationSent ? (
+              <motion.div
+                key="verification"
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.4, ease: 'easeOut' }}
+                style={{
+                  textAlign: 'center',
+                  background: '#111827',
+                  border: '1px solid #1F2937',
+                  borderRadius: 24,
+                  padding: '40px 32px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: 20,
+                }}
+              >
+                {/* Animated mail icon */}
+                <motion.div
+                  animate={{ y: [0, -8, 0], rotate: [-3, 3, -3] }}
+                  transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                  style={{
+                    width: 80, height: 80, borderRadius: 24,
+                    background: 'linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.15))',
+                    border: '1px solid rgba(99,102,241,0.3)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    boxShadow: '0 0 40px rgba(99,102,241,0.2)',
+                  }}
+                >
+                  <MailCheck size={38} color="#6366F1" />
+                </motion.div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <h2 style={{ fontSize: 20, fontWeight: 800, color: 'white', margin: 0 }}>
+                    Cek Gmail Kamu! 📬
+                  </h2>
+                  <p style={{ fontSize: 13, color: '#6B7280', lineHeight: 1.6, margin: 0 }}>
+                    Link verifikasi sudah dikirim ke
+                  </p>
+                  <span style={{
+                    fontSize: 13, fontWeight: 700,
+                    color: '#6366F1',
+                    background: 'rgba(99,102,241,0.1)',
+                    border: '1px solid rgba(99,102,241,0.25)',
+                    borderRadius: 10, padding: '6px 14px',
+                  }}>
+                    {sentToEmail}
+                  </span>
+                </div>
+
+                {/* Spam warning notice */}
+                <div style={{
+                  width: '100%',
+                  padding: '12px 16px',
+                  borderRadius: 12,
+                  background: 'rgba(251, 191, 36, 0.06)',
+                  border: '1px solid rgba(251, 191, 36, 0.25)',
+                  display: 'flex', gap: 10, alignItems: 'flex-start', textAlign: 'left',
+                }}>
+                  <span style={{ fontSize: 16, flexShrink: 0 }}>⚠️</span>
+                  <div>
+                    <p style={{ fontSize: 12, fontWeight: 700, color: '#FBBF24', margin: '0 0 4px 0' }}>
+                      Email mungkin masuk ke folder Spam
+                    </p>
+                    <p style={{ fontSize: 11, lineHeight: 1.5, margin: 0, color: '#D97706' }}>
+                      Jika tidak ada di Kotak Masuk, cek folder <strong>Spam / Junk</strong>.
+                      Klik <strong>"Laporkan bukan spam"</strong> agar email berikutnya masuk langsung.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Steps */}
+                <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {[
+                    { num: '1', text: 'Buka Gmail kamu' },
+                    { num: '2', text: 'Cek Kotak Masuk atau folder Spam' },
+                    { num: '3', text: 'Klik link panjang di dalam email' },
+                    { num: '4', text: 'Kembali ke sini dan klik Masuk' },
+                  ].map((step) => (
+                    <div key={step.num} style={{
+                      display: 'flex', alignItems: 'center', gap: 12,
+                      padding: '10px 14px', borderRadius: 12,
+                      background: '#0d1117', border: '1px solid #1F2937',
+                    }}>
+                      <span style={{
+                        width: 24, height: 24, borderRadius: '50%', flexShrink: 0,
+                        background: 'linear-gradient(135deg, #6366F1, #8B5CF6)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: 11, fontWeight: 800, color: 'white',
+                      }}>{step.num}</span>
+                      <span style={{ fontSize: 13, color: '#9CA3AF' }}>{step.text}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Back to login button */}
+                <motion.button
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => {
+                    setVerificationSent(false);
+                    setMode('login');
+                    setEmail(sentToEmail);
+                    setPassword('');
+                    setName('');
+                    setError('');
+                  }}
+                  style={{
+                    width: '100%', padding: '13px 0', borderRadius: 12,
+                    background: 'linear-gradient(135deg, #6366F1, #8B5CF6)',
+                    border: 'none', cursor: 'pointer',
+                    color: 'white', fontWeight: 700, fontSize: 14,
+                    boxShadow: '0 4px 20px rgba(99,102,241,0.4)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                  }}
+                >
+                  <RefreshCw size={15} /> Sudah Verifikasi? Masuk Sekarang
+                </motion.button>
+              </motion.div>
+            ) : (
+              <>
+              {/* Mobile only: logo */}
           <div className="lg-hide-logo" style={{ textAlign: 'center', marginBottom: 32 }}>
             <motion.div
               animate={{ boxShadow: ['0 0 20px rgba(99,102,241,0.3)', '0 0 40px rgba(99,102,241,0.6)', '0 0 20px rgba(99,102,241,0.3)'] }}
@@ -428,6 +563,9 @@ export default function LoginPage() {
           <p style={{ textAlign: 'center', fontSize: 11, color: '#374151', marginTop: 16 }}>
             Dengan masuk, kamu berkomitmen membangun disiplin diri.
           </p>
+              </>
+            )}
+          </AnimatePresence>
         </motion.div>
       </div>
 

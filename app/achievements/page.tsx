@@ -3,6 +3,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '@/store/useAppStore';
 import { ACHIEVEMENTS } from '@/lib/constants/achievements';
+import { HolographicTrophyCard } from '@/components/achievements/HolographicTrophyCard';
 import { 
   Trophy, Lock, Sparkles, Award, Star, Zap, Search,
   Sunrise, Droplets, Target, Medal, Crown, Moon, Timer, Activity,
@@ -164,7 +165,9 @@ const UserProfileCardModal = ({
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className={`relative w-full max-w-md rounded-3xl p-6 shadow-2xl overflow-hidden border ${isDark ? 'bg-[#0e0e11] border-neutral-800/40 text-white' : 'bg-white border-neutral-200 text-neutral-900 shadow-neutral-300/30'}`}
+          className={`relative w-full transition-[max-width,width] duration-300 ease-out ${
+            viewMode === 'cabinet' ? 'max-w-md md:max-w-3xl' : 'max-w-md'
+          } rounded-3xl p-6 shadow-2xl overflow-hidden border ${isDark ? 'bg-[#0e0e11] border-neutral-800/40 text-white' : 'bg-white border-neutral-200 text-neutral-900 shadow-neutral-300/30'}`}
         >
           {/* Subtle glowing color aura in the background */}
           <div 
@@ -374,52 +377,27 @@ const UserProfileCardModal = ({
                     🏆 Lemari Piala {profileUser.displayName}
                   </h3>
                   <p className="text-[10px] text-neutral-500 font-bold uppercase tracking-wider">
-                    {pialaTerbuka} dari 12 Piala Terbuka
+                    {pialaTerbuka} dari {ACHIEVEMENTS.length} Piala Terbuka
                   </p>
                 </div>
               </div>
 
               {/* Piala Grid */}
-              <div className="grid grid-cols-4 gap-3">
+              <div className="grid grid-cols-4 md:grid-cols-6 gap-3 md:gap-4.5">
                 {ACHIEVEMENTS.map((ach) => {
                   const isUnlocked = (profileUser.unlockedAchievements || []).some(ua => ua.id === ach.id);
-                  const isSelected = selectedCabinetAchievement?.id === ach.id;
                   
                   return (
-                    <div
+                    <HolographicTrophyCard
                       key={ach.id}
+                      achievement={ach}
+                      isUnlocked={isUnlocked}
+                      isDark={isDark}
+                      compact={true}
                       onClick={() => {
-                        playMechanicalClick();
                         setSelectedCabinetAchievement(ach);
                       }}
-                      className={`relative aspect-square rounded-2xl border flex items-center justify-center cursor-pointer transition-all ${
-                        isUnlocked
-                          ? isSelected
-                            ? 'bg-amber-500/15 border-amber-500 shadow-md shadow-amber-500/10 scale-105'
-                            : (isDark ? 'bg-amber-500/5 border-amber-500/20 hover:bg-amber-500/10 hover:border-amber-500/40' : 'bg-amber-50 border-amber-200/50 hover:bg-amber-100/50 hover:border-amber-400')
-                          : isSelected
-                            ? (isDark ? 'bg-neutral-800/40 border-neutral-600 scale-105' : 'bg-neutral-100 border-neutral-350 scale-105')
-                            : (isDark ? 'bg-neutral-900/40 border-neutral-850 hover:border-neutral-700' : 'bg-neutral-50/50 border-neutral-200 hover:border-neutral-300')
-                      }`}
-                      title={ach.title}
-                    >
-                      {/* Trophy Icon */}
-                      <div className={`transition-transform duration-300 ${isUnlocked ? 'filter-none scale-110 drop-shadow-[0_0_8px_rgba(245,158,11,0.2)]' : 'filter grayscale opacity-25'}`}>
-                        {getAchievementIcon(ach.id, undefined, "w-7 h-7")}
-                      </div>
-                      
-                      {/* Lock icon overlay for locked */}
-                      {!isUnlocked && (
-                        <div className="absolute bottom-1 right-1 p-0.5 rounded-full bg-neutral-950/80 border border-neutral-800">
-                          <Lock className="w-2 h-2 text-neutral-500" />
-                        </div>
-                      )}
-                      
-                      {/* Active green dot for unlocked */}
-                      {isUnlocked && (
-                        <div className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/50 animate-pulse" />
-                      )}
-                    </div>
+                    />
                   );
                 })}
               </div>

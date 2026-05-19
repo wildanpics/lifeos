@@ -49,6 +49,9 @@ const checkQuestCompletions = (
         const pagiHabits = ['mandi', 'sholat_subuh', 'morning_reset', 'baca_buku'];
         isCompleted = pagiHabits.every((id) => stats.completedHabits.includes(id));
         break;
+      case 'custom_habit':
+        isCompleted = (stats.completedHabits || []).includes(q.targetHabitId || '');
+        break;
     }
 
     if (isCompleted) {
@@ -192,6 +195,7 @@ interface AppState {
   // Achievements
   unlockedAchievements: UserAchievement[];
   newAchievement: Achievement | null;
+  focusDuelsWon: number;
 
   // Notifications
   notifications: AppNotification[];
@@ -237,6 +241,7 @@ interface AppState {
   setNewAchievement: (a: Achievement | null) => void;
   unlockAchievementLocal: (achievementId: string) => void;
   checkAchievements: () => void;
+  incrementFocusDuelsWon: () => void;
   setUnlockedAchievements: (achievements: UserAchievement[]) => void;
 
   // Notifications Actions
@@ -291,8 +296,13 @@ export const useAppStore = create<AppState>()(
       sleepStartTime: null,
       unlockedAchievements: [],
       newAchievement: null,
+      focusDuelsWon: 0,
       notifications: [],
-      customCategories: [],
+      customCategories: [
+        { id: 'morning', label: 'Pagi', emoji: '🌅', order: 1 },
+        { id: 'focus', label: 'Fokus', emoji: '🎯', order: 2 },
+        { id: 'night', label: 'Malam', emoji: '🌙', order: 3 }
+      ],
       customHabits: [],
       soundEnabled: true,
       levelUpCelebration: null,
@@ -327,6 +337,10 @@ export const useAppStore = create<AppState>()(
       setPrayerAlertBeforeMins: (mins) => set({ prayerAlertBeforeMins: mins }),
       setTahajjudAlertEnabled: (enabled) => set({ tahajjudAlertEnabled: enabled }),
       setDhuhaAlertEnabled: (enabled) => set({ dhuhaAlertEnabled: enabled }),
+      incrementFocusDuelsWon: () => {
+        set((state) => ({ focusDuelsWon: (state.focusDuelsWon || 0) + 1 }));
+        get().checkAchievements();
+      },
       setTotalXP: (xp) => set({ totalXP: xp }),
       setCustomTitle: (title) => {
         set({ customTitle: title });
@@ -789,6 +803,109 @@ export const useAppStore = create<AppState>()(
         if (!unlockedAchievements.some(a => a.id === 'perfect_day')) {
           if ((todayStats.completedHabits?.length || 0) >= 16) get().unlockAchievementLocal('perfect_day');
         }
+        // 13. Fajr Ascended
+        if (!unlockedAchievements.some(a => a.id === 'fajr_ascended')) {
+          const userId = state.user?.uid;
+          if (userId) {
+            import('@/lib/firebase/firestore').then(({ getRecentStats }) => {
+              getRecentStats(userId, 7).then((recentStats) => {
+                if (recentStats && recentStats.length >= 7) {
+                  const completedAll = recentStats.every(day => day.completedHabits?.includes('prayer_fajr'));
+                  if (completedAll) {
+                    get().unlockAchievementLocal('fajr_ascended');
+                  }
+                }
+              }).catch(console.error);
+            });
+          }
+        }
+        // 14. Midnight Caller
+        if (!unlockedAchievements.some(a => a.id === 'midnight_caller')) {
+          if (state.tahajjudAlertEnabled && todayStats.completedHabits?.includes('prayer_tahajjud')) {
+            get().unlockAchievementLocal('midnight_caller');
+          }
+        }
+        // 15. Focus Gladiator
+        if (!unlockedAchievements.some(a => a.id === 'focus_gladiator')) {
+          if ((state.focusDuelsWon || 0) >= 5) {
+            get().unlockAchievementLocal('focus_gladiator');
+          }
+        }
+        // 16. Time Alchemist
+        if (!unlockedAchievements.some(a => a.id === 'time_alchemist')) {
+          const userId = state.user?.uid;
+          if (userId) {
+            import('@/lib/firebase/firestore').then(({ getRecentStats }) => {
+              getRecentStats(userId, 3).then((recentStats) => {
+                if (recentStats && recentStats.length >= 3) {
+                  const completedAll = recentStats.every(day => {
+                    const tasks = day.focusTasks || [];
+                    return tasks.length > 0 && tasks.every(t => t.done);
+                  });
+                  if (completedAll) {
+                    get().unlockAchievementLocal('time_alchemist');
+                  }
+                }
+              }).catch(console.error);
+            });
+          }
+        }
+        // 17. Dopamine Sovereign
+        if (!unlockedAchievements.some(a => a.id === 'dopamine_sovereign')) {
+          const userId = state.user?.uid;
+          if (userId) {
+            import('@/lib/firebase/firestore').then(({ getRecentStats }) => {
+              getRecentStats(userId, 5).then((recentStats) => {
+                if (recentStats && recentStats.length >= 5) {
+                  const cleanAll = recentStats.every(day => day.dopamineStatus === 'clean');
+                  if (cleanAll) {
+                    get().unlockAchievementLocal('dopamine_sovereign');
+                  }
+                }
+              }).catch(console.error);
+            });
+          }
+        }
+        // 18. Loop Shatterer
+        if (!unlockedAchievements.some(a => a.id === 'loop_shatterer')) {
+          if (todayStats.breakTheLoopDone === true && (todayStats.focusMinutes || 0) >= 25) {
+            get().unlockAchievementLocal('loop_shatterer');
+          }
+        }
+        // 19. Diamond Sovereign
+        if (!unlockedAchievements.some(a => a.id === 'league_conqueror')) {
+          if (state.league === 'diamond') {
+            get().unlockAchievementLocal('league_conqueror');
+          }
+        }
+        // 20. Multiplier Deity
+        if (!unlockedAchievements.some(a => a.id === 'multiplier_deity')) {
+          if ((state.disciplineStreak || 0) >= 14) {
+            get().unlockAchievementLocal('multiplier_deity');
+          }
+        }
+        // 21. Radiant Faith
+        if (!unlockedAchievements.some(a => a.id === 'radiant_faith')) {
+          const userId = state.user?.uid;
+          if (userId) {
+            import('@/lib/firebase/firestore').then(({ getRecentStats }) => {
+              getRecentStats(userId, 5).then((recentStats) => {
+                if (recentStats && recentStats.length >= 5) {
+                  const completedAll = recentStats.every(day => day.completedHabits?.includes('prayer_dhuha'));
+                  if (completedAll) {
+                    get().unlockAchievementLocal('radiant_faith');
+                  }
+                }
+              }).catch(console.error);
+            });
+          }
+        }
+        // 22. Zenith Mind
+        if (!unlockedAchievements.some(a => a.id === 'zenith_mind')) {
+          if (todayStats.morningResetComplete?.length === 4 && todayStats.completedHabits?.includes('prayer_dhuha')) {
+            get().unlockAchievementLocal('zenith_mind');
+          }
+        }
       },
 
       setCustomGoals: (goals) => {
@@ -907,6 +1024,7 @@ export const useAppStore = create<AppState>()(
         dhuhaAlertEnabled: state.dhuhaAlertEnabled,
         customGoals: state.customGoals,
         hasCompletedTutorial: state.hasCompletedTutorial,
+        focusDuelsWon: state.focusDuelsWon,
       }),
     }
   )

@@ -7,6 +7,7 @@ import {
   GoogleAuthProvider,
   signOut,
   updateProfile,
+  sendEmailVerification,
   onAuthStateChanged,
   User,
 } from 'firebase/auth';
@@ -62,17 +63,33 @@ export const handleGoogleRedirectResult = async () => {
 
 export const signInWithEmail = async (email: string, password: string) => {
   const result = await signInWithEmailAndPassword(auth, email, password);
+  // Block login if email is not verified yet
+  if (!result.user.emailVerified) {
+    await signOut(auth);
+    const err: any = new Error('Email belum diverifikasi. Cek kotak masuk Gmail kamu.');
+    err.code = 'auth/email-not-verified';
+    throw err;
+  }
   return result.user;
 };
 
 export const signUpWithEmail = async (email: string, password: string, displayName: string) => {
   const result = await createUserWithEmailAndPassword(auth, email, password);
   await updateProfile(result.user, { displayName });
+
+  // Send native Firebase email verification directly
+  await sendEmailVerification(result.user, {
+    url: `${typeof window !== 'undefined' ? window.location.origin : ''}/login`,
+  });
+
   try {
     await ensureUserProfile(result.user);
   } catch (firestoreErr) {
     console.warn('Profile creation skipped after email signup:', firestoreErr);
   }
+
+  // Sign out immediately — user must verify email before accessing the app
+  await signOut(auth);
   return result.user;
 };
 

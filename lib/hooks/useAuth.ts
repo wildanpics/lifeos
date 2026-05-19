@@ -18,7 +18,7 @@ export const useAuth = () => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
 
-      if (firebaseUser) {
+      if (firebaseUser && firebaseUser.emailVerified) {
         try {
           // Load XP
           const xp = await getUserXP(firebaseUser.uid);
@@ -51,7 +51,18 @@ export const useAuth = () => {
           setCustomHabits(habits);
 
           // Hydrate custom goals, streak, and league
-          const userProfile = await getUserProfileById(firebaseUser.uid);
+          let userProfile = await getUserProfileById(firebaseUser.uid);
+          if (!userProfile) {
+            // Profile document failed to create during unverified signup, create it now!
+            try {
+              const { ensureUserProfile } = await import('@/lib/firebase/auth');
+              await ensureUserProfile(firebaseUser);
+              userProfile = await getUserProfileById(firebaseUser.uid);
+            } catch (err) {
+              console.warn('Failed to ensure user profile document:', err);
+            }
+          }
+
           if (userProfile) {
             // Extract latest photo and display name from Google provider data if available
             const googleProfile = firebaseUser.providerData.find((p) => p.providerId === 'google.com');
@@ -97,7 +108,7 @@ export const useAuth = () => {
               setCustomTitle(userProfile.customTitle);
             }
           } else {
-            // Initial sync of local goals to Cloud
+            // Fallback: Initial sync of local goals to Cloud
             const { customGoals } = useAppStore.getState();
             const googleProfile = firebaseUser.providerData.find((p) => p.providerId === 'google.com');
             const latestPhotoURL = googleProfile?.photoURL || firebaseUser.photoURL || null;

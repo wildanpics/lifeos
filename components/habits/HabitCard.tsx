@@ -107,37 +107,37 @@ export function HabitCard() {
     setCurrentCoachContent(COACH_CONTENTS[newIdx]);
   };
 
-  // Merge default system categories (which are protected) with dynamic custom categories
-  const mergedCategories = [
-    ...(customCategories || []),
-    { id: 'prayer', label: 'Sholat', emoji: '🕌', order: 1.5, isSystem: true },
-    { id: 'health', label: 'Kesehatan', emoji: '💪', order: 3.5, isSystem: true }
-  ].sort((a, b) => a.order - b.order);
+  // Use custom categories directly
+  const mergedCategories = [...(customCategories || [])].sort((a, b) => a.order - b.order);
 
   // Fallback to the first available category if the active one does not exist (e.g. for new users or deleted categories)
   useEffect(() => {
     if (mergedCategories.length > 0 && !mergedCategories.some((c) => c.id === activeCategory)) {
       setActiveCategory(mergedCategories[0].id);
     }
-  }, [mergedCategories, activeCategory]);
+  }, [customCategories, activeCategory]);
 
   const activeCategoryObj = mergedCategories.find((c) => c.id === activeCategory);
   const activeCategoryLabel = activeCategoryObj?.label || 'Kategori';
-  const isSystemCategory = activeCategory === 'prayer' || activeCategory === 'health';
 
   // Filter habits belonging to the active category
-  const filteredHabits = isSystemCategory
-    ? HABIT_DEFINITIONS.filter((h) => h.category === activeCategory && !h.isHidden)
-    : [
-        ...HABIT_DEFINITIONS.filter((h) => h.category === activeCategory && !h.isHidden),
-        ...(customHabits || []).filter((h) => h.category === activeCategory)
-      ];
+  const filteredHabits = [
+    ...HABIT_DEFINITIONS.filter((h) => h.category === activeCategory && !h.isHidden),
+    ...(customHabits || []).filter((h) => h.category === activeCategory)
+  ];
 
   const handleComplete = async (habitId: HabitId, xp: number) => {
     if (!user || todayStats?.completedHabits?.includes(habitId)) return;
     
-    // Trigger satisfying confetti burst!
-    triggerConfetti();
+    // Check if this action completes all habits in the active category
+    const completedSet = new Set([...(todayStats?.completedHabits || []), habitId]);
+    const isCategoryCompleted = filteredHabits.every((h) => completedSet.has(h.id));
+    
+    if (isCategoryCompleted) {
+      triggerPremiumSuccessConfetti();
+    } else {
+      triggerConfetti();
+    }
     
     // 1. Update local UI state immediately
     completeHabit(habitId, xp);
@@ -494,39 +494,42 @@ export function HabitCard() {
         })}
 
         {/* Dynamic Habits CRUD Actions Triggers */}
-        {!isSystemCategory && (
-          <div className="space-y-3 pt-2">
+        <div className="space-y-3 pt-2">
+          {activeCategory !== 'prayer' && activeCategory !== 'health' && (
             <button
               onClick={() => setIsModalOpen(true)}
               className="w-full flex items-center justify-center gap-2 p-3 rounded-xl border border-dashed text-sm font-medium transition-all hover:bg-amber-500/5 hover:border-amber-500 border-amber-500/40 text-amber-500"
             >
               <Plus className="w-4 h-4" /> Tambah Kebiasaan Baru
             </button>
+          )}
 
-            {/* Custom Category Deletion Option */}
-            {activeCategoryObj && !(activeCategoryObj as any).isSystem && (
-              <div className="flex gap-2 mt-4 pt-4 border-t border-dashed" style={{ borderColor: 'var(--border)' }}>
-                <button
-                  onClick={() => {
-                    setDeleteTarget({ type: 'category', id: activeCategory, name: activeCategoryObj.label });
-                  }}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold border text-red-500 border-red-500/20 hover:bg-red-500/10 transition-all flex items-center gap-1.5"
-                >
-                  <Trash2 className="w-3.5 h-3.5" /> Hapus Sub-Menu Ini
-                </button>
-              </div>
-            )}
-          </div>
-        )}
+          {/* Custom Category Deletion Option */}
+          {activeCategoryObj && (
+            <div className="flex gap-2 mt-4 pt-4 border-t border-dashed" style={{ borderColor: 'var(--border)' }}>
+              <button
+                onClick={() => {
+                  setDeleteTarget({ type: 'category', id: activeCategory, name: activeCategoryObj.label });
+                }}
+                className="px-4 py-2 rounded-xl text-xs font-semibold border text-red-500 border-red-500/20 hover:bg-red-500/10 transition-all flex items-center gap-1.5"
+              >
+                <Trash2 className="w-3.5 h-3.5" /> Hapus Sub-Menu Ini
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Habits & Category Creator Modal */}
-      <CustomHabitModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        activeCategoryId={activeCategory}
-        activeCategoryLabel={activeCategoryLabel}
-      />
+      <AnimatePresence>
+        {isModalOpen && (
+          <CustomHabitModal
+            onClose={() => setIsModalOpen(false)}
+            activeCategoryId={activeCategory}
+            activeCategoryLabel={activeCategoryLabel}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Custom Confirmation Dialog */}
       <AnimatePresence>

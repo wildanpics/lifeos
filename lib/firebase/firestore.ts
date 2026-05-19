@@ -56,15 +56,36 @@ const QUEST_POOL = [
   { label: "Selesaikan minimal 7 habit hari ini", targetType: "habit_count", targetValue: 7, xpBonus: 50 }
 ];
 
-const getRandomQuests = (): DailyQuest[] => {
-  const shuffled = [...QUEST_POOL].sort(() => 0.5 - Math.random());
+const getRandomQuests = (customHabits: HabitDefinition[] = []): DailyQuest[] => {
+  const questPool = [...QUEST_POOL];
+
+  // Dynamically include user's custom habits if any exist
+  if (customHabits.length > 0) {
+    const shuffledCustoms = [...customHabits].sort(() => 0.5 - Math.random());
+    const selectedCustoms = shuffledCustoms.slice(0, 2); // Pull up to 2 random custom habits
+
+    selectedCustoms.forEach((h) => {
+      questPool.push({
+        label: `Lakukan habit: ${h.label}`,
+        targetType: 'custom_habit',
+        targetValue: 1,
+        xpBonus: 50,
+        targetHabitId: h.id,
+        customIcon: h.icon || '🎯'
+      } as any);
+    });
+  }
+
+  const shuffled = questPool.sort(() => 0.5 - Math.random());
   return shuffled.slice(0, 3).map((q, idx) => ({
     id: `quest_${idx}_${Date.now()}`,
     label: q.label,
     targetType: q.targetType as any,
     targetValue: q.targetValue,
     completed: false,
-    xpBonus: q.xpBonus
+    xpBonus: q.xpBonus,
+    targetHabitId: (q as any).targetHabitId || undefined,
+    customIcon: (q as any).customIcon || undefined
   }));
 };
 
@@ -76,7 +97,8 @@ export const getTodayStats = async (userId: string, date: string): Promise<Daily
 
   // Self-heal: If document exists but dailyQuests is missing, generate and merge to Firestore
   if (!stats.dailyQuests || stats.dailyQuests.length === 0) {
-    const dailyQuests = getRandomQuests();
+    const customHabits = await getCustomHabits(userId);
+    const dailyQuests = getRandomQuests(customHabits);
     stats.dailyQuests = dailyQuests;
     await setDoc(ref, { dailyQuests }, { merge: true });
   }
@@ -86,6 +108,7 @@ export const getTodayStats = async (userId: string, date: string): Promise<Daily
 
 export const initTodayStats = async (userId: string, date: string): Promise<DailyStats> => {
   const ref = doc(db, 'users', userId, 'dailyStats', date);
+  const customHabits = await getCustomHabits(userId);
   const initial: DailyStats = {
     date,
     userId,
@@ -99,7 +122,7 @@ export const initTodayStats = async (userId: string, date: string): Promise<Dail
     completedHabits: [],
     morningLockUnlocked: false,
     dopamineStatus: 'clean',
-    dailyQuests: getRandomQuests()
+    dailyQuests: getRandomQuests(customHabits)
   };
   await setDoc(ref, cleanUndefined(initial), { merge: true });
   return initial;

@@ -46,6 +46,7 @@ import {
 } from 'lucide-react';
 import { getAllUserProfiles, PublicUserProfile } from '@/lib/firebase/firestore';
 import { ACHIEVEMENTS } from '@/lib/constants/achievements';
+import { HolographicTrophyCard } from '@/components/achievements/HolographicTrophyCard';
 
 const GOAL_ICONS: Record<string, any> = {
   Target,
@@ -341,6 +342,12 @@ export default function ProfilePage() {
   const [deleteTarget, setDeleteTarget] = useState<{ uid: string; displayName: string } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [selectedAchievement, setSelectedAchievement] = useState<any | null>(null);
+  const [trophySimulateTrigger, setTrophySimulateTrigger] = useState(0);
+  
+  useEffect(() => {
+    setTrophySimulateTrigger(0);
+  }, [selectedAchievement]);
+
   const [isAchievementsModalOpen, setIsAchievementsModalOpen] = useState(false);
   const [isUserAchievementsModalOpen, setIsUserAchievementsModalOpen] = useState(false);
   const [selectedDevUser, setSelectedDevUser] = useState<PublicUserProfile | null>(null);
@@ -2514,94 +2521,18 @@ service cloud.firestore {
                 {ACHIEVEMENTS.map((ach) => {
                   const unlockRecord = activeModal.list.find(a => a.id === ach.id);
                   const isUnlocked = !!unlockRecord;
-                  const isSecret = ach.secret && !isUnlocked;
-                  const cat = getCategoryDetails(ach.category);
 
                   return (
-                    <motion.div
+                    <HolographicTrophyCard
                       key={ach.id}
-                      whileHover={{ scale: 1.02, y: -2 }}
-                      className={`relative p-3.5 md:p-5 rounded-xl md:rounded-2xl border flex flex-col items-center text-center cursor-pointer transition-all ${
-                        isUnlocked 
-                          ? (isDark 
-                              ? 'bg-neutral-900/40 border-yellow-500/10 hover:border-yellow-500/20' 
-                              : 'bg-amber-50/20 border-yellow-500/20 hover:border-yellow-500/40')
-                          : (isDark 
-                              ? 'bg-neutral-950/40 border-neutral-900/60 opacity-60 hover:opacity-80' 
-                              : 'bg-neutral-100/50 border-neutral-200/80 opacity-70 hover:opacity-90')
-                      }`}
-                      style={{
-                        boxShadow: isUnlocked ? `0 4px 20px ${cat.glowColor}` : 'none'
-                      }}
+                      achievement={ach}
+                      isUnlocked={isUnlocked}
+                      unlockRecord={unlockRecord ? { unlockedAt: unlockRecord.unlockedAt } : null}
+                      isDark={isDark}
                       onClick={() => {
                         setSelectedAchievement(ach);
                       }}
-                    >
-                      {/* Top Badges Row */}
-                      <div className="flex justify-between items-center w-full mb-3 md:mb-4 gap-1">
-                        <span className={`text-[8px] md:text-[9px] font-black uppercase px-1.5 py-0.5 md:px-2.5 md:py-0.5 rounded-full border tracking-widest inline-flex items-center gap-1 ${
-                          isUnlocked 
-                            ? cat.badgeBg 
-                            : (isDark ? "bg-neutral-900/60 text-neutral-500 border-neutral-900/40" : "bg-neutral-200/55 text-neutral-500 border-neutral-200/40")
-                        }`}>
-                          {isSecret ? <LockKeyhole className="w-2 md:w-2.5 h-2 md:h-2.5" /> : cat.icon}
-                          <span className="hidden xs:inline">{isSecret ? 'Misteri' : cat.label}</span>
-                        </span>
-                        
-                        <span className="text-[8px] md:text-[9px] font-black text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/10 whitespace-nowrap">
-                          +{ach.xpReward} XP
-                        </span>
-                      </div>
-
-                      {/* Center Trophy Icon Box */}
-                      <div 
-                        className={`relative w-12 h-12 md:w-16 md:h-16 mx-auto flex items-center justify-center rounded-xl md:rounded-2xl border transition-all mb-2.5 md:mb-3 ${
-                          isUnlocked 
-                            ? (isDark ? 'bg-neutral-950 border-amber-500/20 shadow-lg shadow-amber-500/5' : 'bg-white border-amber-500/30 shadow-md shadow-amber-500/5') 
-                            : (isDark ? 'bg-neutral-950 border-neutral-900' : 'bg-neutral-50 border-neutral-200')
-                        }`}
-                      >
-                        {isUnlocked ? (
-                          <>
-                            {getAchievementIcon(ach.id, cat.color, "w-6 h-6 md:w-8 md:h-8")}
-                            <Sparkles className="absolute -top-1 -right-1 w-3 h-3 md:w-4 h-4 text-yellow-500 animate-pulse" />
-                          </>
-                        ) : isSecret ? (
-                          <HelpCircle className="w-6 h-6 md:w-8 md:h-8 text-purple-400/60" />
-                        ) : (
-                          <LockKeyhole className={`w-6 h-6 md:w-8 md:h-8 ${isDark ? 'text-neutral-600' : 'text-neutral-400'}`} />
-                        )}
-                      </div>
-
-                      {/* Title & Description */}
-                      <div className="space-y-1 flex-1 flex flex-col justify-center">
-                        <h4 className={`text-[10px] md:text-xs font-black leading-tight ${isDark ? 'text-white' : 'text-neutral-950'}`}>
-                          {isSecret ? 'Pencapaian Misterius' : ach.title}
-                        </h4>
-                        <p className={`text-[9px] md:text-[10px] leading-relaxed px-0.5 line-clamp-2 ${isDark ? 'text-neutral-400' : 'text-neutral-600'}`}>
-                          {isSecret ? 'Teruslah berdisiplin untuk mengungkap piala ini.' : ach.description}
-                        </p>
-                      </div>
-
-                      {/* Bottom Status */}
-                      <div className={`w-full border-t mt-3 md:mt-4 pt-2.5 md:pt-3 flex items-center justify-center gap-1 ${isDark ? 'border-neutral-800/40' : 'border-neutral-200'}`}>
-                        {isUnlocked && unlockRecord ? (
-                          <>
-                            <CheckCircle2 className="w-2.5 h-2.5 text-emerald-500 flex-shrink-0" />
-                            <span className="text-[7px] md:text-[8px] font-bold text-amber-500/80 uppercase tracking-wider">
-                              {new Date(unlockRecord.unlockedAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
-                            </span>
-                          </>
-                        ) : (
-                          <>
-                            <LockKeyhole className={`w-2 h-2 md:w-2.5 md:h-2.5 flex-shrink-0 ${isDark ? 'text-neutral-600' : 'text-neutral-400'}`} />
-                            <span className={`text-[7px] md:text-[8px] font-bold uppercase tracking-widest ${isDark ? 'text-neutral-600' : 'text-neutral-400'}`}>
-                              TERKUNCI
-                            </span>
-                          </>
-                        )}
-                      </div>
-                    </motion.div>
+                    />
                   );
                 })}
               </div>
@@ -2657,19 +2588,15 @@ service cloud.firestore {
                       <span>{isSecret ? 'Misteri' : cat.label}</span>
                     </span>
 
-                    <div className={`relative w-20 h-20 mx-auto flex items-center justify-center rounded-2xl border shadow-inner ${
-                      isDark ? 'bg-neutral-900 border-neutral-800' : 'bg-neutral-50 border-neutral-200'
-                    }`}>
-                      {isUnlocked ? (
-                        <>
-                          {getAchievementIcon(ach.id, cat.color, "w-10 h-10")}
-                          <Sparkles className="absolute -top-2 -right-2 w-5 h-5 text-yellow-500 animate-pulse" />
-                        </>
-                      ) : isSecret ? (
-                        <HelpCircle className="w-10 h-10 text-purple-400 opacity-60" />
-                      ) : (
-                        <LockKeyhole className={`w-10 h-10 ${isDark ? 'text-neutral-600' : 'text-neutral-400'}`} />
-                      )}
+                    <div className="w-32 h-32 mx-auto relative select-none">
+                      <HolographicTrophyCard
+                        achievement={ach}
+                        isUnlocked={isUnlocked}
+                        unlockRecord={unlockRecord ? { unlockedAt: unlockRecord.unlockedAt } : null}
+                        isDark={isDark}
+                        compact={true}
+                        simulateUnlockTrigger={trophySimulateTrigger}
+                      />
                     </div>
 
                     <div className="space-y-1.5">
@@ -2687,6 +2614,17 @@ service cloud.firestore {
                       <span>Hadiah XP:</span>
                       <span className="text-yellow-500 font-extrabold">+{ach.xpReward} XP</span>
                     </div>
+
+                    <button
+                      onClick={() => {
+                        playMechanicalClick();
+                        setTrophySimulateTrigger(p => p + 1);
+                      }}
+                      className="w-full py-2.5 px-4 rounded-xl font-extrabold text-[10px] tracking-wider uppercase inline-flex items-center justify-center gap-2 border transition-all duration-300 active:scale-[0.98] select-none cursor-pointer bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 hover:from-amber-600 hover:to-amber-600 text-neutral-950 border-amber-400 shadow-lg shadow-amber-500/10"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 animate-pulse" />
+                      Simulasi Ledakan Partikel 3D
+                    </button>
 
                     <div className={`p-3 border rounded-xl text-[10px] leading-normal ${
                       isDark 

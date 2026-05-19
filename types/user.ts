@@ -27,10 +27,12 @@ export interface FocusTask {
 export interface DailyQuest {
   id: string;
   label: string;
-  targetType: 'water' | 'meals' | 'sleep' | 'focus' | 'habit_count' | 'morning_habits' | 'screen_time_limit';
+  targetType: 'water' | 'meals' | 'sleep' | 'focus' | 'habit_count' | 'morning_habits' | 'screen_time_limit' | 'custom_habit';
   targetValue: number;
   completed: boolean;
   xpBonus: number;
+  targetHabitId?: string;
+  customIcon?: string;
 }
 
 export interface DailyStats {
