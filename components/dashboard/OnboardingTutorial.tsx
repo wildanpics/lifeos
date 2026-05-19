@@ -151,6 +151,22 @@ export const OnboardingTutorial = () => {
       }
     }
 
+    // Safeguard: If the user closed the modal during template setup (Step 4 or Step 5) without having installed the respective category,
+    // revert back to Step 3 so they can click the "+" button again.
+    if (currentSlide === 3 || currentSlide === 4) {
+      const modalOpen = document.getElementById('tour-apply-prayer') || document.getElementById('tour-apply-health');
+      const prayerExists = customCategories.some(c => c.id === 'prayer');
+      const healthExists = customCategories.some(c => c.id === 'health');
+      
+      if (!modalOpen) {
+        if (currentSlide === 3 && !prayerExists) {
+          setCurrentSlide(2);
+        } else if (currentSlide === 4 && !healthExists) {
+          setCurrentSlide(2);
+        }
+      }
+    }
+
     // Step 4 -> Step 5 trigger: Detect if 'prayer' category was successfully installed
     if (currentSlide === 3) {
       const prayerExists = customCategories.some(c => c.id === 'prayer');

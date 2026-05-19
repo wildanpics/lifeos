@@ -168,8 +168,10 @@ const SUBMENU_TEMPLATES = [
 ];
 
 export function CustomHabitModal({ onClose, activeCategoryId, activeCategoryLabel }: CustomHabitModalProps) {
-  const { addCustomCategory, addCustomHabit, customCategories } = useAppStore();
-  const [activeTab, setActiveTab] = useState<'habit' | 'category'>('habit');
+  const { addCustomCategory, addCustomHabit, customCategories, hasCompletedTutorial } = useAppStore();
+  const [activeTab, setActiveTab] = useState<'habit' | 'category'>(
+    !hasCompletedTutorial ? 'category' : 'habit'
+  );
 
   const handleApplyTemplate = (tmpl: typeof SUBMENU_TEMPLATES[0]) => {
     addCustomCategory(tmpl.label.split(' & ')[0], tmpl.emoji, tmpl.id);
