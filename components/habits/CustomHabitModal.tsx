@@ -318,7 +318,7 @@ export function CustomHabitModal({ onClose, activeCategoryId, activeCategoryLabe
                   Kelola Kebiasaan & Sub-Menu
                 </h3>
               </div>
-              <button onClick={onClose} className="p-1 rounded-lg transition-colors hover:bg-white/10">
+              <button id="tour-close-modal" onClick={onClose} className="p-1 rounded-lg transition-colors hover:bg-white/10">
                 <X className="w-5 h-5" style={{ color: 'var(--text-muted)' }} />
               </button>
             </div>

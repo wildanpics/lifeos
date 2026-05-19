@@ -109,7 +109,20 @@ export const OnboardingTutorial = () => {
     },
     {
       step: 6,
-      title: "5. Intip Liga Pejuang 🏆",
+      title: "5. Tutup Menu Kelola ✖️",
+      subtitle: "Silakan Klik Tombol Silang (X)",
+      description: "Hebat! Semua sub-menu template rekomendasi sudah aktif di dashboard-mu. Sekarang, silakan klik tombol 'X' di pojok kanan atas modal ini untuk menutup menu kelola!",
+      icon: X,
+      colorClass: "text-red-400",
+      glowClass: "shadow-[0_0_30px_rgba(239,68,68,0.3)]",
+      bgGradient: "from-red-500/10 via-transparent to-transparent",
+      targetId: "tour-close-modal",
+      position: 'left',
+      requiresUserAction: true // Wait for modal to be closed
+    },
+    {
+      step: 7,
+      title: "6. Intip Liga Pejuang 🏆",
       subtitle: "Silakan Klik Menu 'Leaderboard'",
       description: "Tab menu kebiasaan & pelacak kesehatanmu sudah aktif dan siap digunakan! Sekarang silakan klik menu 'Leaderboard' di sidebar kiri untuk melihat peringkat persainganmu!",
       icon: Trophy,
@@ -121,7 +134,7 @@ export const OnboardingTutorial = () => {
       requiresUserAction: true // Wait for user to navigate to /achievements
     },
     {
-      step: 7,
+      step: 8,
       title: "Petualangan Disiplin Dimulai! 🔥",
       subtitle: "Selamat, Kamu Siap Bertarung!",
       description: "Hebat! Kamu telah menguasai dasar-dasar navigasi LIFE OS. Sekarang, selesaikan kebiasaan harianmu, kumpulkan XP, naikkan level karakter, dan kalahkan prokrastinasi untuk memanjat peringkat Liga Diamond! Sampai jumpa di puncak klasemen!",
@@ -148,7 +161,7 @@ export const OnboardingTutorial = () => {
 
       // Step 3 -> Step 4 trigger: Detect if template modal is open (checks if tour-apply-prayer exists in DOM)
       if (nextSlide === 2) {
-        const modalOpen = document.getElementById('tour-apply-prayer') || document.getElementById('tour-apply-health');
+        const modalOpen = document.getElementById('tour-apply-prayer') || document.getElementById('tour-apply-health') || document.getElementById('tour-close-modal');
         if (modalOpen) {
           nextSlide = 3;
         }
@@ -174,7 +187,7 @@ export const OnboardingTutorial = () => {
       if (nextSlide === 3) {
         const prayerExists = customCategories.some(c => c.id === 'prayer');
         if (prayerExists) {
-          // If the user already has both, skip straight to leaderboard step!
+          // If the user already has both, skip straight to close modal step!
           const healthExists = customCategories.some(c => c.id === 'health');
           if (healthExists) {
             nextSlide = 5;
@@ -192,9 +205,21 @@ export const OnboardingTutorial = () => {
         }
       }
 
-      // Step 6 -> Step 7 trigger: User successfully navigates to '/achievements' (Leaderboard)
-      if (nextSlide === 5 && pathname === '/achievements') {
-        nextSlide = 6;
+      // Step 6 -> Step 7 trigger: Wait for the modal to be closed
+      if (nextSlide === 5) {
+        const modalOpen = document.getElementById('tour-close-modal');
+        const prayerExists = customCategories.some(c => c.id === 'prayer');
+        const healthExists = customCategories.some(c => c.id === 'health');
+
+        // Once the close button is no longer in DOM and categories exist, proceed to sidebar navigation step!
+        if (!modalOpen && prayerExists && healthExists) {
+          nextSlide = 6;
+        }
+      }
+
+      // Step 7 -> Step 8 trigger: User successfully navigates to '/achievements' (Leaderboard)
+      if (nextSlide === 6 && pathname === '/achievements') {
+        nextSlide = 7;
       }
 
       // If slide state changed, apply update and let the next loop run compute target coordinates
