@@ -288,10 +288,26 @@ export const OnboardingTutorial = () => {
   const ActiveIcon = activeSlide.icon;
 
   // Compute bubble coordinates based on active target rect
-  const getBubbleStyle = () => {
+  const getBubbleStyle = (): React.CSSProperties => {
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+
+    // On mobile: always anchor to bottom of screen as a bottom sheet
+    if (isMobile) {
+      return {
+        position: 'fixed',
+        left: '50%',
+        bottom: '16px',
+        transform: 'translateX(-50%)',
+        zIndex: 9999,
+        width: 'calc(100% - 24px)',
+        maxWidth: '100%',
+      };
+    }
+
+    // Desktop: position relative to highlighted element
     if (!targetRect) {
       return {
-        position: 'fixed' as const,
+        position: 'fixed',
         left: '50%',
         top: '50%',
         transform: 'translate(-50%, -50%)',
@@ -310,20 +326,28 @@ export const OnboardingTutorial = () => {
       boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
     };
 
-    if (activeSlide.position === 'right') {
+    // Prefer positioning to the right if there's enough room
+    const bubbleWidth = 380;
+    const spaceRight = window.innerWidth - targetRect.right - gap;
+    const spaceLeft = targetRect.left - gap;
+
+    if (activeSlide.position === 'right' && spaceRight >= bubbleWidth) {
       style.left = `${targetRect.right + gap}px`;
-      style.top = `${targetRect.top + (targetRect.height / 2) - 150}px`;
-      if (typeof window !== 'undefined') {
-        const topVal = targetRect.top + (targetRect.height / 2) - 150;
-        style.top = `${Math.max(16, Math.min(window.innerHeight - 340, topVal))}px`;
-      }
+      const topVal = targetRect.top + (targetRect.height / 2) - 180;
+      style.top = `${Math.max(16, Math.min(window.innerHeight - 400, topVal))}px`;
+    } else if (activeSlide.position === 'left' && spaceLeft >= bubbleWidth) {
+      style.right = `${window.innerWidth - targetRect.left + gap}px`;
+      const topVal = targetRect.top + (targetRect.height / 2) - 180;
+      style.top = `${Math.max(16, Math.min(window.innerHeight - 400, topVal))}px`;
     } else if (activeSlide.position === 'bottom') {
-      style.left = `${targetRect.left + (targetRect.width / 2) - 190}px`;
-      style.top = `${targetRect.bottom + gap}px`;
-      if (typeof window !== 'undefined') {
-        const leftVal = targetRect.left + (targetRect.width / 2) - 190;
-        style.left = `${Math.max(16, Math.min(window.innerWidth - 400, leftVal))}px`;
-      }
+      const leftVal = targetRect.left + (targetRect.width / 2) - (bubbleWidth / 2);
+      style.left = `${Math.max(16, Math.min(window.innerWidth - bubbleWidth - 16, leftVal))}px`;
+      style.top = `${Math.min(targetRect.bottom + gap, window.innerHeight - 420)}px`;
+    } else if (activeSlide.position === 'right' && spaceRight < bubbleWidth) {
+      // Not enough room right — fall back to center
+      style.left = '50%';
+      style.top = '50%';
+      style.transform = 'translate(-50%, -50%)';
     } else {
       style.left = '50%';
       style.top = '50%';
@@ -412,12 +436,12 @@ export const OnboardingTutorial = () => {
         {/* Floating Tooltip Bubble */}
         <motion.div
           key={currentSlide}
-          initial={{ opacity: 0, scale: 0.9, y: 15 }}
+          initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.9, y: 15 }}
-          transition={{ duration: 0.3, ease: 'easeOut' }}
+          exit={{ opacity: 0, scale: 0.95, y: 20 }}
+          transition={{ duration: 0.25, ease: 'easeOut' }}
           style={getBubbleStyle()}
-          className="bg-[#0b0b0e] border border-amber-500/20 rounded-3xl p-6 overflow-hidden flex flex-col items-center text-center pointer-events-auto shadow-2xl"
+          className="bg-[#0b0b0e] border border-amber-500/20 rounded-2xl sm:rounded-3xl px-4 py-4 sm:p-6 overflow-hidden flex flex-col items-center text-center pointer-events-auto shadow-2xl"
         >
           {/* Radial Ambient Glow */}
           <div className={`absolute top-0 inset-x-0 h-32 bg-gradient-to-b ${activeSlide.bgGradient} pointer-events-none transition-all duration-500`} />
@@ -438,8 +462,8 @@ export const OnboardingTutorial = () => {
             Langkah {currentSlide + 1} dari {slides.length}
           </span>
 
-          {/* Icon Circle */}
-          <div className="relative mb-4 z-10">
+          {/* Icon Circle — hidden on mobile to save space */}
+          <div className="relative mb-2 sm:mb-4 z-10 hidden sm:block">
             <div className={`w-14 h-14 rounded-xl bg-neutral-900 border border-white/10 flex items-center justify-center transition-all duration-500 ${activeSlide.glowClass}`}>
               <motion.div
                 initial={{ opacity: 0, scale: 0.5 }}
@@ -452,35 +476,35 @@ export const OnboardingTutorial = () => {
           </div>
 
           {/* Texts content with transition */}
-          <div className="min-h-[120px] flex flex-col items-center z-10 w-full mb-3">
-            <h2 className="text-base font-extrabold text-white tracking-tight leading-snug mb-1">
+          <div className="flex flex-col items-center z-10 w-full mb-2 sm:mb-3">
+            <h2 className="text-sm sm:text-base font-extrabold text-white tracking-tight leading-snug mb-1">
               {activeSlide.title}
             </h2>
-            <h3 className={`text-[10px] font-black uppercase tracking-wider mb-2 ${activeSlide.colorClass}`}>
+            <h3 className={`text-[9px] sm:text-[10px] font-black uppercase tracking-wider mb-2 ${activeSlide.colorClass}`}>
               {activeSlide.subtitle}
             </h3>
-            <div className="text-[11.5px] leading-relaxed text-neutral-350 font-medium px-1 text-left space-y-1 max-h-52 overflow-y-auto">
+            <div className="text-[11px] sm:text-[11.5px] leading-relaxed text-neutral-400 font-medium px-1 text-left space-y-1 max-h-32 sm:max-h-52 overflow-y-auto w-full">
               {activeSlide.description.split('\n').map((line, i) => (
-                line.trim() === '' ? <div key={i} className="h-1" /> : 
+                line.trim() === '' ? <div key={i} className="h-1" /> :
                 <p key={i} className={line.startsWith('•') ? 'pl-1' : ''}>{line}</p>
               ))}
             </div>
             {activeSlide.requiresUserAction && (
-              <span className="mt-3.5 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-black tracking-wider text-amber-400 bg-amber-500/10 border border-amber-500/20 uppercase animate-bounce">
+              <span className="mt-2 sm:mt-3.5 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-black tracking-wider text-amber-400 bg-amber-500/10 border border-amber-500/20 uppercase animate-bounce">
                 👉 Lakukan Aksi Ini Sekarang!
               </span>
             )}
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center justify-between w-full gap-3 mt-2 z-10">
+          <div className="flex items-center justify-between w-full gap-3 mt-1 sm:mt-2 z-10">
             {activeSlide.requiresUserAction ? (
               <>
                 <button
                   onClick={handleSkip}
-                  className="px-4 py-2 rounded-xl text-neutral-500 hover:text-neutral-300 font-bold text-[10px] tracking-wider uppercase transition-all"
+                  className="px-3 py-2 sm:px-4 rounded-xl text-neutral-500 hover:text-neutral-300 font-bold text-[10px] tracking-wider uppercase transition-all"
                 >
-                  Lewati Panduan
+                  Lewati
                 </button>
                 <span className="text-[10px] font-black text-amber-500/70 italic uppercase tracking-wide">Menunggu Aksimu...</span>
               </>
@@ -488,14 +512,14 @@ export const OnboardingTutorial = () => {
               <>
                 <button
                   onClick={handleSkip}
-                  className="px-4 py-2 rounded-xl text-neutral-500 hover:text-neutral-300 font-bold text-[10px] tracking-wider uppercase border border-transparent hover:bg-white/5 transition-all"
+                  className="px-3 py-2 sm:px-4 rounded-xl text-neutral-500 hover:text-neutral-300 font-bold text-[10px] tracking-wider uppercase border border-transparent hover:bg-white/5 transition-all"
                 >
                   Lewati
                 </button>
 
                 <button
                   onClick={handleNext}
-                  className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl font-bold text-[10px] tracking-wider uppercase bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-500/20 active:scale-95 transition-all border border-amber-500/20"
+                  className="flex items-center gap-1.5 px-4 py-2.5 sm:px-5 rounded-xl font-bold text-[10px] tracking-wider uppercase bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-500/20 active:scale-95 transition-all border border-amber-500/20"
                 >
                   {currentSlide === slides.length - 1 ? (
                     <>
