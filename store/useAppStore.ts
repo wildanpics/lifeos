@@ -304,11 +304,7 @@ export const useAppStore = create<AppState>()(
       newAchievement: null,
       focusDuelsWon: 0,
       notifications: [],
-      customCategories: [
-        { id: 'morning', label: 'Pagi', emoji: '🌅', order: 1 },
-        { id: 'focus', label: 'Fokus', emoji: '🎯', order: 2 },
-        { id: 'night', label: 'Malam', emoji: '🌙', order: 3 }
-      ],
+      customCategories: [],
       customHabits: [],
       soundEnabled: true,
       levelUpCelebration: null,
