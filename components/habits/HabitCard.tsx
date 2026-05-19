@@ -72,6 +72,7 @@ export function HabitCard() {
     todayStats, 
     user, 
     completeHabit, 
+    uncompleteHabit,
     updateWater, 
     updateMeals, 
     customCategories, 
@@ -126,44 +127,74 @@ export function HabitCard() {
     ...(customHabits || []).filter((h) => h.category === activeCategory)
   ];
 
-  const handleComplete = async (habitId: HabitId, xp: number) => {
-    if (!user || todayStats?.completedHabits?.includes(habitId)) return;
-    
-    // Check if this action completes all habits in the active category
-    const completedSet = new Set([...(todayStats?.completedHabits || []), habitId]);
-    const isCategoryCompleted = filteredHabits.every((h) => completedSet.has(h.id));
-    
-    if (isCategoryCompleted) {
-      triggerPremiumSuccessConfetti();
+  const handleHabitClick = async (habitId: HabitId, xp: number) => {
+    if (!user || !todayStats) return;
+
+    const isAlreadyCompleted = todayStats.completedHabits?.includes(habitId);
+
+    if (isAlreadyCompleted) {
+      // ── BATAL CENTANG (UNCHECK) ───────────────────────────────────────────
+      // 1. Update state lokal seketika
+      uncompleteHabit(habitId, xp);
+
+      try {
+        const today = getToday();
+        const { deleteHabitLog, updateDailyStats, addXP } = await import('@/lib/firebase/firestore');
+
+        // 2. Hapus log habit di database
+        await deleteHabitLog(user.uid, habitId, today);
+
+        // 3. Update status harian
+        const newCompleted = (todayStats.completedHabits || []).filter((id) => id !== habitId);
+        const newXp = Math.max(0, (todayStats.xpEarned || 0) - xp);
+        await updateDailyStats(user.uid, today, {
+          completedHabits: newCompleted,
+          xpEarned: newXp,
+        });
+
+        // 4. Kurangi XP di profil global Firebase (-xp)
+        await addXP(user.uid, -xp);
+      } catch (e) {
+        console.error('Failed to uncomplete habit:', e);
+      }
     } else {
-      triggerConfetti();
+      // ── CENTANG (CHECK) ───────────────────────────────────────────────────
+      const completedSet = new Set([...(todayStats.completedHabits || []), habitId]);
+      const isCategoryCompleted = filteredHabits.every((h) => completedSet.has(h.id));
+
+      if (isCategoryCompleted) {
+        triggerPremiumSuccessConfetti();
+      } else {
+        triggerConfetti();
+      }
+
+      // 1. Update state lokal seketika
+      completeHabit(habitId, xp);
+      setShowXP({ id: habitId, xp });
+      setTimeout(() => setShowXP(null), 1500);
+
+      try {
+        const today = getToday();
+
+        // 2. Catat log habit baru
+        await logHabit({ habitId, userId: user.uid, date: today, completedAt: new Date(), xpEarned: xp });
+
+        // 3. Update status harian
+        const newCompleted = [...(todayStats.completedHabits || []), habitId];
+        const newXp = (todayStats.xpEarned || 0) + xp;
+        const { updateDailyStats, addXP } = await import('@/lib/firebase/firestore');
+
+        await updateDailyStats(user.uid, today, {
+          completedHabits: newCompleted,
+          xpEarned: newXp,
+        });
+
+        // 4. Tambah XP ke profil global Firebase
+        await addXP(user.uid, xp);
+      } catch (e) {
+        console.error(e);
+      }
     }
-    
-    // 1. Update local UI state immediately
-    completeHabit(habitId, xp);
-    setShowXP({ id: habitId, xp });
-    setTimeout(() => setShowXP(null), 1500);
-    
-    try {
-      const today = getToday();
-      
-      // 2. Log individual habit
-      await logHabit({ habitId, userId: user.uid, date: today, completedAt: new Date(), xpEarned: xp });
-      
-      // 3. Update the dailyStats document so completed habits persist on reload
-      const newCompleted = [...(todayStats?.completedHabits || []), habitId];
-      const newXp = (todayStats?.xpEarned || 0) + xp;
-      const { updateDailyStats, addXP } = await import('@/lib/firebase/firestore');
-      
-      await updateDailyStats(user.uid, today, {
-        completedHabits: newCompleted,
-        xpEarned: newXp
-      });
-      
-      // 4. Add XP to global user profile
-      await addXP(user.uid, xp);
-      
-    } catch (e) { console.error(e); }
   };
 
   const handleSetWater = async (value: number) => {
@@ -179,7 +210,7 @@ export function HabitCard() {
       
       // Auto-complete custom water milestone (Gives flat 20 XP upon full 8 glasses!)
       if (next >= 8 && !todayStats.completedHabits?.includes('water_8')) {
-        handleComplete('water_8', 20);
+        handleHabitClick('water_8', 20);
         triggerPremiumSuccessConfetti();
       }
     } catch (e) { console.error(e); }
@@ -198,7 +229,7 @@ export function HabitCard() {
       
       // Auto-complete custom meals milestone (Gives flat 20 XP upon full 4 meals completed!)
       if (next >= 4 && !todayStats.completedHabits?.includes('meals_4')) {
-        handleComplete('meals_4', 20);
+        handleHabitClick('meals_4', 20);
         triggerPremiumSuccessConfetti();
       }
     } catch (e) { console.error(e); }
@@ -432,8 +463,8 @@ export function HabitCard() {
                 border: `1px solid ${done ? 'rgba(16,185,129,0.3)' : 'var(--border)'}`,
               }}>
               <div 
-                onClick={() => !done && handleComplete(habit.id, habit.xp)}
-                className={cn("flex-1 flex items-center gap-3 min-w-0", !done ? "cursor-pointer" : "")}
+                onClick={() => handleHabitClick(habit.id, habit.xp)}
+                className="flex-1 flex items-center gap-3 min-w-0 cursor-pointer"
               >
                 <span className="text-xl flex items-center justify-center w-8 h-8 rounded-xl flex-shrink-0" style={{ background: habit.id.startsWith('prayer_') ? 'rgba(245, 158, 11, 0.08)' : 'var(--bg-secondary)' }}>
                   {habit.id === 'prayer_fajr' ? (
@@ -461,11 +492,16 @@ export function HabitCard() {
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: 'rgba(99,102,241,0.15)', color: 'var(--accent)' }}>
                   +{habit.xp} XP
                 </span>
-                {done ? (
-                  <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" />
-                ) : (
-                  <Circle className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--border)' }} />
-                )}
+                <div 
+                  onClick={() => handleHabitClick(habit.id, habit.xp)}
+                  className="cursor-pointer flex-shrink-0"
+                >
+                  {done ? (
+                    <CheckCircle className="w-5 h-5 text-green-400" />
+                  ) : (
+                    <Circle className="w-5 h-5" style={{ color: 'var(--border)' }} />
+                  )}
+                </div>
                 
                 {/* Delete button for custom habits */}
                 {habit.id.startsWith('custom_') && (

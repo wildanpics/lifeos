@@ -230,6 +230,7 @@ interface AppState {
   setPrayerCity: (id: string, name: string) => void;
   toggleSleep: () => void;
   completeHabit: (habitId: HabitId, xp: number) => void;
+  uncompleteHabit: (habitId: HabitId, xp: number) => void;
   updateWater: (glasses: number) => void;
   updateMeals: (meals: number) => void;
   updateSleep: (hours: number) => void;
@@ -413,6 +414,35 @@ export const useAppStore = create<AppState>()(
             'streak'
           );
         }
+        get().checkAchievements();
+      },
+
+      uncompleteHabit: (habitId, xp) => {
+        playMechanicalClick();
+        set((state) => {
+          const stats = state.todayStats;
+          if (!stats) return {};
+          const completedHabits = stats.completedHabits.filter((id) => id !== habitId);
+          const newXpEarned = Math.max(0, (stats.xpEarned || 0) - xp);
+          const interimStats = {
+            ...stats,
+            completedHabits,
+            xpEarned: newXpEarned,
+          };
+          // Safely deduct XP from global total
+          const nextTotalXp = Math.max(0, state.totalXP - xp);
+          
+          return {
+            todayStats: interimStats,
+            totalXP: nextTotalXp,
+          };
+        });
+        
+        get().addNotification(
+          '🔄 Habit Dibatalkan',
+          `XP disesuaikan kembali (-${xp} XP).`,
+          'system'
+        );
         get().checkAchievements();
       },
 

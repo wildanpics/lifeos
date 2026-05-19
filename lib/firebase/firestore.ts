@@ -143,6 +143,11 @@ export const logHabit = async (log: HabitLog) => {
   await setDoc(ref, cleanUndefined({ ...log, completedAt: serverTimestamp() }));
 };
 
+export const deleteHabitLog = async (userId: string, habitId: string, date: string) => {
+  const ref = doc(db, 'users', userId, 'habitLogs', `${date}_${habitId}`);
+  await deleteDoc(ref);
+};
+
 export const getHabitLogsForDate = async (userId: string, date: string): Promise<HabitLog[]> => {
   const ref = collection(db, 'users', userId, 'habitLogs');
   const q = query(ref, where('date', '==', date));
